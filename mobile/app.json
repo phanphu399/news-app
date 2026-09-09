@@ -15,7 +15,9 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.aster.marketnews",
       "infoPlist": {
-        "UIBackgroundModes": ["remote-notification"]
+        "UIBackgroundModes": [
+          "remote-notification"
+        ]
       }
     },
     "android": {
@@ -31,13 +33,16 @@
         {
           "icon": "./assets/notification-icon.png",
           "color": "#e11d48",
-          "sounds": ["./assets/sounds/beep.wav"]
+          "sounds": [
+            "./assets/sounds/beep.wav"
+          ]
         }
-      ]
+      ],
+      "expo-asset"
     ],
     "extra": {
-      "supabaseUrl": "https://YOUR-PROJECT.supabase.co",
-      "supabaseAnonKey": "YOUR-ANON-KEY"
+      "supabaseUrl": "https://vsrzhjdqaftsfyyzfuai.supabase.co",
+      "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZzcnpoamRxYWZ0c2Z5eXpmdWFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg5MzUyNjcsImV4cCI6MjEwNDUxMTI2N30.9RrO8cUI6xgaU9Id-nZS4foNkumNsnZvBHGiFTZzv1E"
     }
   }
 }
