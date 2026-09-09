@@ -31,7 +31,7 @@ export async function upsertNews(items) {
 
   const { data, error } = await client.from('market_news').upsert(payload, {
     onConflict: 'id',
-  });
+  }).select('id');
 
   if (error) {
     throw new Error(`Supabase upsert failed: ${error.message}`);
