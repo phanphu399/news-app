@@ -9,6 +9,7 @@ export default class NewsViewModel {
     this.items = [];
     this.importantIds = new Set();
     this.listeners = new Set();
+    this.newItemListeners = new Set();
     this.loading = false;
     this.error = null;
     this.offRealtime = null;
@@ -18,6 +19,11 @@ export default class NewsViewModel {
   subscribe(listener) {
     this.listeners.add(listener);
     return () => this.listeners.delete(listener);
+  }
+
+  onNewItem(listener) {
+    this.newItemListeners.add(listener);
+    return () => this.newItemListeners.delete(listener);
   }
 
   emit() {
@@ -35,9 +41,17 @@ export default class NewsViewModel {
           NewsWarningService.playBeep();
           NewsWarningService.scheduleLocal(item);
         }
+        this.newItemListeners.forEach((listener) => listener(item));
         this.emit();
       },
-      () => this.refresh()
+      () => this.refresh(),
+      (updated) => {
+        if (!updated) return;
+        this.items = this.items.map((existing) =>
+          existing.id === updated.id ? updated : existing
+        );
+        this.emit();
+      }
     );
 
     this.offTimer = setInterval(() => {

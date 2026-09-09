@@ -30,7 +30,7 @@ export async function fetchLatestNews(limit = 100) {
   return (data ?? []).map((row) => NewsModel.fromSupabase(row));
 }
 
-export function subscribeRealtime(onInsert, onDelete) {
+export function subscribeRealtime(onInsert, onDelete, onUpdate) {
   const supabase = getSupabase();
   if (!supabase) return () => {};
 
@@ -40,6 +40,11 @@ export function subscribeRealtime(onInsert, onDelete) {
       'postgres_changes',
       { event: 'INSERT', schema: 'public', table: 'market_news' },
       (payload) => onInsert?.(NewsModel.fromSupabase(payload.new))
+    )
+    .on(
+      'postgres_changes',
+      { event: 'UPDATE', schema: 'public', table: 'market_news' },
+      (payload) => onUpdate?.(NewsModel.fromSupabase(payload.new))
     )
     .on(
       'postgres_changes',

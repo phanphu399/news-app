@@ -84,7 +84,7 @@ export async function translateToVietnamese(text) {
   throw lastError || new Error('No translation provider succeeded');
 }
 
-export async function translateTitles(items, { limit = 8, concurrency = 3 } = {}) {
+export async function translateTitles(items, { limit = 20, concurrency = 10 } = {}) {
   const targets = items
     .filter((item) => item && item.title && !item.title_vi)
     .slice(0, limit);

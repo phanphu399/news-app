@@ -4,6 +4,7 @@ import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-
 import NewsViewModel from './src/viewmodels/NewsViewModel';
 import NewsListView from './src/views/NewsListView';
 import NewsWebView from './src/views/NewsWebView';
+import NotificationToast from './src/views/NotificationToast';
 import EconomicCalendarView from './src/views/EconomicCalendarView';
 import CustomFeedView from './src/views/CustomFeedView';
 import TradingViewScreen from './src/views/TradingViewScreen';
@@ -17,7 +18,10 @@ const TABS = {
   FEEDS: 'feeds',
 };
 
-function TabBar({ active, onChange, insets }) {
+const TOAST_DURATION_MS = 7000;
+const MAX_TOASTS = 3;
+
+function TabBar({ active, onChange, insets, badge }) {
   const tabs = [
     { key: TABS.NEWS, label: 'Tin nóng', icon: '🔥' },
     { key: TABS.GOLD, label: 'Vàng XAU', icon: '🪙' },
@@ -39,6 +43,11 @@ function TabBar({ active, onChange, insets }) {
             <Text style={[styles.tabIcon, isActive && styles.tabIconActive]}>{tab.icon}</Text>
             <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>{tab.label}</Text>
             <View style={[styles.tabIndicator, isActive && styles.tabIndicatorActive]} />
+            {badge > 0 && tab.key === TABS.NEWS && (
+              <View style={styles.badgeDot}>
+                <Text style={styles.badgeText}>{badge > 99 ? '99+' : badge}</Text>
+              </View>
+            )}
           </TouchableOpacity>
         );
       })}
@@ -79,6 +88,10 @@ function MainScreen() {
   const { canInstall, install } = useInstallPrompt();
   const [activeTab, setActiveTab] = useState(TABS.NEWS);
   const [openedUrl, setOpenedUrl] = useState(null);
+  const [toasts, setToasts] = useState([]);
+  const [newCount, setNewCount] = useState(0);
+  const seqRef = useRef(0);
+  const toastTimersRef = useRef(new Map());
   const viewModelRef = useRef(null);
   if (!viewModelRef.current) {
     viewModelRef.current = new NewsViewModel();
@@ -87,23 +100,54 @@ function MainScreen() {
 
   const [state, setState] = useState({ items: [], loading: true, error: null });
 
+  const dismissToast = (id) => {
+    const timer = toastTimersRef.current.get(id);
+    if (timer) {
+      clearTimeout(timer);
+      toastTimersRef.current.delete(id);
+    }
+    setToasts((list) => list.filter((toast) => toast.id !== id));
+  };
+
   useEffect(() => {
     const unsubscribe = vm.subscribe((nextState) => setState(nextState));
+    const unsubNewItem = vm.onNewItem((item) => {
+      const id = ++seqRef.current;
+      setNewCount((count) => count + 1);
+      setToasts((list) => [...list.slice(-(MAX_TOASTS - 1)), { id, item }]);
+      const timer = setTimeout(() => dismissToast(id), TOAST_DURATION_MS);
+      toastTimersRef.current.set(id, timer);
+    });
     vm.start();
     return () => {
       unsubscribe();
+      unsubNewItem();
       vm.stop();
+      toastTimersRef.current.forEach((timer) => clearTimeout(timer));
+      toastTimersRef.current.clear();
     };
-  }, []);
+  }, [vm]);
 
   const connected = !state.error;
 
+  const openInNewTab = (url) => {
+    if (Platform.OS !== 'web' || typeof document === 'undefined') return;
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.target = '_blank';
+    anchor.rel = 'noopener noreferrer';
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+  };
+
   const openArticle = (url) => {
-    if (Platform.OS === 'web' && typeof window !== 'undefined') {
-      window.open(url, '_blank', 'noopener,noreferrer');
-      return;
-    }
     setOpenedUrl(url);
+  };
+
+  const handleTabChange = (key) => {
+    setActiveTab(key);
+    if (key === TABS.NEWS) setNewCount(0);
   };
 
   return (
@@ -126,9 +170,28 @@ function MainScreen() {
         {activeTab === TABS.FEEDS && (
           <CustomFeedView onAdded={() => vm.refresh()} onOpenArticle={openArticle} />
         )}
+
+        {toasts.map((toast, index) => (
+          <NotificationToast
+            key={toast.id}
+            item={toast.item}
+            offset={index}
+            onClose={() => dismissToast(toast.id)}
+            onPress={() => {
+              dismissToast(toast.id);
+              setActiveTab(TABS.NEWS);
+              openArticle(toast.item.url);
+            }}
+          />
+        ))}
       </View>
 
-      <TabBar active={activeTab} onChange={setActiveTab} insets={insets} />
+      <TabBar
+        active={activeTab}
+        onChange={handleTabChange}
+        insets={insets}
+        badge={activeTab !== TABS.NEWS ? newCount : 0}
+      />
 
       {canInstall && (
         <TouchableOpacity style={styles.installButton} onPress={install} activeOpacity={0.85}>
@@ -147,7 +210,15 @@ function MainScreen() {
               <Text style={styles.closeButtonText}>←</Text>
             </TouchableOpacity>
             <Text style={styles.modalTitle}>Đang mở bài viết</Text>
-            <View style={styles.modalSpacer} />
+            {Platform.OS === 'web' && (
+              <TouchableOpacity
+                style={styles.externalButton}
+                onPress={() => openInNewTab(openedUrl)}
+                accessibilityLabel="Mở ở tab mới"
+              >
+                <Text style={styles.externalText}>↗ Mở tab</Text>
+              </TouchableOpacity>
+            )}
           </View>
           {openedUrl ? <NewsWebView url={openedUrl} /> : null}
         </View>
@@ -174,6 +245,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 820,
     alignSelf: 'center',
+    position: 'relative',
   },
   tabBar: {
     flexDirection: 'row',
@@ -221,6 +293,23 @@ const styles = StyleSheet.create({
   tabIndicatorActive: {
     backgroundColor: COLORS.primary,
   },
+  badgeDot: {
+    position: 'absolute',
+    top: 1,
+    right: '24%',
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: COLORS.important,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  badgeText: {
+    color: '#fff',
+    fontSize: 9,
+    fontWeight: '800',
+  },
   modal: {
     flex: 1,
     backgroundColor: COLORS.background,
@@ -253,6 +342,19 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginLeft: 12,
     flex: 1,
+  },
+  externalButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 9,
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+  },
+  externalText: {
+    color: COLORS.primary,
+    fontSize: 12,
+    fontWeight: '800',
   },
   modalSpacer: {
     width: 40,

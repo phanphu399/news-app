@@ -10,7 +10,7 @@ import { notifyImportantNews } from '../src/services/fcm.js';
 import { translateTitles } from '../src/services/translator.js';
 import { generateRunId } from '../src/utils/helpers.js';
 
-const TRANSLATE_LIMIT = 8;
+const TRANSLATE_LIMIT = 20;
 
 export default async function handler(request, response) {
   const runId = generateRunId();
