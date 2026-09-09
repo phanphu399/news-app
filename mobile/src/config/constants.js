@@ -62,5 +62,5 @@ export function categoryStyle(category) {
 }
 
 export const REFRESH_INTERVAL_MS = 60000;
-export const APP_NAME = 'ASTER';
+export const APP_NAME = 'NEWS';
 export const APP_TAGLINE = 'Tin thị trường · Forex · Macro';

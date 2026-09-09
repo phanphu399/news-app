@@ -30,7 +30,7 @@ export default function TradingViewScreen() {
       <View style={styles.chartBox}>
         {Platform.OS === 'web' ? (
           <iframe
-            title="ASTER XAUUSD Chart"
+            title="NEWS XAUUSD Chart"
             src={buildTradingViewUrl()}
             style={{ flex: 1, width: '100%', height: '100%', border: 0 }}
           />

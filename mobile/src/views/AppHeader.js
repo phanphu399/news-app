@@ -10,7 +10,7 @@ export default function AppHeader({ connected, loading, onRefresh }) {
     <LinearGradient colors={GRADIENTS.header} style={styles.header}>
       <View style={styles.brand}>
         <LinearGradient colors={GRADIENTS.gold} style={styles.logo}>
-          <Text style={styles.logoText}>A</Text>
+          <Text style={styles.logoText}>{APP_NAME.charAt(0)}</Text>
         </LinearGradient>
         <View>
           <Text style={styles.name}>{APP_NAME}</Text>

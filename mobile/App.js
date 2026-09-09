@@ -134,7 +134,7 @@ function MainScreen() {
         <TouchableOpacity style={styles.installButton} onPress={install} activeOpacity={0.85}>
           <Text style={styles.installIcon}>⬇</Text>
           <View>
-            <Text style={styles.installTitle}>Cài đặt ASTER</Text>
+            <Text style={styles.installTitle}>Cài đặt NEWS</Text>
             <Text style={styles.installSub}>Dùng như ứng dụng riêng</Text>
           </View>
         </TouchableOpacity>

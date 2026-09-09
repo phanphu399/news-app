@@ -136,6 +136,13 @@ function strokePolyline(px, size, points, rgb, widthPx, alpha = 1) {
 // ---------- icon design ----------
 const GLYPH_A = ['01110', '11111', '10001', '10001', '10001', '10001', '10001'];
 
+const GLYPH_WORD = [
+  ['10001', '11001', '10101', '10011', '10001', '10001', '10001'], // N
+  ['01111', '10000', '10000', '11110', '10000', '10000', '11111'], // E
+  ['10001', '10001', '10001', '10101', '10101', '11011', '10001'], // W
+  ['01111', '10000', '10000', '01111', '00001', '00001', '11110'], // S
+];
+
 function cellAlpha(x, y, cell, radius) {
   const left = radius;
   const right = cell - radius;
@@ -211,32 +218,39 @@ function drawIcon(size, maskable) {
     }
   }
 
-  // brand glyph "A" (gold)
-  const cell = s / 13;
-  const glyphW = 5 * cell;
+  // brand word "NEWS" (gold)
+  const words = GLYPH_WORD.length;
+  const gap = 1;
+  const colsTotal = words * 5 + (words - 1) * gap;
+  const cell = s / (colsTotal + 4);
   const glyphH = 7 * cell;
-  const gx = (s - glyphW) / 2;
-  const gy = s * (maskable ? 0.1 : 0.13);
-  drawGlyph(px, s, GLYPH_A, {
-    sx: gx,
-    sy: gy,
-    cell,
-    color: [255, 233, 168],
-    glowColor: [245, 197, 66],
-    glow: true,
-  });
+  const gw = colsTotal * cell;
+  const gx = (s - gw) / 2;
+  const gy = s * (maskable ? 0.16 : 0.2);
+  let cursor = gx;
+  for (const glyph of GLYPH_WORD) {
+    drawGlyph(px, s, glyph, {
+      sx: cursor,
+      sy: gy,
+      cell,
+      color: [255, 233, 168],
+      glowColor: [245, 197, 66],
+      glow: true,
+    });
+    cursor += glyph[0].length * cell + gap * cell;
+  }
 
   // secondary line (blue) above the fold
   const bluePoints = [
     [s * 0.05, s * 0.6],
-    [s * 0.3, s * 0.5],
-    [s * 0.6, s * 0.57],
-    [s * 0.95, s * 0.45],
+    [s * 0.3, s * 0.55],
+    [s * 0.6, s * 0.6],
+    [s * 0.95, s * 0.5],
   ].map(([px2, py2]) => [px2 + inset, py2 + inset]);
   strokePolyline(px, size, bluePoints, [56, 189, 248], s * 0.02, 0.4);
 
   // main line (red) crossing under the glyph
-  const chartTop = gy + glyphH + s * 0.04;
+  const chartTop = gy + glyphH + s * 0.05;
   const chartBottom = s * 0.9;
   const span = chartBottom - chartTop;
   const redPoints = [
@@ -270,8 +284,8 @@ function drawIcon(size, maskable) {
 
 // ---------- manifest / service worker / html injection ----------
 const manifest = {
-  name: 'ASTER - Realtime Market News',
-  short_name: 'ASTER',
+  name: 'NEWS - Realtime Market News',
+  short_name: 'NEWS',
   description: 'Tin tức Forex & Macro theo thời gian thực',
   start_url: '/',
   scope: '/',
@@ -345,11 +359,11 @@ const PRELOAD_SCRIPT = `<script>
 
 const HEAD_INJECT = [
   `<meta name="theme-color" content="#0b0e14" />`,
-  `<meta name="description" content="ASTER - Tin tức Forex & Macro theo thời gian thực" />`,
+  `<meta name="description" content="NEWS - Tin tức Forex & Macro theo thời gian thực" />`,
   `<meta name="mobile-web-app-capable" content="yes" />`,
   `<meta name="apple-mobile-web-app-capable" content="yes" />`,
   `<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />`,
-  `<meta name="apple-mobile-web-app-title" content="ASTER" />`,
+  `<meta name="apple-mobile-web-app-title" content="NEWS" />`,
   `<link rel="manifest" href="/manifest.webmanifest" />`,
   `<link rel="icon" type="image/png" href="/icons/icon-192.png" />`,
   `<link rel="apple-touch-icon" href="/icons/icon-180.png" />`,
