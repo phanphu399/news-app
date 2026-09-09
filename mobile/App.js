@@ -96,6 +96,14 @@ function MainScreen() {
 
   const connected = !state.error;
 
+  const openArticle = (url) => {
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      window.open(url, '_blank', 'noopener,noreferrer');
+      return;
+    }
+    setOpenedUrl(url);
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.background} />
@@ -107,13 +115,15 @@ function MainScreen() {
             items={state.items}
             loading={state.loading}
             error={state.error}
-            onItemPress={(item) => setOpenedUrl(item.url)}
+            onItemPress={(item) => openArticle(item.url)}
             onRefresh={() => vm.refresh()}
           />
         )}
         {activeTab === TABS.GOLD && <TradingViewScreen />}
         {activeTab === TABS.CALENDAR && <EconomicCalendarView />}
-        {activeTab === TABS.FEEDS && <CustomFeedView onAdded={() => vm.refresh()} />}
+        {activeTab === TABS.FEEDS && (
+          <CustomFeedView onAdded={() => vm.refresh()} onOpenArticle={openArticle} />
+        )}
       </View>
 
       <TabBar active={activeTab} onChange={setActiveTab} insets={insets} />

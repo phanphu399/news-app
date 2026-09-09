@@ -7,8 +7,8 @@ export default function AppHeader({ connected, loading, onRefresh }) {
     <View style={styles.header}>
       <View style={styles.brand}>
         <View style={styles.logo}>
-          <Text style={styles.logoText}>{APP_NAME.charAt(0)}</Text>
-          <View style={styles.logoDot} />
+          <Text style={styles.logoText}>A</Text>
+          <View style={styles.logoLine} />
         </View>
         <View>
           <Text style={styles.name}>{APP_NAME}</Text>
@@ -61,20 +61,18 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(56,189,248,0.35)',
   },
   logoText: {
-    color: COLORS.primary,
-    fontSize: 20,
+    color: COLORS.gold,
+    fontSize: 21,
     fontWeight: '900',
+    letterSpacing: 0.5,
   },
-  logoDot: {
-    position: 'absolute',
-    right: -2,
-    top: -2,
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+  logoLine: {
+    marginTop: 3,
+    width: 18,
+    height: 3,
+    borderRadius: 2,
     backgroundColor: COLORS.important,
-    borderWidth: 2,
-    borderColor: COLORS.background,
+    opacity: 0.9,
   },
   name: {
     color: COLORS.text,

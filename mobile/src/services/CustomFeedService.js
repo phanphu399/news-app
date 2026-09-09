@@ -1,46 +1,34 @@
-import { parseStringPromise } from 'fast-xml-parser';
+import { Platform } from 'react-native';
 import { LocalStorageService } from './LocalStorageService';
 import NewsModel from '../models/NewsModel';
+import { BACKEND_URL } from '../config/constants';
 
-const CORS_PROXIES = [
-  (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-  (url) => `https://corsproxy.io/?url=${encodeURIComponent(url)}`,
-];
-
-async function tryFetch(url) {
-  let lastError = null;
-  for (const build of CORS_PROXIES) {
-    try {
-      const response = await fetch(build(url), { signal: AbortSignal.timeout(12000) });
-      if (response.ok) {
-        return await response.text();
-      }
-      lastError = new Error(`Status ${response.status}`);
-    } catch (error) {
-      lastError = error;
-    }
+function proxyUrl(feed) {
+  const encoded = encodeURIComponent(feed.rssUrl);
+  if (Platform.OS === 'web' && typeof location !== 'undefined') {
+    return `/api/rss-proxy?url=${encoded}`;
   }
-  throw lastError ?? new Error('All CORS proxies failed');
+  return `${BACKEND_URL}/api/rss-proxy?url=${encoded}`;
 }
 
 export async function fetchCustomFeed(feed) {
-  const xml = await tryFetch(feed.rssUrl);
-  const parsed = await parseStringPromise(xml, {
-    ignoreAttributes: false,
-    attributeNamePrefix: '@_',
-  });
-
-  const channel = parsed?.rss?.channel;
-  if (!channel || !Array.isArray(channel.item)) {
-    return [];
+  const response = await fetch(proxyUrl(feed), { signal: AbortSignal.timeout(15000) });
+  if (!response.ok) {
+    throw new Error(`Proxy responded with ${response.status}`);
   }
 
-  return channel.item.slice(0, 10).map((item) =>
+  const json = await response.json();
+  if (json.error) {
+    throw new Error(json.error);
+  }
+
+  const items = Array.isArray(json.items) ? json.items : [];
+  return items.slice(0, 12).map((item) =>
     NewsModel.fromCustomFeed({
       title: String(item.title || '').trim(),
-      url: item.link || item.guid?.['#text'] || item.guid || '',
+      url: item.url || '',
       source: feed.source || 'Custom',
-      publishedAt: item.pubDate ? new Date(item.pubDate) : new Date(),
+      publishedAt: item.publishedAt ? new Date(item.publishedAt) : new Date(),
     })
   );
 }
@@ -56,6 +44,10 @@ export const CustomFeedService = {
 
   async removeUserFeed(id) {
     return LocalStorageService.removeCustomFeed(id);
+  },
+
+  async fetchFeed(feed) {
+    return fetchCustomFeed(feed);
   },
 
   async fetchAll() {

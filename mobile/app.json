@@ -47,6 +47,7 @@
       "expo-status-bar"
     ],
     "extra": {
+      "backendUrl": "https://news-realtime-eight.vercel.app",
       "supabaseUrl": "https://vsrzhjdqaftsfyyzfuai.supabase.co",
       "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZzcnpoamRxYWZ0c2Z5eXpmdWFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg5MzUyNjcsImV4cCI6MjEwNDUxMTI2N30.9RrO8cUI6xgaU9Id-nZS4foNkumNsnZvBHGiFTZzv1E"
     }

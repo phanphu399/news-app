@@ -134,71 +134,136 @@ function strokePolyline(px, size, points, rgb, widthPx, alpha = 1) {
 }
 
 // ---------- icon design ----------
+const GLYPH_A = ['01110', '11111', '10001', '10001', '10001', '10001', '10001'];
+
+function cellAlpha(x, y, cell, radius) {
+  const left = radius;
+  const right = cell - radius;
+  const top = radius;
+  const bottom = cell - radius;
+  if (x >= left && x <= right && y >= top && y <= bottom) return 1;
+  const cx = x < left ? left : x > right ? right : x;
+  const cy = y < top ? top : y > bottom ? bottom : y;
+  return Math.min(1, radius - Math.hypot(x - cx, y - cy) + 0.5);
+}
+
+function drawGlyph(px, size, glyph, { sx, sy, cell, color, glowColor, glow }) {
+  const rows = glyph.length;
+  const cols = glyph[0].length;
+
+  if (glow) {
+    for (let gy = 0; gy < rows; gy++) {
+      for (let gx = 0; gx < cols; gx++) {
+        if (glyph[gy][gx] !== '1') continue;
+        const cx = sx + gx * cell + cell / 2;
+        const cy = sy + gy * cell + cell / 2;
+        fillCircle(px, size, cx, cy, cell * 1.05, glowColor, 0.35);
+      }
+    }
+  }
+
+  for (let gy = 0; gy < rows; gy++) {
+    for (let gx = 0; gx < cols; gx++) {
+      if (glyph[gy][gx] !== '1') continue;
+      const x0 = sx + gx * cell;
+      const y0 = sy + gy * cell;
+      const r = cell * 0.22;
+      for (let y = Math.floor(y0); y < Math.ceil(y0 + cell); y++) {
+        for (let x = Math.floor(x0); x < Math.ceil(x0 + cell); x++) {
+          if (x < 0 || y < 0 || x >= size || y >= size) continue;
+          const a = cellAlpha(x - x0, y - y0, cell, r);
+          if (a > 0) blend(px, (y * size + x) * 4, ...color, a);
+        }
+      }
+    }
+  }
+}
+
 function drawIcon(size, maskable) {
   const px = new Uint8Array(size * size * 4);
   const radius = size * (maskable ? 0.08 : 0.22);
   const inset = maskable ? size * 0.02 : 0;
+  const s = size;
 
-  // base
-  for (let y = 0; y < size; y++) {
-    for (let x = 0; x < size; x++) {
-      const i = (y * size + x) * 4;
-      const a = roundedRectAlpha(x, y, size, radius);
-      blend(px, i, 13, 18, 26, a); // #0d121a
+  // base gradient (top #101826 -> bottom #0b0f16)
+  for (let y = 0; y < s; y++) {
+    for (let x = 0; x < s; x++) {
+      const i = (y * s + x) * 4;
+      const t = y / s;
+      const a = roundedRectAlpha(x, y, s, radius);
+      if (a <= 0) continue;
+      px[i] = Math.round((0x10 - 5 * t) * a);
+      px[i + 1] = Math.round((0x1a - 7 * t) * a);
+      px[i + 2] = Math.round((0x28 - 18 * t) * a);
+      px[i + 3] = Math.round(255 * a);
     }
   }
 
-  const s = size;
+  // grid
   const gridStep = s / 16;
   for (let g = 1; g < 16; g++) {
     const pos = Math.round(g * gridStep);
     for (let n = 0; n < s; n++) {
       if (pos >= inset && pos < s - inset) {
-        blend(px, (pos * s + n) * 4, 24, 34, 54, 0.5);
-        blend(px, (n * s + pos) * 4, 24, 34, 54, 0.5);
+        blend(px, (pos * s + n) * 4, 24, 34, 54, 0.45);
+        blend(px, (n * s + pos) * 4, 24, 34, 54, 0.45);
       }
     }
   }
 
-  // secondary line (blue)
+  // brand glyph "A" (gold)
+  const cell = s / 13;
+  const glyphW = 5 * cell;
+  const glyphH = 7 * cell;
+  const gx = (s - glyphW) / 2;
+  const gy = s * (maskable ? 0.1 : 0.13);
+  drawGlyph(px, s, GLYPH_A, {
+    sx: gx,
+    sy: gy,
+    cell,
+    color: [255, 233, 168],
+    glowColor: [245, 197, 66],
+    glow: true,
+  });
+
+  // secondary line (blue) above the fold
   const bluePoints = [
-    [s * 0.06, s * 0.62],
-    [s * 0.26, s * 0.72],
-    [s * 0.45, s * 0.55],
-    [s * 0.66, s * 0.66],
-    [s * 0.9, s * 0.5],
-  ].map(([x, y]) => [x + inset, y + inset]);
-  strokePolyline(px, size, bluePoints, [56, 189, 248], s * 0.035, 0.35);
+    [s * 0.05, s * 0.6],
+    [s * 0.3, s * 0.5],
+    [s * 0.6, s * 0.57],
+    [s * 0.95, s * 0.45],
+  ].map(([px2, py2]) => [px2 + inset, py2 + inset]);
+  strokePolyline(px, size, bluePoints, [56, 189, 248], s * 0.02, 0.4);
 
-  // main line (red) with glow
+  // main line (red) crossing under the glyph
+  const chartTop = gy + glyphH + s * 0.04;
+  const chartBottom = s * 0.9;
+  const span = chartBottom - chartTop;
   const redPoints = [
-    [s * 0.04, s * 0.78],
-    [s * 0.2, s * 0.62],
-    [s * 0.36, s * 0.66],
-    [s * 0.52, s * 0.46],
-    [s * 0.7, s * 0.52],
-    [s * 0.9, s * 0.3],
-    [s * 0.98, s * 0.28],
-  ].map(([x, y]) => [x + inset, y + inset]);
-  strokePolyline(px, size, redPoints, [244, 63, 94], s * 0.095, 0.28); // glow
-  strokePolyline(px, size, redPoints, [244, 63, 94], s * 0.048, 1);
+    [s * 0.06, chartTop + span * 0.92],
+    [s * 0.22, chartTop + span * 0.62],
+    [s * 0.4, chartTop + span * 0.72],
+    [s * 0.58, chartTop + span * 0.38],
+    [s * 0.78, chartTop + span * 0.48],
+    [s * 0.96, chartTop + span * 0.12],
+  ].map(([px2, py2]) => [px2 + inset, py2 + inset]);
+  strokePolyline(px, size, redPoints, [244, 63, 94], s * 0.1, 0.25);
+  strokePolyline(px, size, redPoints, [244, 63, 94], s * 0.045, 1);
 
-  // data points
   for (const [x, y] of redPoints) {
-    fillCircle(px, size, x, y, s * 0.018, [255, 255, 255]);
-    fillCircle(px, size, x, y, s * 0.011, [244, 63, 94]);
+    fillCircle(px, size, x, y, s * 0.016, [255, 255, 255]);
+    fillCircle(px, size, x, y, s * 0.01, [244, 63, 94]);
   }
 
-  // arrow head
   const [ax, ay] = redPoints[redPoints.length - 1];
   const arrow = [
-    [ax - s * 0.02, ay + s * 0.075],
-    [ax + s * 0.075, ay],
-    [ax - s * 0.02, ay - s * 0.075],
+    [ax - s * 0.02, ay + s * 0.07],
+    [ax + s * 0.07, ay],
+    [ax - s * 0.02, ay - s * 0.07],
   ];
-  strokePolyline(px, size, [arrow[0], arrow[1]], [255, 255, 255], s * 0.012, 1);
-  strokePolyline(px, size, [arrow[1], arrow[2]], [255, 255, 255], s * 0.012, 1);
-  strokePolyline(px, size, [arrow[0], arrow[2]], [255, 255, 255], s * 0.012, 1);
+  strokePolyline(px, size, [arrow[0], arrow[1]], [255, 255, 255], s * 0.011, 1);
+  strokePolyline(px, size, [arrow[1], arrow[2]], [255, 255, 255], s * 0.011, 1);
+  strokePolyline(px, size, [arrow[0], arrow[2]], [255, 255, 255], s * 0.011, 1);
 
   return encodePng(size, px);
 }

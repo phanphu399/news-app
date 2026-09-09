@@ -5,6 +5,11 @@ export const SUPABASE_URL =
 export const SUPABASE_ANON_KEY =
   Constants.expoConfig?.extra?.supabaseAnonKey || process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '';
 
+export const BACKEND_URL =
+  Constants.expoConfig?.extra?.backendUrl ||
+  process.env.EXPO_PUBLIC_BACKEND_URL ||
+  'https://news-realtime-eight.vercel.app';
+
 // Palette
 export const COLORS = {
   background: '#0b0e14',
