@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Platform } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { COLORS } from '../config/constants';
 
@@ -28,13 +28,22 @@ export default function TradingViewScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.chartBox}>
-        <WebView
-          source={{ uri: buildTradingViewUrl() }}
-          style={styles.webview}
-          originWhitelist={['*']}
-          javaScriptEnabled
-          domStorageEnabled
-        />
+        {Platform.OS === 'web' ? (
+          <iframe
+            title="ASTER XAUUSD Chart"
+            src={buildTradingViewUrl()}
+            style={{ flex: 1, width: '100%', height: '100%', border: 0 }}
+          />
+        ) : (
+          <WebView
+            source={{ uri: buildTradingViewUrl() }}
+            style={styles.webview}
+            originWhitelist={['*']}
+            javaScriptEnabled
+            domStorageEnabled
+            startInLoadingState
+          />
+        )}
       </View>
     </View>
   );

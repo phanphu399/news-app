@@ -1,7 +1,16 @@
 import { scrapeAll } from '../src/services/scraper.js';
-import { upsertNews, cleanupOldNews, findExistingIds } from '../src/services/supabase.js';
+import {
+  upsertNews,
+  cleanupOldNews,
+  findExistingIds,
+  fetchUntranslatedRows,
+  updateVietnameseTitles,
+} from '../src/services/supabase.js';
 import { notifyImportantNews } from '../src/services/fcm.js';
+import { translateTitles } from '../src/services/translator.js';
 import { generateRunId } from '../src/utils/helpers.js';
+
+const TRANSLATE_LIMIT = 8;
 
 export default async function handler(request, response) {
   const runId = generateRunId();
@@ -14,6 +23,7 @@ export default async function handler(request, response) {
     upserted: 0,
     notified: 0,
     cleaned: 0,
+    translated: 0,
     message: '',
   };
 
@@ -32,10 +42,20 @@ export default async function handler(request, response) {
     payload.scraped = items.length;
 
     const importantIds = items.filter((item) => item.is_important).map((item) => item.id);
-    const existingIds = await findExistingIds(importantIds);
+    const existingIds = await findExistingIds(items.map((item) => item.id));
     const brandNewImportant = items.filter(
       (item) => item.is_important && !existingIds.has(item.id)
     );
+
+    const brandNew = items.filter((item) => !existingIds.has(item.id));
+    const translated = await translateTitles(brandNew, { limit: TRANSLATE_LIMIT });
+    payload.translated = translated.length;
+
+    const remainingBudget = Math.max(0, TRANSLATE_LIMIT - translated.length);
+    const untranslatedRows = await fetchUntranslatedRows(remainingBudget);
+    await translateTitles(untranslatedRows, { limit: remainingBudget });
+    const backfilled = await updateVietnameseTitles(untranslatedRows);
+    payload.translated += backfilled;
 
     const { data: insertedRows } = await upsertNews(items);
     const insertedRowsArray = Array.isArray(insertedRows) ? insertedRows : [];
