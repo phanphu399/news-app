@@ -1,0 +1,43 @@
+{
+  "expo": {
+    "name": "ASTER - Market News",
+    "slug": "aster-market-news",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#0b0e14"
+    },
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.aster.marketnews",
+      "infoPlist": {
+        "UIBackgroundModes": ["remote-notification"]
+      }
+    },
+    "android": {
+      "package": "com.aster.marketnews",
+      "useNextNotificationsApi": true,
+      "adaptiveIcon": {
+        "backgroundColor": "#0b0e14"
+      }
+    },
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#e11d48",
+          "sounds": ["./assets/sounds/beep.wav"]
+        }
+      ]
+    ],
+    "extra": {
+      "supabaseUrl": "https://YOUR-PROJECT.supabase.co",
+      "supabaseAnonKey": "YOUR-ANON-KEY"
+    }
+  }
+}

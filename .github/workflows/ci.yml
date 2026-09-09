@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend:
+    name: Backend checks (Vercel)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Syntax check
+        run: |
+          node --check api/cron-fetch.js
+          node --check src/services/scraper.js
+          node --check src/services/supabase.js
+          node --check src/services/fcm.js
+          node --check src/utils/helpers.js
+
+      - name: Validate vercel.json
+        run: node -e "const c = require('./vercel.json'); if (!c.crons || c.crons.length === 0) throw new Error('crons missing'); console.log('cron schedule:', c.crons[0].schedule);"
+
+  mobile:
+    name: Mobile checks (Expo)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci || npm install --no-audit --no-fund
+
+      - name: Syntax check
+        run: |
+          node --check App.js
+          node --check src/viewmodels/NewsViewModel.js
+          node --check src/services/CustomFeedService.js
+
+      - name: Validate app.json
+        run: node -e "const c = require('./app.json'); if (!c.expo || !c.expo.plugins) throw new Error('app.json invalid'); console.log('app.json OK');"
