@@ -1,15 +1,17 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { COLORS, APP_NAME, APP_TAGLINE } from '../config/constants';
+import { LinearGradient } from 'expo-linear-gradient';
+import { COLORS, GRADIENTS, APP_NAME, APP_TAGLINE } from '../config/constants';
 
 export default function AppHeader({ connected, loading, onRefresh }) {
+  const friendlyStatus = connected ? 'Trực tuyến' : 'Ngoại tuyến';
+
   return (
-    <View style={styles.header}>
+    <LinearGradient colors={GRADIENTS.header} style={styles.header}>
       <View style={styles.brand}>
-        <View style={styles.logo}>
+        <LinearGradient colors={GRADIENTS.gold} style={styles.logo}>
           <Text style={styles.logoText}>A</Text>
-          <View style={styles.logoLine} />
-        </View>
+        </LinearGradient>
         <View>
           <Text style={styles.name}>{APP_NAME}</Text>
           <Text style={styles.tagline}>{APP_TAGLINE}</Text>
@@ -17,9 +19,9 @@ export default function AppHeader({ connected, loading, onRefresh }) {
       </View>
 
       <View style={styles.right}>
-        <View style={styles.status}>
+        <View style={[styles.status, !connected && styles.statusOffline]}>
           <View style={[styles.statusDot, { backgroundColor: connected ? COLORS.success : COLORS.danger }]} />
-          <Text style={styles.statusText}>{connected ? 'Live' : 'Offline'}</Text>
+          <Text style={styles.statusText}>{friendlyStatus}</Text>
         </View>
         <TouchableOpacity
           style={[styles.refreshButton, loading && styles.refreshButtonBusy]}
@@ -30,7 +32,7 @@ export default function AppHeader({ connected, loading, onRefresh }) {
           <Text style={styles.refreshIcon}>↻</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </LinearGradient>
   );
 }
 
@@ -41,7 +43,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: COLORS.background,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.borderSoft,
   },
@@ -53,26 +54,20 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: '#101826',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(56,189,248,0.35)',
+    shadowColor: '#f59e0b',
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 6,
   },
   logoText: {
-    color: COLORS.gold,
+    color: '#3b2a05',
     fontSize: 21,
     fontWeight: '900',
     letterSpacing: 0.5,
-  },
-  logoLine: {
-    marginTop: 3,
-    width: 18,
-    height: 3,
-    borderRadius: 2,
-    backgroundColor: COLORS.important,
-    opacity: 0.9,
   },
   name: {
     color: COLORS.text,
@@ -92,11 +87,16 @@ const styles = StyleSheet.create({
   status: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.surface,
+    backgroundColor: 'rgba(13,18,25,0.7)',
     paddingHorizontal: 9,
-    paddingVertical: 4,
+    paddingVertical: 5,
     borderRadius: 20,
     marginRight: 10,
+    borderWidth: 1,
+    borderColor: COLORS.borderSoft,
+  },
+  statusOffline: {
+    borderColor: 'rgba(244,63,94,0.35)',
   },
   statusDot: {
     width: 7,
@@ -113,7 +113,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: COLORS.surface,
+    backgroundColor: 'rgba(13,18,25,0.7)',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,

@@ -1,49 +1,68 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { formatRelativeTime } from '../utils/time_format';
-import { categoryStyle, COLORS, IMPORTANT_BORDER_COLOR, IMPORTANT_DOT_COLOR } from '../config/constants';
+import {
+  categoryStyle,
+  COLORS,
+  GRADIENTS,
+  IMPORTANT_BORDER_COLOR,
+  IMPORTANT_DOT_COLOR,
+} from '../config/constants';
 
-function SourceBadge({ source }) {
-  const initial = (source || '?').charAt(0).toUpperCase();
-  return (
-    <View style={styles.sourceBadge}>
-      <Text style={styles.sourceBadgeText}>{initial}</Text>
-    </View>
-  );
+function timeTone(publishedAt) {
+  const ageMinutes = (Date.now() - new Date(publishedAt).getTime()) / (1000 * 60);
+  if (ageMinutes <= 60) return COLORS.success;
+  if (ageMinutes <= 180) return COLORS.amber;
+  return COLORS.textMuted;
 }
 
-export default function NewsCard({ item, onPress }) {
+export default function NewsCard({ item, onPress, dimmed }) {
   const isImportant = Boolean(item.isImportant);
   const cat = categoryStyle(item.category);
 
   return (
     <TouchableOpacity
-      activeOpacity={0.7}
+      activeOpacity={0.75}
       onPress={() => onPress?.(item)}
-      style={[styles.card, isImportant && styles.cardImportant]}
+      style={[styles.card, isImportant && styles.cardImportant, dimmed && styles.cardDimmed]}
     >
-      <SourceBadge source={item.source} />
+      <View style={[styles.accent, { backgroundColor: cat.color }]} />
+
+      {isImportant && (
+        <LinearGradient
+          colors={GRADIENTS.importantRibbon}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={styles.ribbon}
+        >
+          <View style={styles.importantDot} />
+          <Text style={styles.importantText}>QUAN TRỌNG</Text>
+        </LinearGradient>
+      )}
 
       <View style={styles.body}>
-        {isImportant && (
-          <View style={styles.importantRow}>
-            <View style={styles.importantDot} />
-            <Text style={styles.importantText}>QUAN TRỌNG</Text>
-          </View>
-        )}
-
         <Text style={[styles.title, isImportant && styles.titleImportant]} numberOfLines={3}>
           {item.titleVi || item.title}
         </Text>
 
         <View style={styles.metaRow}>
-          <View style={[styles.categoryChip, { backgroundColor: cat.bg }]}>
+          <View style={[styles.categoryChip, { borderColor: cat.color, backgroundColor: cat.bg }]}>
             <Text style={[styles.categoryText, { color: cat.color }]}>{cat.label}</Text>
+          </View>
+          <Text style={[styles.time, { color: timeTone(item.publishedAt) }]}>
+            {formatRelativeTime(item.publishedAt)}
+          </Text>
+        </View>
+
+        <View style={styles.sourceRow}>
+          <View style={[styles.sourceDot, { borderColor: cat.color }]}>
+            <Text style={styles.sourceInitial}>{(item.source || '?').charAt(0).toUpperCase()}</Text>
           </View>
           <Text style={styles.sourceName} numberOfLines={1}>
             {item.source || 'Unknown'}
           </Text>
-          <Text style={styles.time}>{formatRelativeTime(item.publishedAt)}</Text>
+          <Text style={styles.arrow}>↗</Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -55,51 +74,56 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: COLORS.surface,
     borderRadius: 14,
-    padding: 14,
     marginHorizontal: 12,
     marginVertical: 5,
     borderWidth: 1,
     borderColor: COLORS.borderSoft,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 3,
   },
   cardImportant: {
     borderColor: IMPORTANT_BORDER_COLOR,
-    backgroundColor: COLORS.surface,
   },
-  sourceBadge: {
-    width: 34,
-    height: 34,
-    borderRadius: 10,
-    backgroundColor: COLORS.surfaceAlt,
+  cardDimmed: {
+    opacity: 0.55,
+  },
+  accent: {
+    width: 3,
+    alignSelf: 'stretch',
+  },
+  ribbon: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-    marginTop: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
   },
-  sourceBadgeText: {
-    color: COLORS.textSecondary,
-    fontSize: 15,
+  importantDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#fff',
+    marginRight: 5,
+    opacity: 0.9,
+  },
+  importantText: {
+    color: '#fff',
+    fontSize: 9,
     fontWeight: '800',
+    letterSpacing: 0.8,
   },
   body: {
     flex: 1,
-  },
-  importantRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 5,
-  },
-  importantDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
-    backgroundColor: IMPORTANT_DOT_COLOR,
-    marginRight: 6,
-  },
-  importantText: {
-    color: '#fda4af',
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 1,
+    paddingVertical: 12,
+    paddingRight: 14,
+    paddingLeft: 12,
   },
   title: {
     color: COLORS.text,
@@ -110,32 +134,58 @@ const styles = StyleSheet.create({
   titleImportant: {
     color: '#ffffff',
     fontWeight: '700',
+    paddingRight: 92,
   },
   metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: 10,
+    minHeight: 20,
   },
   categoryChip: {
-    paddingHorizontal: 7,
+    paddingHorizontal: 8,
     paddingVertical: 3,
-    borderRadius: 6,
-    marginRight: 8,
+    borderRadius: 999,
+    borderWidth: 1,
   },
   categoryText: {
     fontSize: 10,
     fontWeight: '800',
     letterSpacing: 0.5,
   },
+  time: {
+    fontSize: 11,
+    marginLeft: 'auto',
+    fontVariant: ['tabular-nums'],
+  },
+  sourceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 9,
+  },
+  sourceDot: {
+    width: 20,
+    height: 20,
+    borderRadius: 6,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sourceInitial: {
+    color: COLORS.textSecondary,
+    fontSize: 10,
+    fontWeight: '800',
+  },
   sourceName: {
     flex: 1,
     color: COLORS.textMuted,
-    fontSize: 12,
+    fontSize: 11,
+    marginLeft: 7,
     fontWeight: '500',
   },
-  time: {
+  arrow: {
     color: COLORS.textMuted,
-    fontSize: 11,
-    fontVariant: ['tabular-nums'],
+    fontSize: 13,
+    fontWeight: '700',
   },
 });

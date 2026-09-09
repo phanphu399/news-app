@@ -15,6 +15,7 @@ export const COLORS = {
   background: '#0b0e14',
   surface: '#131a26',
   surfaceAlt: '#1a2231',
+  surfaceElevated: '#182134',
   border: '#223046',
   borderSoft: '#1a2438',
   primary: '#38bdf8',
@@ -30,6 +31,14 @@ export const COLORS = {
   success: '#34d399',
   danger: '#fb7185',
   amber: '#fbbf24',
+};
+
+export const GRADIENTS = {
+  header: ['#101a2c', '#0b0e14'],
+  brand: ['#38bdf8', '#6366f1'],
+  gold: ['#fbbf24', '#f97316'],
+  importantRibbon: ['#e11d48', '#9f1239'],
+  cardTop: ['rgba(56,189,248,0.16)', 'rgba(13,18,26,0)'],
 };
 
 export const IMPORTANT_BORDER_COLOR = COLORS.importantDeep;

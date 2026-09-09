@@ -30,13 +30,15 @@ function TabBar({ active, onChange, insets }) {
       {tabs.map((tab) => {
         const isActive = active === tab.key;
         return (
-          <TouchableOpacity key={tab.key} style={styles.tabItem} onPress={() => onChange(tab.key)}>
-            <Text style={styles.tabIcon}>{tab.icon}</Text>
-            <View style={[styles.tabLabelWrap, isActive && styles.tabLabelWrapActive]}>
-              <Text style={[styles.tabLabelText, isActive && styles.tabLabelTextActive]}>
-                {tab.label}
-              </Text>
-            </View>
+          <TouchableOpacity
+            key={tab.key}
+            style={[styles.tabItem, isActive && styles.tabItemActive]}
+            onPress={() => onChange(tab.key)}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.tabIcon, isActive && styles.tabIconActive]}>{tab.icon}</Text>
+            <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>{tab.label}</Text>
+            <View style={[styles.tabIndicator, isActive && styles.tabIndicatorActive]} />
           </TouchableOpacity>
         );
       })}
@@ -178,7 +180,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#0d1119',
     borderTopWidth: 1,
     borderTopColor: COLORS.borderSoft,
-    paddingTop: 8,
+    paddingTop: 6,
     width: '100%',
     maxWidth: 820,
     alignSelf: 'center',
@@ -186,28 +188,38 @@ const styles = StyleSheet.create({
   tabItem: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: 2,
+    paddingTop: 4,
+    paddingBottom: 2,
+  },
+  tabItemActive: {
+    backgroundColor: 'rgba(56,189,248,0.06)',
   },
   tabIcon: {
     fontSize: 18,
     marginBottom: 2,
+    opacity: 0.75,
   },
-  tabLabelWrap: {
-    paddingHorizontal: 12,
-    paddingVertical: 3,
-    borderRadius: 12,
+  tabIconActive: {
+    opacity: 1,
   },
-  tabLabelWrapActive: {
-    backgroundColor: 'rgba(56,189,248,0.14)',
-  },
-  tabLabelText: {
+  tabLabel: {
     color: COLORS.textMuted,
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600',
   },
-  tabLabelTextActive: {
+  tabLabelActive: {
     color: COLORS.primary,
     fontWeight: '800',
+  },
+  tabIndicator: {
+    marginTop: 5,
+    width: 20,
+    height: 2.5,
+    borderRadius: 2,
+    backgroundColor: 'transparent',
+  },
+  tabIndicatorActive: {
+    backgroundColor: COLORS.primary,
   },
   modal: {
     flex: 1,
