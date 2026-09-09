@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, StatusBar, Modal } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, StatusBar, Modal, Platform } from 'react-native';
 import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import NewsViewModel from './src/viewmodels/NewsViewModel';
 import NewsListView from './src/views/NewsListView';
@@ -41,8 +41,37 @@ function TabBar({ active, onChange, insets }) {
   );
 }
 
+function useInstallPrompt() {
+  const [prompt, setPrompt] = useState(null);
+
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof window === 'undefined') return;
+    const ready = () => setPrompt(window.__asterDeferredPrompt || null);
+    const installed = () => setPrompt(null);
+    if (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) return;
+    if (window.__asterDeferredPrompt) ready();
+    window.addEventListener('aster-prompt-ready', ready);
+    window.addEventListener('appinstalled', installed);
+    return () => {
+      window.removeEventListener('aster-prompt-ready', ready);
+      window.removeEventListener('appinstalled', installed);
+    };
+  }, []);
+
+  const install = async () => {
+    if (!prompt) return;
+    prompt.prompt();
+    const choice = await prompt.userChoice;
+    if (choice && choice.outcome === 'accepted') setPrompt(null);
+    else setPrompt(null);
+  };
+
+  return { canInstall: Boolean(prompt), install };
+}
+
 function MainScreen() {
   const insets = useSafeAreaInsets();
+  const { canInstall, install } = useInstallPrompt();
   const [activeTab, setActiveTab] = useState(TABS.NEWS);
   const [openedUrl, setOpenedUrl] = useState(null);
   const viewModelRef = useRef(null);
@@ -84,6 +113,16 @@ function MainScreen() {
       </View>
 
       <TabBar active={activeTab} onChange={setActiveTab} insets={insets} />
+
+      {canInstall && (
+        <TouchableOpacity style={styles.installButton} onPress={install} activeOpacity={0.85}>
+          <Text style={styles.installIcon}>⬇</Text>
+          <View>
+            <Text style={styles.installTitle}>Cài đặt ASTER</Text>
+            <Text style={styles.installSub}>Dùng như ứng dụng riêng</Text>
+          </View>
+        </TouchableOpacity>
+      )}
 
       <Modal visible={Boolean(openedUrl)} onRequestClose={() => setOpenedUrl(null)} animationType="slide">
         <View style={styles.modal}>
@@ -191,5 +230,39 @@ const styles = StyleSheet.create({
   },
   modalSpacer: {
     width: 40,
+  },
+  installButton: {
+    position: 'absolute',
+    right: 16,
+    bottom: 92,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+    borderRadius: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    shadowColor: '#000',
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 8,
+  },
+  installIcon: {
+    color: COLORS.primary,
+    fontSize: 20,
+    marginRight: 10,
+    fontWeight: '800',
+  },
+  installTitle: {
+    color: COLORS.text,
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  installSub: {
+    color: COLORS.textMuted,
+    fontSize: 11,
+    marginTop: 1,
   },
 });

@@ -245,6 +245,20 @@ self.addEventListener('fetch',(e)=>{
   })());
 });`;
 
+const PRELOAD_SCRIPT = `<script>
+(function () {
+  window.__asterDeferredPrompt = null;
+  window.addEventListener('beforeinstallprompt', function (e) {
+    e.preventDefault();
+    window.__asterDeferredPrompt = e;
+    window.dispatchEvent(new Event('aster-prompt-ready'));
+  });
+  window.addEventListener('appinstalled', function () {
+    window.__asterInstalled = true;
+  });
+})();
+</script>`;
+
 const HEAD_INJECT = [
   `<meta name="theme-color" content="#0b0e14" />`,
   `<meta name="description" content="ASTER - Tin tức Forex & Macro theo thời gian thực" />`,
@@ -270,6 +284,7 @@ function main() {
 
   const htmlPath = join(DIST, 'index.html');
   let html = readFileSync(htmlPath, 'utf8');
+  html = html.replace('<head>', `<head>\n    ${PRELOAD_SCRIPT}`);
   html = html.replace('</head>', `${HEAD_INJECT}\n  </head>`);
   html = html.replace(
     '</body>',
