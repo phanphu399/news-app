@@ -1,13 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, StatusBar, Modal } from 'react-native';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import NewsViewModel from './src/viewmodels/NewsViewModel';
 import NewsListView from './src/views/NewsListView';
 import NewsWebView from './src/views/NewsWebView';
 import EconomicCalendarView from './src/views/EconomicCalendarView';
 import CustomFeedView from './src/views/CustomFeedView';
-import { BACKGROUND_COLOR, TEXT_PRIMARY, TEXT_SECONDARY } from './src/config/constants';
+import AppHeader from './src/views/AppHeader';
+import { COLORS } from './src/config/constants';
 
 const TABS = {
   NEWS: 'news',
@@ -17,24 +17,26 @@ const TABS = {
 
 function TabBar({ active, onChange, insets }) {
   const tabs = [
-    { key: TABS.NEWS, label: 'Tin nóng' },
-    { key: TABS.CALENDAR, label: 'Lịch KT' },
-    { key: TABS.FEEDS, label: 'Feeds' },
+    { key: TABS.NEWS, label: 'Tin nóng', icon: '🔥' },
+    { key: TABS.CALENDAR, label: 'Lịch KT', icon: '📅' },
+    { key: TABS.FEEDS, label: 'Feeds', icon: '⚙️' },
   ];
 
   return (
     <View style={[styles.tabBar, { paddingBottom: Math.max(insets.bottom, 8) }]}>
-      {tabs.map((tab) => (
-        <TouchableOpacity
-          key={tab.key}
-          style={styles.tabItem}
-          onPress={() => onChange(tab.key)}
-        >
-          <Text style={[styles.tabLabel, active === tab.key && styles.tabLabelActive]}>
-            {tab.label}
-          </Text>
-        </TouchableOpacity>
-      ))}
+      {tabs.map((tab) => {
+        const isActive = active === tab.key;
+        return (
+          <TouchableOpacity key={tab.key} style={styles.tabItem} onPress={() => onChange(tab.key)}>
+            <Text style={styles.tabIcon}>{tab.icon}</Text>
+            <View style={[styles.tabLabelWrap, isActive && styles.tabLabelWrapActive]}>
+              <Text style={[styles.tabLabelText, isActive && styles.tabLabelTextActive]}>
+                {tab.label}
+              </Text>
+            </View>
+          </TouchableOpacity>
+        );
+      })}
     </View>
   );
 }
@@ -60,36 +62,37 @@ function MainScreen() {
     };
   }, []);
 
+  const connected = !state.error;
+
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="light-content" backgroundColor={BACKGROUND_COLOR} />
+      <StatusBar barStyle="light-content" backgroundColor={COLORS.background} />
+      <AppHeader connected={connected} loading={state.loading} onRefresh={() => vm.refresh()} />
 
-      {activeTab === TABS.NEWS && (
-        <NewsListView
-          items={state.items}
-          loading={state.loading}
-          error={state.error}
-          onItemPress={(item) => setOpenedUrl(item.url)}
-          onRefresh={() => vm.refresh()}
-        />
-      )}
-
-      {activeTab === TABS.CALENDAR && <EconomicCalendarView />}
-      {activeTab === TABS.FEEDS && <CustomFeedView onAdded={() => vm.refresh()} />}
+      <View style={styles.content}>
+        {activeTab === TABS.NEWS && (
+          <NewsListView
+            items={state.items}
+            loading={state.loading}
+            error={state.error}
+            onItemPress={(item) => setOpenedUrl(item.url)}
+            onRefresh={() => vm.refresh()}
+          />
+        )}
+        {activeTab === TABS.CALENDAR && <EconomicCalendarView />}
+        {activeTab === TABS.FEEDS && <CustomFeedView onAdded={() => vm.refresh()} />}
+      </View>
 
       <TabBar active={activeTab} onChange={setActiveTab} insets={insets} />
 
-      <Modal
-        visible={Boolean(openedUrl)}
-        onRequestClose={() => setOpenedUrl(null)}
-        animationType="slide"
-      >
+      <Modal visible={Boolean(openedUrl)} onRequestClose={() => setOpenedUrl(null)} animationType="slide">
         <View style={styles.modal}>
-          <View style={[styles.modalHeader, { paddingTop: insets.top + 8 }]}>
+          <View style={styles.modalHeader}>
             <TouchableOpacity style={styles.closeButton} onPress={() => setOpenedUrl(null)}>
-              <Text style={styles.closeButtonText}>Close</Text>
+              <Text style={styles.closeButtonText}>←</Text>
             </TouchableOpacity>
-            <Text style={styles.modalTitle}>Đang mở bài viết...</Text>
+            <Text style={styles.modalTitle}>Đang mở bài viết</Text>
+            <View style={styles.modalSpacer} />
           </View>
           {openedUrl ? <NewsWebView url={openedUrl} /> : null}
         </View>
@@ -109,52 +112,84 @@ export default function App() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: BACKGROUND_COLOR,
+    backgroundColor: COLORS.background,
+  },
+  content: {
+    flex: 1,
+    width: '100%',
+    maxWidth: 820,
+    alignSelf: 'center',
   },
   tabBar: {
     flexDirection: 'row',
-    backgroundColor: '#0f172a',
+    backgroundColor: '#0d1119',
     borderTopWidth: 1,
-    borderTopColor: '#1e293b',
+    borderTopColor: COLORS.borderSoft,
     paddingTop: 8,
+    width: '100%',
+    maxWidth: 820,
+    alignSelf: 'center',
   },
   tabItem: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: 4,
+    paddingVertical: 2,
   },
-  tabLabel: {
-    color: TEXT_SECONDARY,
-    fontSize: 13,
+  tabIcon: {
+    fontSize: 18,
+    marginBottom: 2,
+  },
+  tabLabelWrap: {
+    paddingHorizontal: 12,
+    paddingVertical: 3,
+    borderRadius: 12,
+  },
+  tabLabelWrapActive: {
+    backgroundColor: 'rgba(56,189,248,0.14)',
+  },
+  tabLabelText: {
+    color: COLORS.textMuted,
+    fontSize: 12,
     fontWeight: '600',
   },
-  tabLabelActive: {
-    color: '#38bdf8',
+  tabLabelTextActive: {
+    color: COLORS.primary,
+    fontWeight: '800',
   },
   modal: {
     flex: 1,
-    backgroundColor: BACKGROUND_COLOR,
+    backgroundColor: COLORS.background,
   },
   modalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#0f172a',
-    paddingHorizontal: 12,
-    paddingBottom: 10,
+    backgroundColor: '#0d1119',
+    paddingHorizontal: 8,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.borderSoft,
   },
   closeButton: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    width: 40,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: COLORS.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   closeButtonText: {
-    color: '#38bdf8',
-    fontWeight: '700',
-    fontSize: 14,
+    color: COLORS.primary,
+    fontSize: 18,
+    fontWeight: '800',
   },
   modalTitle: {
-    color: TEXT_PRIMARY,
-    fontSize: 13,
-    marginLeft: 8,
+    color: COLORS.text,
+    fontSize: 14,
+    fontWeight: '700',
+    marginLeft: 12,
     flex: 1,
+  },
+  modalSpacer: {
+    width: 40,
   },
 });

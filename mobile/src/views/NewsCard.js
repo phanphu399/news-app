@@ -1,16 +1,20 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { formatRelativeTime } from '../utils/time_format';
-import {
-  IMPORTANT_BORDER_COLOR,
-  IMPORTANT_DOT_COLOR,
-  CARD_BACKGROUND,
-  TEXT_PRIMARY,
-  TEXT_SECONDARY,
-} from '../config/constants';
+import { categoryStyle, COLORS, IMPORTANT_BORDER_COLOR, IMPORTANT_DOT_COLOR } from '../config/constants';
+
+function SourceBadge({ source }) {
+  const initial = (source || '?').charAt(0).toUpperCase();
+  return (
+    <View style={styles.sourceBadge}>
+      <Text style={styles.sourceBadgeText}>{initial}</Text>
+    </View>
+  );
+}
 
 export default function NewsCard({ item, onPress }) {
   const isImportant = Boolean(item.isImportant);
+  const cat = categoryStyle(item.category);
 
   return (
     <TouchableOpacity
@@ -18,18 +22,29 @@ export default function NewsCard({ item, onPress }) {
       onPress={() => onPress?.(item)}
       style={[styles.card, isImportant && styles.cardImportant]}
     >
-      {isImportant && <View style={styles.importantDot} />}
+      <SourceBadge source={item.source} />
+
       <View style={styles.body}>
-        <View style={styles.metaRow}>
-          <Text style={[styles.source, isImportant && styles.sourceImportant]}>
-            {item.source || 'Unknown'}
-          </Text>
-          <Text style={[styles.category]}>{item.category || 'Macro'}</Text>
-          <Text style={styles.time}>{formatRelativeTime(item.publishedAt)}</Text>
-        </View>
+        {isImportant && (
+          <View style={styles.importantRow}>
+            <View style={styles.importantDot} />
+            <Text style={styles.importantText}>QUAN TRỌNG</Text>
+          </View>
+        )}
+
         <Text style={[styles.title, isImportant && styles.titleImportant]} numberOfLines={3}>
           {item.title}
         </Text>
+
+        <View style={styles.metaRow}>
+          <View style={[styles.categoryChip, { backgroundColor: cat.bg }]}>
+            <Text style={[styles.categoryText, { color: cat.color }]}>{cat.label}</Text>
+          </View>
+          <Text style={styles.sourceName} numberOfLines={1}>
+            {item.source || 'Unknown'}
+          </Text>
+          <Text style={styles.time}>{formatRelativeTime(item.publishedAt)}</Text>
+        </View>
       </View>
     </TouchableOpacity>
   );
@@ -38,60 +53,89 @@ export default function NewsCard({ item, onPress }) {
 const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
-    backgroundColor: CARD_BACKGROUND,
-    borderRadius: 12,
+    backgroundColor: COLORS.surface,
+    borderRadius: 14,
     padding: 14,
     marginHorizontal: 12,
-    marginVertical: 6,
+    marginVertical: 5,
     borderWidth: 1,
-    borderColor: 'transparent',
+    borderColor: COLORS.borderSoft,
   },
   cardImportant: {
     borderColor: IMPORTANT_BORDER_COLOR,
+    backgroundColor: COLORS.surface,
   },
-  importantDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: IMPORTANT_DOT_COLOR,
-    marginRight: 10,
-    marginTop: 6,
+  sourceBadge: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    backgroundColor: COLORS.surfaceAlt,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+    marginTop: 4,
+  },
+  sourceBadgeText: {
+    color: COLORS.textSecondary,
+    fontSize: 15,
+    fontWeight: '800',
   },
   body: {
     flex: 1,
   },
+  importantRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 5,
+  },
+  importantDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: IMPORTANT_DOT_COLOR,
+    marginRight: 6,
+  },
+  importantText: {
+    color: '#fda4af',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 1,
+  },
+  title: {
+    color: COLORS.text,
+    fontSize: 15,
+    lineHeight: 21,
+    fontWeight: '600',
+  },
+  titleImportant: {
+    color: '#ffffff',
+    fontWeight: '700',
+  },
   metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 6,
+    marginTop: 10,
   },
-  source: {
-    color: TEXT_SECONDARY,
+  categoryChip: {
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 6,
+    marginRight: 8,
+  },
+  categoryText: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  sourceName: {
+    flex: 1,
+    color: COLORS.textMuted,
     fontSize: 12,
-    fontWeight: '600',
-  },
-  sourceImportant: {
-    color: '#fda4af',
-  },
-  category: {
-    color: '#64748b',
-    fontSize: 11,
-    marginLeft: 8,
-    textTransform: 'uppercase',
-  },
-  time: {
-    color: '#64748b',
-    fontSize: 11,
-    marginLeft: 'auto',
-  },
-  title: {
-    color: TEXT_PRIMARY,
-    fontSize: 15,
-    lineHeight: 20,
     fontWeight: '500',
   },
-  titleImportant: {
-    color: '#fff1f2',
-    fontWeight: '700',
+  time: {
+    color: COLORS.textMuted,
+    fontSize: 11,
+    fontVariant: ['tabular-nums'],
   },
 });
