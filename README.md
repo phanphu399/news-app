@@ -68,10 +68,12 @@ Bảng **`market_news`** — **tuyệt đối không lưu nội dung bài viết
 
 ## 3. Data Fetching Pipeline (Vercel API)
 
-Cấu hình `vercel.json`:
+> **Lưu ý quan trọng (Hobby plan):** Vercel Hobby chỉ cho phép cron tối đa **1 lần/ngày** — lịch `* * * * *` (mỗi phút) bị chặn deploy. Do đó nhịp 1 phút được đảm bảo bằng **External Scheduler** (xem mục 5). `vercel.json` chỉ giữ 1 cron dự phòng mỗi ngày (`0 1 * * *`) để vẫn có lượt chạy ngay cả khi external scheduler tạm lỗi.
+
+`vercel.json` (Hobby-safe, dự phòng 1 lần/ngày):
 
 ```json
-{ "crons": [{ "path": "/api/cron-fetch", "schedule": "* * * * *" }] }
+{ "crons": [{ "path": "/api/cron-fetch", "schedule": "0 1 * * *" }] }
 ```
 
 Luồng xử lý trong `api/cron-fetch.js` (Controller, không chứa logic nghiệp vụ):
@@ -113,6 +115,18 @@ npm install
 vercel --prod
 ```
 Đặt env trên Vercel (xem `backend/.env.example`).
+
+### External Scheduler — chạy mỗi phút (Hobby plan)
+Vì Hobby không cho cron mỗi phút, dùng 1 dịch vụ scheduler để gọi endpoint mỗi phút:
+
+1. Deploy thành công → lấy URL: `https://<your-app>.vercel.app/api/cron-fetch`
+2. Đặt `CRON_SECRET` trong Vercel env (VD: `8f3a...`).
+3. Tạo scheduler tại **cron-job.org** (hoặc Crontap, Upstash QStash):
+   - **URL**: `https://<your-app>.vercel.app/api/cron-fetch`
+   - **Method**: `GET`
+   - **Interval**: `1` phút (`* * * * *`)
+   - **Headers**: `Authorization: Bearer <CRON_SECRET>`
+4. Bấm **Enable/Start** → endpoint sẽ được gọi mỗi phút, hòan toàn không lệ thuộc giới hạn cron của Vercel.
 
 ### Database (Supabase)
 Chạy `db/schema.sql` trong Supabase SQL Editor (bảng + trigger dọn 3 ngày + realtime).
