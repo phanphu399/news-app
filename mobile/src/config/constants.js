@@ -8,7 +8,7 @@ export const SUPABASE_ANON_KEY =
 export const BACKEND_URL =
   Constants.expoConfig?.extra?.backendUrl ||
   process.env.EXPO_PUBLIC_BACKEND_URL ||
-  'https://news-realtime-eight.vercel.app';
+  'https://news-app-realtime-seven.vercel.app';
 
 // Palette
 export const COLORS = {
