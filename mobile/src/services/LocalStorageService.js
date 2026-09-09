@@ -3,6 +3,8 @@ import { Platform } from 'react-native';
 
 const CUSTOM_FEEDS_KEY = '@aster/custom_feeds';
 const LAST_READ_KEY = '@aster/last_read_at';
+const WATCH_KEYWORDS_KEY = '@aster/watch_keywords';
+const BOOKMARKS_KEY = '@aster/bookmarks';
 
 const isWeb = Platform.OS === 'web';
 
@@ -100,5 +102,46 @@ export const LocalStorageService = {
 
   async setLastReadAt(timestamp = Date.now()) {
     await writeItem(LAST_READ_KEY, String(timestamp));
+  },
+
+  async getWatchKeywords() {
+    const raw = await readItem(WATCH_KEYWORDS_KEY);
+    if (!raw) return [];
+    try {
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed.filter((k) => typeof k === 'string' && k.trim()) : [];
+    } catch {
+      return [];
+    }
+  },
+
+  async setWatchKeywords(keywords) {
+    await writeItem(WATCH_KEYWORDS_KEY, JSON.stringify(keywords));
+  },
+
+  async getBookmarks() {
+    const raw = await readItem(BOOKMARKS_KEY);
+    if (!raw) return [];
+    try {
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  },
+
+  async addBookmark(item) {
+    const bookmarks = await this.getBookmarks();
+    if (bookmarks.some((bookmark) => bookmark.id === item.id)) return bookmarks;
+    const next = [item, ...bookmarks];
+    await writeItem(BOOKMARKS_KEY, JSON.stringify(next));
+    return next;
+  },
+
+  async removeBookmark(id) {
+    const bookmarks = await this.getBookmarks();
+    const next = bookmarks.filter((bookmark) => bookmark.id !== id);
+    await writeItem(BOOKMARKS_KEY, JSON.stringify(next));
+    return next;
   },
 };

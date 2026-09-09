@@ -3,18 +3,22 @@ import { View, Text, TouchableOpacity, StyleSheet, StatusBar, Modal, Platform } 
 import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import NewsViewModel from './src/viewmodels/NewsViewModel';
 import NewsListView from './src/views/NewsListView';
+import NewsArticleView from './src/views/NewsArticleView';
 import NewsWebView from './src/views/NewsWebView';
 import NotificationToast from './src/views/NotificationToast';
+import WatchlistView from './src/views/WatchlistView';
 import EconomicCalendarView from './src/views/EconomicCalendarView';
 import CustomFeedView from './src/views/CustomFeedView';
 import TradingViewScreen from './src/views/TradingViewScreen';
 import AppHeader from './src/views/AppHeader';
+import { LocalStorageService } from './src/services/LocalStorageService';
 import { COLORS } from './src/config/constants';
 
 const TABS = {
   NEWS: 'news',
   GOLD: 'gold',
   CALENDAR: 'calendar',
+  FOLLOW: 'follow',
   FEEDS: 'feeds',
 };
 
@@ -26,6 +30,7 @@ function TabBar({ active, onChange, insets, badge }) {
     { key: TABS.NEWS, label: 'Tin nóng', icon: '🔥' },
     { key: TABS.GOLD, label: 'Vàng XAU', icon: '🪙' },
     { key: TABS.CALENDAR, label: 'Lịch KT', icon: '📅' },
+    { key: TABS.FOLLOW, label: 'Quan tâm', icon: '⭐' },
     { key: TABS.FEEDS, label: 'Nguồn tin', icon: '📡' },
   ];
 
@@ -87,9 +92,12 @@ function MainScreen() {
   const insets = useSafeAreaInsets();
   const { canInstall, install } = useInstallPrompt();
   const [activeTab, setActiveTab] = useState(TABS.NEWS);
-  const [openedUrl, setOpenedUrl] = useState(null);
+  const [openedArticle, setOpenedArticle] = useState(null);
   const [toasts, setToasts] = useState([]);
   const [newCount, setNewCount] = useState(0);
+  const [keywords, setKeywords] = useState([]);
+  const [bookmarks, setBookmarks] = useState([]);
+  const [embedArticle, setEmbedArticle] = useState(false);
   const seqRef = useRef(0);
   const toastTimersRef = useRef(new Map());
   const viewModelRef = useRef(null);
@@ -128,6 +136,20 @@ function MainScreen() {
     };
   }, [vm]);
 
+  useEffect(() => {
+    let cancelled = false;
+    Promise.all([LocalStorageService.getWatchKeywords(), LocalStorageService.getBookmarks()]).then(
+      ([kw, marks]) => {
+        if (cancelled) return;
+        setKeywords(kw);
+        setBookmarks(marks);
+      }
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const connected = !state.error;
 
   const openInNewTab = (url) => {
@@ -141,8 +163,37 @@ function MainScreen() {
     anchor.remove();
   };
 
-  const openArticle = (url) => {
-    setOpenedUrl(url);
+  const toggleBookmark = async (item) => {
+    const exists = bookmarks.some((bookmark) => bookmark.id === item.id);
+    if (exists) {
+      await LocalStorageService.removeBookmark(item.id);
+      setBookmarks(bookmarks.filter((bookmark) => bookmark.id !== item.id));
+    } else {
+      await LocalStorageService.addBookmark(item);
+      setBookmarks([item, ...bookmarks]);
+    }
+  };
+
+  const addKeyword = async (keyword) => {
+    const next = keywords.includes(keyword) ? keywords : [...keywords, keyword];
+    setKeywords(next);
+    await LocalStorageService.setWatchKeywords(next);
+  };
+
+  const removeKeyword = async (keyword) => {
+    const next = keywords.filter((k) => k !== keyword);
+    setKeywords(next);
+    await LocalStorageService.setWatchKeywords(next);
+  };
+
+  const openArticle = (item) => {
+    setOpenedArticle(item);
+    setEmbedArticle(false);
+  };
+
+  const closeArticle = () => {
+    setOpenedArticle(null);
+    setEmbedArticle(false);
   };
 
   const handleTabChange = (key) => {
@@ -161,12 +212,23 @@ function MainScreen() {
             items={state.items}
             loading={state.loading}
             error={state.error}
-            onItemPress={(item) => openArticle(item.url)}
+            onItemPress={openArticle}
             onRefresh={() => vm.refresh()}
           />
         )}
         {activeTab === TABS.GOLD && <TradingViewScreen />}
         {activeTab === TABS.CALENDAR && <EconomicCalendarView />}
+        {activeTab === TABS.FOLLOW && (
+          <WatchlistView
+            items={state.items}
+            keywords={keywords}
+            onAddKeyword={addKeyword}
+            onRemoveKeyword={removeKeyword}
+            bookmarks={bookmarks}
+            onToggleBookmark={toggleBookmark}
+            onOpenArticle={openArticle}
+          />
+        )}
         {activeTab === TABS.FEEDS && (
           <CustomFeedView onAdded={() => vm.refresh()} onOpenArticle={openArticle} />
         )}
@@ -180,7 +242,7 @@ function MainScreen() {
             onPress={() => {
               dismissToast(toast.id);
               setActiveTab(TABS.NEWS);
-              openArticle(toast.item.url);
+              openArticle(toast.item);
             }}
           />
         ))}
@@ -203,24 +265,48 @@ function MainScreen() {
         </TouchableOpacity>
       )}
 
-      <Modal visible={Boolean(openedUrl)} onRequestClose={() => setOpenedUrl(null)} animationType="slide">
+      <Modal
+        visible={Boolean(openedArticle)}
+        onRequestClose={closeArticle}
+        animationType="slide"
+      >
         <View style={styles.modal}>
           <View style={styles.modalHeader}>
-            <TouchableOpacity style={styles.closeButton} onPress={() => setOpenedUrl(null)}>
+            <TouchableOpacity style={styles.closeButton} onPress={closeArticle}>
               <Text style={styles.closeButtonText}>←</Text>
             </TouchableOpacity>
-            <Text style={styles.modalTitle}>Đang mở bài viết</Text>
-            {Platform.OS === 'web' && (
-              <TouchableOpacity
-                style={styles.externalButton}
-                onPress={() => openInNewTab(openedUrl)}
-                accessibilityLabel="Mở ở tab mới"
-              >
-                <Text style={styles.externalText}>↗ Mở tab</Text>
-              </TouchableOpacity>
-            )}
+            <Text style={styles.modalTitle} numberOfLines={1}>
+              {openedArticle?.source || 'Đang mở bài viết'}
+            </Text>
+            <TouchableOpacity
+              style={styles.externalButton}
+              onPress={() => {
+                if (Platform.OS === 'web') {
+                  openInNewTab(openedArticle?.url);
+                } else {
+                  setEmbedArticle(true);
+                }
+              }}
+              accessibilityLabel="Mở ở tab mới"
+            >
+              <Text style={styles.externalText}>↗ Mở tab</Text>
+            </TouchableOpacity>
           </View>
-          {openedUrl ? <NewsWebView url={openedUrl} /> : null}
+          {openedArticle ? (
+            embedArticle ? (
+              <NewsWebView url={openedArticle.url} />
+            ) : (
+              <NewsArticleView
+                item={openedArticle}
+                onOpenOriginal={() => {
+                  if (Platform.OS === 'web') openInNewTab(openedArticle.url);
+                  else setEmbedArticle(true);
+                }}
+                onToggleBookmark={() => toggleBookmark(openedArticle)}
+                isBookmarked={bookmarks.some((bookmark) => bookmark.id === openedArticle.id)}
+              />
+            )
+          ) : null}
         </View>
       </Modal>
     </SafeAreaView>
