@@ -11,6 +11,10 @@
       "backgroundColor": "#0b0e14"
     },
     "newArchEnabled": true,
+    "web": {
+      "bundler": "metro",
+      "output": "single"
+    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.aster.marketnews",

@@ -6,11 +6,13 @@
   "main": "index.js",
   "scripts": {
     "start": "expo start",
+    "build": "expo export --platform web",
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web"
   },
   "dependencies": {
+    "@expo/metro-runtime": "~57.0.15",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@supabase/supabase-js": "^2.45.0",
     "babel-preset-expo": "~57.0.0",
@@ -21,8 +23,10 @@
     "expo-status-bar": "~57.0.1",
     "fast-xml-parser": "^4.5.0",
     "react": "19.2.3",
+    "react-dom": "19.2.3",
     "react-native": "0.86.3",
     "react-native-safe-area-context": "~5.7.0",
+    "react-native-web": "^0.21.2",
     "react-native-webview": "13.16.1"
   },
   "devDependencies": {
