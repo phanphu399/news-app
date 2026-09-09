@@ -1,7 +1,8 @@
 export default class NewsModel {
-  constructor({ id, title, source, url, category, is_important, published_at }) {
+  constructor({ id, title, title_vi, source, url, category, is_important, published_at }) {
     this.id = id;
     this.title = title;
+    this.titleVi = title_vi || null;
     this.source = source ?? 'Unknown';
     this.url = url;
     this.category = category ?? 'Macro';

@@ -33,7 +33,7 @@ export default function NewsCard({ item, onPress }) {
         )}
 
         <Text style={[styles.title, isImportant && styles.titleImportant]} numberOfLines={3}>
-          {item.title_vi || item.title}
+          {item.titleVi || item.title}
         </Text>
 
         <View style={styles.metaRow}>

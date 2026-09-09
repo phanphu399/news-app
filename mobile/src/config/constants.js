@@ -41,11 +41,11 @@ export const TEXT_SECONDARY = COLORS.textSecondary;
 export const ACCENT_COLOR = COLORS.primary;
 
 export const CATEGORY_STYLES = {
-  Macro: { label: 'MACRO', color: '#38bdf8', bg: 'rgba(56,189,248,0.12)' },
-  XAUUSD: { label: 'XAU/USD', color: '#f5c542', bg: 'rgba(245,197,66,0.12)' },
-  Paywall: { label: 'PAYWALL', color: '#a78bfa', bg: 'rgba(167,139,250,0.12)' },
-  Geopolitics: { label: 'GEOPOLITICS', color: '#fb7185', bg: 'rgba(251,113,133,0.12)' },
-  Custom: { label: 'CUSTOM', color: '#34d399', bg: 'rgba(52,211,153,0.12)' },
+  Macro: { label: 'KINH TẾ VĨ MÔ', color: '#38bdf8', bg: 'rgba(56,189,248,0.12)' },
+  XAUUSD: { label: 'VÀNG & DẦU', color: '#f5c542', bg: 'rgba(245,197,66,0.12)' },
+  Paywall: { label: 'BÀI TRẢ PHÍ', color: '#a78bfa', bg: 'rgba(167,139,250,0.12)' },
+  Geopolitics: { label: 'ĐỊA CHÍNH TRỊ', color: '#fb7185', bg: 'rgba(251,113,133,0.12)' },
+  Custom: { label: 'FEED CỦA BẠN', color: '#34d399', bg: 'rgba(52,211,153,0.12)' },
 };
 
 export function categoryStyle(category) {
@@ -54,4 +54,4 @@ export function categoryStyle(category) {
 
 export const REFRESH_INTERVAL_MS = 60000;
 export const APP_NAME = 'ASTER';
-export const APP_TAGLINE = 'Market News · Forex & Macro';
+export const APP_TAGLINE = 'Tin thị trường · Forex · Macro';

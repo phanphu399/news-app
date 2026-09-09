@@ -22,7 +22,7 @@ function TabBar({ active, onChange, insets }) {
     { key: TABS.NEWS, label: 'Tin nóng', icon: '🔥' },
     { key: TABS.GOLD, label: 'Vàng XAU', icon: '🪙' },
     { key: TABS.CALENDAR, label: 'Lịch KT', icon: '📅' },
-    { key: TABS.FEEDS, label: 'Feeds', icon: '⚙️' },
+    { key: TABS.FEEDS, label: 'Nguồn tin', icon: '📡' },
   ];
 
   return (
