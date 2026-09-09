@@ -6,11 +6,13 @@ import NewsListView from './src/views/NewsListView';
 import NewsWebView from './src/views/NewsWebView';
 import EconomicCalendarView from './src/views/EconomicCalendarView';
 import CustomFeedView from './src/views/CustomFeedView';
+import TradingViewScreen from './src/views/TradingViewScreen';
 import AppHeader from './src/views/AppHeader';
 import { COLORS } from './src/config/constants';
 
 const TABS = {
   NEWS: 'news',
+  GOLD: 'gold',
   CALENDAR: 'calendar',
   FEEDS: 'feeds',
 };
@@ -18,6 +20,7 @@ const TABS = {
 function TabBar({ active, onChange, insets }) {
   const tabs = [
     { key: TABS.NEWS, label: 'Tin nóng', icon: '🔥' },
+    { key: TABS.GOLD, label: 'Vàng XAU', icon: '🪙' },
     { key: TABS.CALENDAR, label: 'Lịch KT', icon: '📅' },
     { key: TABS.FEEDS, label: 'Feeds', icon: '⚙️' },
   ];
@@ -108,6 +111,7 @@ function MainScreen() {
             onRefresh={() => vm.refresh()}
           />
         )}
+        {activeTab === TABS.GOLD && <TradingViewScreen />}
         {activeTab === TABS.CALENDAR && <EconomicCalendarView />}
         {activeTab === TABS.FEEDS && <CustomFeedView onAdded={() => vm.refresh()} />}
       </View>
