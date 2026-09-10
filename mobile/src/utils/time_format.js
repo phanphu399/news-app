@@ -2,12 +2,21 @@ const MINUTE = 60;
 const HOUR = 60 * MINUTE;
 const DAY = 24 * HOUR;
 
+function toDate(value) {
+  if (!value) return null;
+  if (value instanceof Date) return value;
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
 export function formatRelativeTime(date, now = new Date()) {
-  if (!date || Number.isNaN(date.getTime())) {
+  const input = toDate(date);
+  const current = toDate(now) || new Date();
+  if (!input) {
     return 'Vừa xong';
   }
 
-  const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+  const seconds = Math.floor((current.getTime() - input.getTime()) / 1000);
 
   if (seconds < 60) {
     return 'Vừa xong';
@@ -28,6 +37,7 @@ export function formatRelativeTime(date, now = new Date()) {
 }
 
 export function formatUtcClock(date) {
-  if (!date || Number.isNaN(date.getTime())) return '';
-  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const input = toDate(date);
+  if (!input) return '';
+  return input.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
