@@ -2,10 +2,7 @@ import React from 'react';
 import { WebView } from 'react-native-webview';
 import { View, StyleSheet, Platform } from 'react-native';
 import { BACKGROUND_COLOR } from '../config/constants';
-
-function resolvedUrl(url) {
-  return url.startsWith('http') ? url : `https://${url}`;
-}
+import { normalizeUrl } from '../utils/url';
 
 export default function NewsWebView({ url, onClose }) {
   if (Platform.OS === 'web') {
@@ -13,7 +10,7 @@ export default function NewsWebView({ url, onClose }) {
       <View style={styles.container}>
         <iframe
           title="article"
-          src={resolvedUrl(url)}
+          src={normalizeUrl(url)}
           style={{ flex: 1, width: '100%', height: '100%', border: 0, background: '#fff' }}
         />
       </View>
@@ -23,7 +20,7 @@ export default function NewsWebView({ url, onClose }) {
   return (
     <View style={styles.container}>
       <WebView
-        source={{ uri: resolvedUrl(url) }}
+        source={{ uri: normalizeUrl(url) }}
         startInLoadingState
         domStorageEnabled
         javaScriptEnabled

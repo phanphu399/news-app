@@ -1,4 +1,5 @@
 import { BACKEND_URL } from '../config/constants';
+import { normalizeUrl } from '../utils/url';
 import { Platform } from 'react-native';
 
 const isWeb = Platform.OS === 'web';
@@ -16,12 +17,13 @@ function tryFetch(endpoint) {
 }
 
 export async function fetchArticle(targetUrl) {
+  const url = normalizeUrl(targetUrl);
   const candidates = [];
   if (isWeb && typeof window !== 'undefined' && window.location) {
-    const sameOrigin = `${window.location.origin}/api/article?url=${encodeURIComponent(targetUrl)}`;
+    const sameOrigin = `${window.location.origin}/api/article?url=${encodeURIComponent(url)}`;
     candidates.push(sameOrigin);
   }
-  candidates.push(`${BACKEND_URL}/api/article?url=${encodeURIComponent(targetUrl)}`);
+  candidates.push(`${BACKEND_URL}/api/article?url=${encodeURIComponent(url)}`);
 
   let lastError = null;
   for (const candidate of [...new Set(candidates)]) {

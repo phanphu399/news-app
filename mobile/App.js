@@ -12,6 +12,7 @@ import CustomFeedView from './src/views/CustomFeedView';
 import TradingViewScreen from './src/views/TradingViewScreen';
 import AppHeader from './src/views/AppHeader';
 import { LocalStorageService } from './src/services/LocalStorageService';
+import { normalizeUrl } from './src/utils/url';
 import { COLORS } from './src/config/constants';
 
 const TABS = {
@@ -155,7 +156,7 @@ function MainScreen() {
   const openInNewTab = (url) => {
     if (Platform.OS !== 'web' || typeof document === 'undefined') return;
     const anchor = document.createElement('a');
-    anchor.href = url;
+    anchor.href = normalizeUrl(url);
     anchor.target = '_blank';
     anchor.rel = 'noopener noreferrer';
     document.body.appendChild(anchor);
