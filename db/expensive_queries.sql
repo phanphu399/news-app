@@ -11,8 +11,6 @@ select queryid,
        round((total_exec_time / 1000)::numeric, 1)  as total_sec,
        calls,
        round(mean_exec_time::numeric, 1)            as mean_ms,
-       round(blk_read_time::numeric, 1)             as read_ms,
-       round(blk_write_time::numeric, 1)            as write_ms,
        left(query, 120)                             as query
 from pg_stat_statements
 order by total_exec_time desc
