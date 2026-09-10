@@ -44,7 +44,7 @@ function SkeletonCard() {
   );
 }
 
-export default function NewsListView({ items, loading, error, onItemPress, onRefresh }) {
+export default function NewsListView({ items, loading, error, onItemPress, onRefresh, onCleanup }) {
   const [filter, setFilter] = useState(ALL);
 
   const chips = useMemo(() => {
@@ -61,18 +61,9 @@ export default function NewsListView({ items, loading, error, onItemPress, onRef
     ];
   }, [items]);
 
-  const grouped = useMemo(() => {
-    const filtered = filter === ALL ? items : items.filter((item) => (item.category || 'Macro') === filter);
-    const order = ['Macro', 'XAUUSD', 'Paywall', 'Geopolitics', 'Custom'];
-    const groups = new Map();
-    for (const item of filtered) {
-      const key = item.category || 'Macro';
-      if (!groups.has(key)) groups.set(key, []);
-      groups.get(key).push(item);
-    }
-    return [...groups.entries()]
-      .sort((a, b) => order.indexOf(a[0]) - order.indexOf(b[0]))
-      .map(([category, list]) => ({ category, list }));
+  const flatList = useMemo(() => {
+    if (filter === ALL) return items;
+    return items.filter((item) => (item.category || 'Macro') === filter);
   }, [items, filter]);
 
   if (loading && items.length === 0) {
@@ -143,9 +134,16 @@ export default function NewsListView({ items, loading, error, onItemPress, onRef
         })}
       </ScrollView>
 
+      {onCleanup ? (
+        <TouchableOpacity style={styles.cleanupRow} onPress={onCleanup} activeOpacity={0.7}>
+          <Text style={styles.cleanupIcon}>🗑</Text>
+          <Text style={styles.cleanupText}>Xóa tin cũ / Dọn bộ nhớ</Text>
+        </TouchableOpacity>
+      ) : null}
+
       <FlatList
-        data={grouped}
-        keyExtractor={(group) => group.category}
+        data={flatList}
+        keyExtractor={(item) => item.id}
         contentContainerStyle={styles.content}
         refreshControl={
           <RefreshControl
@@ -156,23 +154,7 @@ export default function NewsListView({ items, loading, error, onItemPress, onRef
             progressBackgroundColor={COLORS.surface}
           />
         }
-        renderItem={({ item: group }) => {
-          const cat = categoryStyle(group.category);
-          return (
-            <View style={styles.group}>
-              <View style={styles.groupHeader}>
-                <View style={[styles.groupBar, { backgroundColor: cat.color }]} />
-                <Text style={styles.groupTitle}>{cat.label}</Text>
-                <View style={styles.groupCount}>
-                  <Text style={styles.groupCountText}>{group.list.length}</Text>
-                </View>
-              </View>
-              {group.list.map((newsItem) => (
-                <NewsCard key={newsItem.id} item={newsItem} onPress={onItemPress} />
-              ))}
-            </View>
-          );
-        }}
+        renderItem={({ item }) => <NewsCard item={item} onPress={onItemPress} />}
       />
     </View>
   );
@@ -192,6 +174,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 9,
     gap: 8,
+  },
+  cleanupRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 7,
+    marginHorizontal: 12,
+    marginBottom: 4,
+    borderRadius: 9,
+    backgroundColor: COLORS.surfaceAlt,
+  },
+  cleanupIcon: {
+    fontSize: 12,
+    marginRight: 6,
+  },
+  cleanupText: {
+    color: COLORS.textMuted,
+    fontSize: 12,
+    fontWeight: '700',
   },
   chip: {
     flexDirection: 'row',
@@ -240,43 +241,6 @@ const styles = StyleSheet.create({
   content: {
     paddingVertical: 10,
     paddingBottom: 28,
-  },
-  group: {
-    marginBottom: 14,
-    marginTop: 4,
-  },
-  groupHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginLeft: 16,
-    marginBottom: 8,
-    marginRight: 16,
-  },
-  groupBar: {
-    width: 3,
-    height: 14,
-    borderRadius: 2,
-    marginRight: 8,
-  },
-  groupTitle: {
-    color: COLORS.textSecondary,
-    fontSize: 13,
-    fontWeight: '800',
-    letterSpacing: 1,
-  },
-  groupCount: {
-    marginLeft: 8,
-    backgroundColor: COLORS.surfaceAlt,
-    borderRadius: 10,
-    minWidth: 20,
-    alignItems: 'center',
-    paddingHorizontal: 6,
-    paddingVertical: 1,
-  },
-  groupCountText: {
-    color: COLORS.textMuted,
-    fontSize: 11,
-    fontWeight: '700',
   },
   center: {
     flex: 1,

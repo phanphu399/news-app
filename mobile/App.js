@@ -205,6 +205,21 @@ function MainScreen() {
     if (key === TABS.NEWS) setNewCount(0);
   };
 
+  const handleCleanup = async () => {
+    let result = null;
+    try {
+      result = await vm.purgeOldNews();
+    } catch (error) {
+      result = { deleted: 0, localCleared: false, error: error.message };
+    }
+    const id = ++seqRef.current;
+    const deleted = result?.deleted ?? 0;
+    const cleared = result?.localCleared ?? false;
+    const failed = Boolean(result?.error);
+    setToasts((list) => [...list.slice(-(MAX_TOASTS - 1)), { id, item: null, text: failed ? 'Không thể dọn dẹp.' : `Đã xóa ${deleted} tin cũ${cleared ? ' và xóa bộ nhớ cache.' : '.'}` }]);
+    setTimeout(() => dismissToast(id), TOAST_DURATION_MS);
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.background} />
@@ -218,6 +233,7 @@ function MainScreen() {
             error={state.error}
             onItemPress={openArticle}
             onRefresh={() => vm.refresh()}
+            onCleanup={handleCleanup}
           />
         )}
         {activeTab === TABS.GOLD && <TradingViewScreen />}

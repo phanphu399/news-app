@@ -2,7 +2,7 @@ import { fetchLatestNews, subscribeRealtime } from '../services/SupabaseService'
 import { NewsWarningService } from '../services/NewsWarningService';
 import { LocalStorageService } from '../services/LocalStorageService';
 import NewsModel from '../models/NewsModel';
-import { REFRESH_INTERVAL_MS } from '../config/constants';
+import { REFRESH_INTERVAL_MS, BACKEND_URL } from '../config/constants';
 
 export default class NewsViewModel {
   constructor() {
@@ -104,5 +104,22 @@ export default class NewsViewModel {
       this.error = error.message;
     }
     this.emit();
+  }
+
+  async purgeOldNews() {
+    const results = { deleted: 0, localCleared: false };
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/cleanup`, { method: 'POST' });
+      if (res.ok) {
+        const body = await res.json().catch(() => ({}));
+        results.deleted = body.deleted || 0;
+      }
+    } catch {
+      /* backend unreachable — vẫn dọn cache cục bộ */
+    }
+    await LocalStorageService.clearNewsCache();
+    results.localCleared = true;
+    await this.refresh();
+    return results;
   }
 }

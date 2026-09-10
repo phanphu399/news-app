@@ -3,7 +3,7 @@ import { Animated, Text, TouchableOpacity, View, StyleSheet } from 'react-native
 import { COLORS, categoryStyle } from '../config/constants';
 import TranslatedText from '../components/TranslatedText';
 
-export default function NotificationToast({ item, onPress, onClose, offset }) {
+export default function NotificationToast({ item, text, onPress, onClose, offset }) {
   const slide = useRef(new Animated.Value(-120)).current;
 
   useEffect(() => {
@@ -14,6 +14,28 @@ export default function NotificationToast({ item, onPress, onClose, offset }) {
       tension: 70,
     }).start();
   }, []);
+
+  if (!item) {
+    return (
+      <Animated.View style={[styles.wrap, { top: 8 + offset * 96, transform: [{ translateY: slide }] }]}>
+        <TouchableOpacity style={styles.toast} activeOpacity={0.9} onPress={onPress}>
+          <View style={[styles.accent, { backgroundColor: COLORS.primary }]} />
+          <View style={styles.body}>
+            <View style={styles.metaRow}>
+              <Text style={[styles.cat, { color: COLORS.primary }]}>HỆ THỐNG</Text>
+              <Text style={styles.badge}>NEWS</Text>
+            </View>
+            <Text style={styles.title} numberOfLines={2}>
+              {text || ''}
+            </Text>
+          </View>
+          <TouchableOpacity style={styles.closeBtn} onPress={onClose} hitSlop={10}>
+            <Text style={styles.closeText}>✕</Text>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Animated.View>
+    );
+  }
 
   const cat = categoryStyle(item.category);
 

@@ -176,6 +176,10 @@ export const LocalStorageService = {
         item.publishedAt && item.publishedAt instanceof Date
           ? item.publishedAt.toISOString()
           : item.publishedAt,
+      created_at:
+        item.createdAt && item.createdAt instanceof Date
+          ? item.createdAt.toISOString()
+          : item.createdAt,
     }));
     await writeItem(NEWS_CACHE_KEY, JSON.stringify({ savedAt: new Date().toISOString(), items: rows }));
   },

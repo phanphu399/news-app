@@ -19,8 +19,9 @@ export async function fetchLatestNews(limit = 100) {
 
   const { data, error } = await supabase
     .from('market_news')
-    .select('id,title,source,url,category,is_important,published_at')
+    .select('id,title,source,url,category,is_important,published_at,created_at')
     .order('published_at', { ascending: false })
+    .order('created_at', { ascending: true })
     .limit(limit);
 
   if (error) {

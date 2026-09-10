@@ -51,14 +51,14 @@ const CLEANUP_MIN_INTERVAL_MS = 6 * 60 * 60 * 1000;
 
 const RETENTION_MAX_ROWS = 100;
 
-export async function cleanupOldNews() {
+export async function cleanupOldNews({ force = false } = {}) {
   if (!isReady()) return { deleted: 0 };
 
   const now = Date.now();
-  if (now - lastCleanupAt < CLEANUP_MIN_INTERVAL_MS) {
-    return { deleted: 0 };
+  if (!force && now - lastCleanupAt < CLEANUP_MIN_INTERVAL_MS) {
+    return { deleted: 0, skipped: true };
   }
-  lastCleanupAt = now;
+  if (!force) lastCleanupAt = now;
 
   const { data: keepIds, error } = await client
     .from('market_news')
@@ -73,16 +73,17 @@ export async function cleanupOldNews() {
   const keepSet = new Set((keepIds ?? []).map((row) => row.id));
   if (keepSet.size === 0) return { deleted: 0 };
 
-  const { error: deleteError } = await client
+  const { data: deletedRows, error: deleteError } = await client
     .from('market_news')
     .delete()
-    .not('id', 'in', Array.from(keepSet));
+    .not('id', 'in', Array.from(keepSet))
+    .select('id');
 
   if (deleteError) {
     throw new Error(`Supabase cleanup delete failed: ${deleteError.message}`);
   }
 
-  return { deleted: 0 };
+  return { deleted: deletedRows?.length ?? 0 };
 }
 
 export async function listUserFeeds() {

@@ -7,10 +7,11 @@ create table if not exists public.market_news (
   url          text not null,
   category     text not null default 'Macro',
   is_important boolean not null default false,
-  published_at timestamptz not null default now()
+  published_at timestamptz not null default now(),
+  created_at   timestamptz not null default now()  -- thời điểm hệ thống nhận tin (phá thứ tự khi trùng giờ)
 );
 
-create index if not exists idx_market_news_published_at on public.market_news (published_at desc);
+create index if not exists idx_market_news_published_at on public.market_news (published_at desc, created_at asc);
 create index if not exists idx_market_news_is_important on public.market_news (is_important);
 
 -- Auto cleanup: purge records older than 3 days.
