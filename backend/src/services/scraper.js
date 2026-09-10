@@ -1,6 +1,7 @@
 import { XMLParser } from 'fast-xml-parser';
 import {
   DIRECT_RSS_FEEDS,
+  EXTRA_FEEDS,
   MACRO_QUERIES,
   COMMODITY_QUERIES,
   PAYWALL_QUERIES,
@@ -64,7 +65,12 @@ function buildFeedSets() {
     category: 'Macro',
     source: detectSource(url),
   }));
-  return [...googleFeeds, ...directFeeds];
+  const extraFeeds = EXTRA_FEEDS.map((feed) => ({
+    url: feed.url,
+    category: feed.category || 'Macro',
+    source: feed.source || detectSource(feed.url),
+  }));
+  return [...googleFeeds, ...directFeeds, ...extraFeeds];
 }
 
 async function fetchFeedOnce(feed) {
@@ -106,7 +112,7 @@ async function fetchFeedOnce(feed) {
   });
 }
 
-async function fetchFeed(feed, attempt = 1) {
+export async function fetchFeed(feed, attempt = 1) {
   try {
     return await fetchFeedOnce(feed);
   } catch (error) {

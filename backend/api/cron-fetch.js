@@ -1,4 +1,4 @@
-import { scrapeAll } from '../src/services/scraper.js';
+import { scrapeAll, fetchFeed } from '../src/services/scraper.js';
 import {
   upsertNews,
   cleanupOldNews,
@@ -6,12 +6,39 @@ import {
   findExistingIds,
   fetchUntranslatedRows,
   updateVietnameseTitles,
+  listUserFeeds,
+  updateUserFeedStatus,
 } from '../src/services/supabase.js';
 import { notifyImportantNews } from '../src/services/fcm.js';
 import { translateTitles } from '../src/services/translator.js';
 import { generateRunId } from '../src/utils/helpers.js';
 
 const TRANSLATE_LIMIT = 20;
+
+async function fetchUserFeedItems() {
+  const feeds = await listUserFeeds();
+  const items = [];
+  for (const feed of feeds) {
+    try {
+      const got = await fetchFeed({
+        url: feed.rss_url,
+        source: feed.name || feed.rss_url,
+        category: feed.category || 'Custom',
+      });
+      for (const item of got) {
+        if (!item.title || !item.title.trim()) continue;
+        items.push(item);
+      }
+      await updateUserFeedStatus(feed.id, { ok: true });
+    } catch (error) {
+      await updateUserFeedStatus(feed.id, {
+        ok: false,
+        error: String(error.message || error).slice(0, 240),
+      });
+    }
+  }
+  return items;
+}
 
 export default async function handler(request, response) {
   const runId = generateRunId();
@@ -21,6 +48,7 @@ export default async function handler(request, response) {
     status: 'ok',
     started_at: startAt,
     scraped: 0,
+    user_feeds: 0,
     upserted: 0,
     notified: 0,
     cleaned: 0,
@@ -40,8 +68,11 @@ export default async function handler(request, response) {
   }
 
   try {
-    const items = await scrapeAll();
-    payload.scraped = items.length;
+    const systemItems = await scrapeAll();
+    payload.scraped = systemItems.length;
+    const userItems = await fetchUserFeedItems();
+    payload.user_feeds = userItems.length;
+    const items = [...systemItems, ...userItems];
 
     const importantIds = items.filter((item) => item.is_important).map((item) => item.id);
     const existingIds = await findExistingIds(items.map((item) => item.id));

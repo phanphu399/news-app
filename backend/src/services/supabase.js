@@ -121,6 +121,30 @@ export async function cleanupOldNews() {
   return { deleted: data?.length ?? 0 };
 }
 
+export async function listUserFeeds() {
+  if (!isReady()) return [];
+  try {
+    const { data, error } = await client
+      .from('user_feeds')
+      .select('id,name,rss_url,category,enabled')
+      .eq('enabled', true)
+      .limit(60);
+    if (error) throw error;
+    return data ?? [];
+  } catch (error) {
+    console.error('[supabase] listUserFeeds failed (bảng user_feeds chưa tạo?):', error.message);
+    return [];
+  }
+}
+
+export async function updateUserFeedStatus(id, { ok, error: errorText }) {
+  if (!isReady() || !id) return;
+  const patch = ok
+    ? { last_fetched_at: new Date().toISOString(), last_error: null }
+    : { last_error: String(errorText || '').slice(0, 240) };
+  await client.from('user_feeds').update(patch).eq('id', id);
+}
+
 export async function reclassifyPaywallToMacro(limit = 100) {
   if (!isReady()) return 0;
 

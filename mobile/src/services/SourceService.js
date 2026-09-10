@@ -1,5 +1,7 @@
 import { BACKEND_URL } from '../config/constants';
 
+const FEEDS_ENDPOINT = `${BACKEND_URL}/api/user-feeds`;
+
 export async function fetchSources() {
   const endpoint = `${BACKEND_URL}/api/sources`;
   const response = await fetch(endpoint, {
@@ -10,6 +12,32 @@ export async function fetchSources() {
   const json = await response.json();
   if (!json || !json.ok) throw new Error(json?.error || 'Không tải được nguồn tin');
   return json.sources || [];
+}
+
+export async function addUserFeed({ name, rssUrl, category }) {
+  const response = await fetch(FEEDS_ENDPOINT, {
+    method: 'POST',
+    signal: AbortSignal.timeout(20000),
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, rssUrl, category }),
+  });
+  const json = await response.json().catch(() => ({}));
+  if (!response.ok || !json?.ok) {
+    throw new Error(json?.error || `HTTP ${response.status}`);
+  }
+  return json.feed;
+}
+
+export async function removeUserFeed(id) {
+  const response = await fetch(`${FEEDS_ENDPOINT}?id=${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+    signal: AbortSignal.timeout(15000),
+  });
+  const json = await response.json().catch(() => ({}));
+  if (!response.ok || !json?.ok) {
+    throw new Error(json?.error || `HTTP ${response.status}`);
+  }
+  return true;
 }
 
 export function sourcesFromItems(items) {

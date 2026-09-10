@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import {
   DIRECT_RSS_FEEDS,
+  EXTRA_FEEDS,
   MACRO_QUERIES,
   COMMODITY_QUERIES,
   KNOWN_SOURCES,
@@ -28,6 +29,14 @@ function buildSourceList() {
     url,
     categories: ['Macro'],
   }));
+
+  for (const feed of EXTRA_FEEDS) {
+    sources.push({
+      source: feed.source || detectSource(feed.url),
+      url: feed.url,
+      categories: [feed.category || 'Macro'],
+    });
+  }
 
   sources.push({
     source: KNOWN_SOURCES.GOOGLE_NEWS,
@@ -77,6 +86,30 @@ export default async function handler(request, response) {
   if (request.method === 'OPTIONS') return response.status(204).end();
 
   const sourceList = buildSourceList();
+  const userFeedIds = new Set();
+
+  if (client) {
+    try {
+      const { data } = await client
+        .from('user_feeds')
+        .select('id,name,rss_url,category')
+        .eq('enabled', true)
+        .limit(60);
+      if (Array.isArray(data)) {
+        for (const feed of data) {
+          sourceList.push({
+            source: feed.name || feed.rss_url,
+            url: feed.rss_url,
+            categories: [feed.category || 'Custom'],
+            userFeedId: feed.id,
+          });
+          userFeedIds.add(feed.id);
+        }
+      }
+    } catch {
+      /* user_feeds chưa tạo thì bỏ qua */
+    }
+  }
 
   const counts = new Map();
   if (client) {
@@ -108,6 +141,7 @@ export default async function handler(request, response) {
         healthy: health.healthy,
         error: health.error,
         count24h: counts.get(source.source) || 0,
+        userFeedId: source.userFeedId || null,
       };
     })
   );

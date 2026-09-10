@@ -61,9 +61,16 @@ export const PAYWALL_QUERIES = [
 export const DIRECT_RSS_FEEDS = [
   'https://finance.yahoo.com/news/rssindex',
   'https://www.cnbc.com/id/100003114/device/rss/rss.html',
-  'https://www.whitehouse.gov/feed/',
   'https://feeds.content.dowjones.io/public/rss/mw_topstories',
   'https://oilprice.com/rss/main',
+];
+
+export const EXTRA_FEEDS = [
+  {
+    url: 'https://news.google.com/rss/search?q=site:whitehouse.gov&hl=en-US&gl=US&ceid=US:en',
+    source: KNOWN_SOURCES.WHITE_HOUSE,
+    category: 'Macro',
+  },
 ];
 
 export const CACHE_TTL_HOURS = 1;
