@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { fetchArticle } from '../services/ReaderService';
 import { COLORS, categoryStyle } from '../config/constants';
+import TranslatedText from '../components/TranslatedText';
 
 export default function NewsArticleView({ item, onOpenOriginal, onToggleBookmark, isBookmarked }) {
   const [status, setStatus] = useState('loading');
@@ -108,7 +109,7 @@ export default function NewsArticleView({ item, onOpenOriginal, onToggleBookmark
         <Text style={styles.source}>{article.source || item.source}</Text>
       </View>
 
-      <Text style={styles.title}>{article.title || item.titleVi || item.title}</Text>
+      <TranslatedText style={styles.title} text={article.title || item.title} />
 
       {article.description ? (
         <Text style={styles.deck}>{article.description}</Text>

@@ -60,11 +60,6 @@ create index if not exists idx_market_news_important
 create index if not exists idx_market_news_source
   on public.market_news (source);
 
--- index riêng cho query "chưa dịch" (title_vi null)
-create index if not exists idx_market_news_untranslated
-  on public.market_news (published_at desc)
-  where title_vi is null;
-
 -- 4) TIME-OUT: query chạy quá lâu tự chết, không ôm connection
 -----------------------------------------------------------
 alter database postgres set statement_timeout = '30s';

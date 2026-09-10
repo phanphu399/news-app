@@ -29,9 +29,6 @@ export async function upsertNews(items) {
       is_important: Boolean(item.is_important),
       published_at: item.published_at,
     };
-    if (item.title_vi) {
-      row.title_vi = item.title_vi;
-    }
     return row;
   });
 
@@ -61,46 +58,6 @@ export async function findExistingIds(ids) {
   }
 
   return new Set((data ?? []).map((row) => row.id));
-}
-
-export async function fetchUntranslatedRows(limit) {
-  if (!isReady() || !limit || limit <= 0) {
-    return [];
-  }
-
-  const { data, error } = await client
-    .from('market_news')
-    .select('id, title')
-    .is('title_vi', null)
-    .order('published_at', { ascending: false })
-    .limit(limit);
-
-  if (error) {
-    throw new Error(`Supabase untranslated select failed: ${error.message}`);
-  }
-
-  return data ?? [];
-}
-
-export async function updateVietnameseTitles(rows) {
-  const payload = (rows || [])
-    .filter((row) => row.title_vi)
-    .map((row) => ({ id: row.id, title_vi: row.title_vi }));
-
-  if (!isReady() || payload.length === 0) {
-    return 0;
-  }
-
-  const { data, error } = await client
-    .from('market_news')
-    .upsert(payload, { onConflict: 'id' })
-    .select('id');
-
-  if (error) {
-    throw new Error(`Supabase title_vi update failed: ${error.message}`);
-  }
-
-  return data?.length ?? 0;
 }
 
 let lastCleanupAt = 0;

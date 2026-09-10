@@ -168,7 +168,6 @@ export const LocalStorageService = {
     const rows = (items || []).slice(0, NEWS_CACHE_MAX_ITEMS).map((item) => ({
       id: item.id,
       title: item.title,
-      title_vi: item.titleVi || null,
       source: item.source ?? 'Unknown',
       url: item.url,
       category: item.category ?? 'Macro',

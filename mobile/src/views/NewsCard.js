@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { formatRelativeTime } from '../utils/time_format';
 import { categoryStyle, COLORS } from '../config/constants';
 import { faviconUrl } from '../utils/domain';
+import TranslatedText from '../components/TranslatedText';
 
 function timeTone(publishedAt) {
   const ageMinutes = (Date.now() - new Date(publishedAt).getTime()) / (1000 * 60);
@@ -33,9 +34,7 @@ export default function NewsCard({ item, onPress, dimmed }) {
       )}
 
       <View style={styles.body}>
-        <Text style={[styles.title, isImportant && styles.titleImportant]} numberOfLines={3}>
-          {item.titleVi || item.title}
-        </Text>
+        <TranslatedText style={[styles.title, isImportant && styles.titleImportant]} numberOfLines={3} text={item.title} />
 
         <View style={styles.metaRow}>
           {favicon ? <Image source={{ uri: favicon }} style={styles.favicon} /> : null}

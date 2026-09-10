@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Animated, Text, TouchableOpacity, View, StyleSheet } from 'react-native';
 import { COLORS, categoryStyle } from '../config/constants';
+import TranslatedText from '../components/TranslatedText';
 
 export default function NotificationToast({ item, onPress, onClose, offset }) {
   const slide = useRef(new Animated.Value(-120)).current;
@@ -25,9 +26,7 @@ export default function NotificationToast({ item, onPress, onClose, offset }) {
             <Text style={[styles.cat, { color: cat.color }]}>{cat.label}</Text>
             <Text style={styles.badge}>🔴 NOVA</Text>
           </View>
-          <Text style={styles.title} numberOfLines={2}>
-            {item.titleVi || item.title}
-          </Text>
+          <TranslatedText style={styles.title} numberOfLines={2} text={item.title} />
         </View>
         <TouchableOpacity style={styles.closeBtn} onPress={onClose} hitSlop={10}>
           <Text style={styles.closeText}>✕</Text>

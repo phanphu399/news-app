@@ -15,7 +15,7 @@ import { COLORS } from '../config/constants';
 const SUGGESTIONS = ['FED', 'Lãi suất', 'XAUUSD', 'Dầu thô'];
 
 function matchKeyword(item, keyword) {
-  const text = `${item.title || ''} ${item.titleVi || ''} ${item.source || ''}`.toLowerCase();
+  const text = `${item.title || ''} ${item.source || ''}`.toLowerCase();
   return text.includes(keyword.toLowerCase());
 }
 

@@ -4,17 +4,12 @@ import {
   cleanupOldNews,
   reclassifyPaywallToMacro,
   findExistingIds,
-  fetchUntranslatedRows,
-  updateVietnameseTitles,
   listUserFeeds,
   updateUserFeedStatus,
   cronAcquireLock,
 } from '../src/services/supabase.js';
 import { notifyImportantNews } from '../src/services/fcm.js';
-import { translateTitles } from '../src/services/translator.js';
 import { generateRunId } from '../src/utils/helpers.js';
-
-const TRANSLATE_LIMIT = 20;
 
 async function withRetry(run, label, attempts = 2) {
   for (let attempt = 1; attempt <= attempts; attempt += 1) {
@@ -67,7 +62,6 @@ export default async function handler(request, response) {
     notified: 0,
     cleaned: 0,
     reclassified: 0,
-    translated: 0,
     message: '',
   };
 
@@ -98,15 +92,6 @@ export default async function handler(request, response) {
     const existingIds = await findExistingIds(items.map((item) => item.id));
     const brandNew = items.filter((item) => !existingIds.has(item.id));
     const brandNewImportant = brandNew.filter((item) => item.isImportant);
-
-    const translated = await translateTitles(brandNew, { limit: TRANSLATE_LIMIT });
-    payload.translated = translated.length;
-
-    const remainingBudget = Math.max(0, TRANSLATE_LIMIT - translated.length);
-    const untranslatedRows = await fetchUntranslatedRows(remainingBudget);
-    await translateTitles(untranslatedRows, { limit: remainingBudget });
-    const backfilled = await updateVietnameseTitles(untranslatedRows);
-    payload.translated += backfilled;
 
     const { data: insertedRows } = await withRetry(
       () => upsertNews(brandNew),
