@@ -48,7 +48,7 @@ export default function NewsCard({ item, onPress, dimmed }) {
           </Text>
           <Text style={styles.dot}>·</Text>
           <Text style={[styles.category, { color: cat.color }]} numberOfLines={1}>
-            #{cat.label.split(' ')[0]}
+            #{cat.short || cat.label.split(' ')[0]}
           </Text>
         </View>
       </View>
