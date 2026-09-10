@@ -44,7 +44,7 @@ function SkeletonCard() {
   );
 }
 
-export default function NewsListView({ items, loading, error, onItemPress, onRefresh, onCleanup }) {
+export default function NewsListView({ items, loading, error, onItemPress, onRefresh }) {
   const [filter, setFilter] = useState(ALL);
 
   const chips = useMemo(() => {
@@ -134,13 +134,6 @@ export default function NewsListView({ items, loading, error, onItemPress, onRef
         })}
       </ScrollView>
 
-      {onCleanup ? (
-        <TouchableOpacity style={styles.cleanupRow} onPress={onCleanup} activeOpacity={0.7}>
-          <Text style={styles.cleanupIcon}>🗑</Text>
-          <Text style={styles.cleanupText}>Xóa tin cũ / Dọn bộ nhớ</Text>
-        </TouchableOpacity>
-      ) : null}
-
       <FlatList
         data={flatList}
         keyExtractor={(item) => item.id}
@@ -174,25 +167,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 9,
     gap: 8,
-  },
-  cleanupRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 7,
-    marginHorizontal: 12,
-    marginBottom: 4,
-    borderRadius: 9,
-    backgroundColor: COLORS.surfaceAlt,
-  },
-  cleanupIcon: {
-    fontSize: 12,
-    marginRight: 6,
-  },
-  cleanupText: {
-    color: COLORS.textMuted,
-    fontSize: 12,
-    fontWeight: '700',
   },
   chip: {
     flexDirection: 'row',

@@ -71,19 +71,20 @@ export async function cleanupOldNews({ force = false } = {}) {
   }
 
   if (Array.isArray(keepRows) && keepRows.length === 0) return { deleted: 0 };
-  const lastKept = keepRows[keepRows.length - 1];
-  const threshold = lastKept?.published_at;
+  const threshold = keepRows[keepRows.length - 1]?.published_at;
+  if (!threshold) return { deleted: 0 };
 
   const { data: deletedRows, error: deleteError } = await client
     .from('market_news')
     .delete()
-    .lt('published_at', threshold);
+    .lt('published_at', threshold)
+    .select('id');
 
   if (deleteError) {
     throw new Error(`Supabase cleanup delete failed: ${deleteError.message}`);
   }
 
-  return { deleted: deletedRows?.length ?? 0 };
+  return { deleted: Array.isArray(deletedRows) ? deletedRows.length : 0 };
 }
 
 export async function listUserFeeds() {
