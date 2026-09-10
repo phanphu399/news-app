@@ -119,7 +119,7 @@ export default async function handler(request, response) {
         .from('market_news')
         .select('source')
         .gte('published_at', since)
-        .limit(5000);
+        .limit(3000);
       if (!error && Array.isArray(data)) {
         for (const row of data) {
           const key = row.source || 'Unknown';

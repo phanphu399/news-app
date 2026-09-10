@@ -8,12 +8,26 @@ import {
   updateVietnameseTitles,
   listUserFeeds,
   updateUserFeedStatus,
+  cronAcquireLock,
 } from '../src/services/supabase.js';
 import { notifyImportantNews } from '../src/services/fcm.js';
 import { translateTitles } from '../src/services/translator.js';
 import { generateRunId } from '../src/utils/helpers.js';
 
 const TRANSLATE_LIMIT = 20;
+
+async function withRetry(run, label, attempts = 2) {
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      return await run();
+    } catch (error) {
+      if (attempt === attempts) throw error;
+      console.warn(`[cron-fetch] ${label} failed (attempt ${attempt}), retrying...`, error.message);
+      await new Promise((resolve) => setTimeout(resolve, 500 * attempt));
+    }
+  }
+  return null;
+}
 
 async function fetchUserFeedItems() {
   const feeds = await listUserFeeds();
@@ -68,19 +82,23 @@ export default async function handler(request, response) {
   }
 
   try {
+    const acquired = await cronAcquireLock(90);
+    if (!acquired) {
+      payload.status = 'skipped';
+      payload.message = 'Có một lượt chạy khác đang diễn ra (lock).';
+      return response.status(200).json(payload);
+    }
+
     const systemItems = await scrapeAll();
     payload.scraped = systemItems.length;
     const userItems = await fetchUserFeedItems();
     payload.user_feeds = userItems.length;
     const items = [...systemItems, ...userItems];
 
-    const importantIds = items.filter((item) => item.is_important).map((item) => item.id);
     const existingIds = await findExistingIds(items.map((item) => item.id));
-    const brandNewImportant = items.filter(
-      (item) => item.is_important && !existingIds.has(item.id)
-    );
-
     const brandNew = items.filter((item) => !existingIds.has(item.id));
+    const brandNewImportant = brandNew.filter((item) => item.isImportant);
+
     const translated = await translateTitles(brandNew, { limit: TRANSLATE_LIMIT });
     payload.translated = translated.length;
 
@@ -90,7 +108,10 @@ export default async function handler(request, response) {
     const backfilled = await updateVietnameseTitles(untranslatedRows);
     payload.translated += backfilled;
 
-    const { data: insertedRows } = await upsertNews(items);
+    const { data: insertedRows } = await withRetry(
+      () => upsertNews(brandNew),
+      'upsertNews'
+    );
     const insertedRowsArray = Array.isArray(insertedRows) ? insertedRows : [];
     payload.upserted = insertedRowsArray.length;
 

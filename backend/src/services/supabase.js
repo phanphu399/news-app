@@ -83,42 +83,47 @@ export async function fetchUntranslatedRows(limit) {
 }
 
 export async function updateVietnameseTitles(rows) {
-  if (!isReady() || rows.length === 0) {
+  const payload = (rows || [])
+    .filter((row) => row.title_vi)
+    .map((row) => ({ id: row.id, title_vi: row.title_vi }));
+
+  if (!isReady() || payload.length === 0) {
     return 0;
   }
 
-  let updated = 0;
-  for (const row of rows) {
-    if (!row.title_vi) continue;
-    const { error } = await client
-      .from('market_news')
-      .update({ title_vi: row.title_vi })
-      .eq('id', row.id);
-    if (error) {
-      throw new Error(`Supabase title_vi update failed: ${error.message}`);
-    }
-    updated += 1;
+  const { data, error } = await client
+    .from('market_news')
+    .upsert(payload, { onConflict: 'id' })
+    .select('id');
+
+  if (error) {
+    throw new Error(`Supabase title_vi update failed: ${error.message}`);
   }
 
-  return updated;
+  return data?.length ?? 0;
 }
+
+let lastCleanupAt = 0;
+const CLEANUP_MIN_INTERVAL_MS = 6 * 60 * 60 * 1000;
 
 export async function cleanupOldNews() {
   if (!isReady()) return { deleted: 0 };
 
+  const now = Date.now();
+  if (now - lastCleanupAt < CLEANUP_MIN_INTERVAL_MS) {
+    return { deleted: 0 };
+  }
+  lastCleanupAt = now;
+
   const cutoff = new Date(Date.now() - DATA_RETENTION_DAYS * 24 * 60 * 60 * 1000).toISOString();
 
-  const { data, error } = await client
-    .from('market_news')
-    .delete()
-    .lt('published_at', cutoff)
-    .select('id');
+  const { error } = await client.from('market_news').delete().lt('published_at', cutoff);
 
   if (error) {
     throw new Error(`Supabase cleanup failed: ${error.message}`);
   }
 
-  return { deleted: data?.length ?? 0 };
+  return { deleted: 0 };
 }
 
 export async function listUserFeeds() {
@@ -143,6 +148,23 @@ export async function updateUserFeedStatus(id, { ok, error: errorText }) {
     ? { last_fetched_at: new Date().toISOString(), last_error: null }
     : { last_error: String(errorText || '').slice(0, 240) };
   await client.from('user_feeds').update(patch).eq('id', id);
+}
+
+export async function cronAcquireLock(lockSeconds = 90) {
+  if (!isReady()) return true;
+  try {
+    const cutoff = new Date(Date.now() - lockSeconds * 1000).toISOString();
+    const { data, error } = await client
+      .from('cron_state')
+      .update({ ran_at: new Date().toISOString() })
+      .eq('id', 1)
+      .or(`ran_at.is.null,ran_at.lt.${cutoff}`)
+      .select('id');
+    if (error) return true;
+    return Array.isArray(data) && data.length > 0;
+  } catch {
+    return true;
+  }
 }
 
 export async function reclassifyPaywallToMacro(limit = 100) {
