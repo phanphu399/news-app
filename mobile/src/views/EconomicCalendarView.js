@@ -1,124 +1,253 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Platform } from 'react-native';
-import { WebView } from 'react-native-webview';
-import { COLORS } from '../config/constants';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  ActivityIndicator,
+  RefreshControl,
+} from 'react-native';
+import { COLORS, FONT_FAMILY, TABULAR_NUMS } from '../config/constants';
+import { BACKEND_URL } from '../config/constants';
+import { showToast } from '../services/ToastService';
+import Card from '../components/Card';
+import localizeTitle, {
+  localizeCountry,
+  localizeImpact,
+  formatDateHeader,
+  formatTime,
+} from '../utils/calendarVi';
 
-const importanceFilter = '-1,1';
+const IMPACT_COLORS = {
+  High: COLORS.important,
+  Medium: COLORS.amber,
+  Low: COLORS.success,
+};
 
-function buildCalendarHtml(width, height) {
-  const w = Math.max(320, Math.floor(width));
-  const h = Math.max(400, Math.floor(height));
-  return `
-<!DOCTYPE html>
-<html>
-<head>
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<style>
-  html, body { margin:0; padding:0; width:100%; height:100%; background:#0b0e14; overflow:hidden; }
-  .wrap { width:${w}px; height:${h}px; overflow-x:auto; overflow-y:auto; -webkit-overflow-scrolling:touch; }
-  .tradingview-widget-container { width:${w}px; height:${h}px; }
-  .tradingview-widget-container__widget { width:${w}px; height:${h}px; }
-</style>
-</head>
-<body>
-  <div class="wrap">
-    <div class="tradingview-widget-container">
-      <div class="tradingview-widget-container__widget"></div>
-      <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-events.js" async>
-      {
-        "colorTheme": "dark",
-        "isTransparent": true,
-        "width": ${w},
-        "height": ${h},
-        "locale": "vi_VN",
-        "importanceFilter": "${importanceFilter}",
-        "ime_tz": "Asia/Ho_Chi_Minh"
-      }
-      <\/script>
-    </div>
-  </div>
-</body>
-</html>`;
-}
+const IMPACT_FILTERS = [
+  { key: 'All', label: 'Tất cả' },
+  { key: 'High', label: 'Quan trọng' },
+  { key: 'Medium', label: 'Trung bình' },
+  { key: 'Low', label: 'Thấp' },
+];
 
-function todayLabel() {
-  try {
-    return new Date().toLocaleDateString('vi-VN', {
-      weekday: 'long',
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    });
-  } catch {
-    return new Date().toLocaleDateString('vi-VN');
-  }
-}
-
-function Legend({ color, label }) {
+function ImpactBadge({ impact }) {
   return (
-    <View style={styles.legendItem}>
-      <View style={[styles.legendDot, { backgroundColor: color }]} />
-      <Text style={styles.legendLabel}>{label}</Text>
+    <View style={[styles.impactBadge, { backgroundColor: `${IMPACT_COLORS[impact]}22` }]}>
+      <View style={[styles.impactDot, { backgroundColor: IMPACT_COLORS[impact] }]} />
+      <Text style={[styles.impactText, { color: IMPACT_COLORS[impact] }]}>
+        {localizeImpact(impact)}
+      </Text>
     </View>
   );
 }
 
-export default function EconomicCalendarView() {
-  const boxRef = useRef(null);
-  const [size, setSize] = useState(null);
+function CalendarRow({ event, last }) {
+  const time = formatTime(event.date);
+  const country = event.country || '?';
+  const hasValues = Boolean(event.forecast || event.previous);
 
-  useEffect(() => {
-    const measure = () => {
-      if (boxRef.current && Platform.OS === 'web') {
-        const rect = boxRef.current.getBoundingClientRect();
-        setSize({ width: rect.width, height: rect.height });
-      }
-    };
-    measure();
-    if (Platform.OS === 'web') {
-      const observer = new ResizeObserver(measure);
-      if (boxRef.current) observer.observe(boxRef.current);
-      return () => observer.disconnect();
+  return (
+    <View style={[styles.row, last && styles.rowLast]}>
+      <View style={styles.timeCol}>
+        <Text style={styles.timeText}>{time}</Text>
+        <Text style={styles.countryCode}>{country}</Text>
+      </View>
+
+      <View style={styles.titleCol}>
+        <Text style={styles.titleText} numberOfLines={2}>
+          {localizeTitle(event.title)}
+        </Text>
+        <View style={styles.metaRow}>
+          <ImpactBadge impact={event.impact} />
+          <Text style={styles.countryName}>{localizeCountry(country)}</Text>
+        </View>
+      </View>
+
+      {hasValues ? (
+        <View style={styles.statsCol}>
+          <Text style={styles.statText}>
+            <Text style={styles.statLabel}>Cũ: </Text>
+            <Text style={styles.statValue}>{event.previous || '—'}</Text>
+          </Text>
+          <Text style={styles.statText}>
+            <Text style={styles.statLabel}>Dự báo: </Text>
+            <Text style={styles.statValue}>{event.forecast || '—'}</Text>
+          </Text>
+        </View>
+      ) : (
+        <View style={styles.statsCol}>
+          <Text style={styles.statEmpty}>Chưa có số liệu</Text>
+        </View>
+      )}
+    </View>
+  );
+}
+
+function DayCard({ date, events }) {
+  return (
+    <Card style={styles.dayCard}>
+      <View style={styles.dateHeader}>
+        <Text style={styles.dateHeaderText}>{formatDateHeader(date)}</Text>
+        <Text style={styles.dateCount}>{events.length} sự kiện</Text>
+      </View>
+      {events.map((event, index) => (
+        <CalendarRow key={index} event={event} last={index === events.length - 1} />
+      ))}
+    </Card>
+  );
+}
+
+export default function EconomicCalendarView() {
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [impact, setImpact] = useState('All');
+  const [refreshing, setRefreshing] = useState(false);
+  const abortRef = useRef(null);
+
+  const load = useCallback(async (mode = 'initial') => {
+    const abort = new AbortController();
+    abortRef.current = abort;
+    if (mode === 'initial') setLoading(true);
+    else setRefreshing(true);
+    setError(null);
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/calendar`, {
+        signal: abort.signal,
+        headers: { Accept: 'application/json' },
+      });
+      const json = await res.json();
+      if (!res.ok || !json?.ok) throw new Error(json?.error || `HTTP ${res.status}`);
+      setEvents(json.events || []);
+    } catch (err) {
+      if (err.name === 'AbortError') return;
+      setError(err.message);
+      showToast({ type: 'error', title: 'Lỗi lịch kinh tế', message: err.message });
+    } finally {
+      if (mode === 'initial') setLoading(false);
+      else setRefreshing(false);
     }
-    return undefined;
   }, []);
 
-  const html = size ? buildCalendarHtml(size.width, size.height) : null;
+  useEffect(() => {
+    load('initial');
+    return () => abortRef.current?.abort();
+  }, [load]);
+
+  const filtered = useMemo(() => {
+    const list =
+      impact === 'All' ? events : events.filter((event) => event.impact === impact);
+    const now = Date.now();
+    const upcoming = list.filter((event) => new Date(event.date) >= now - 3600_000);
+    const past = list.filter((event) => new Date(event.date) < now - 3600_000);
+    return [...upcoming, ...past];
+  }, [events, impact]);
+
+  const sections = useMemo(() => {
+    const map = new Map();
+    for (const event of filtered) {
+      const key = new Date(event.date).toDateString();
+      if (!map.has(key)) map.set(key, []);
+      map.get(key).push(event);
+    }
+    return [...map.entries()]
+      .sort((a, b) => new Date(a[0]) - new Date(b[0]))
+      .map(([date, items]) => ({ date, items }));
+  }, [filtered]);
+
+  const listData = useMemo(
+    () =>
+      sections.map((section) => ({
+        key: section.date,
+        date: section.date,
+        events: section.items,
+      })),
+    [sections]
+  );
+
+  const renderItem = useCallback(({ item }) => {
+    return <DayCard date={item.date} events={item.events} />;
+  }, []);
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <View>
           <Text style={styles.headerTitle}>LỊCH KINH TẾ</Text>
-          <Text style={styles.headerDate}>
-            {todayLabel().charAt(0).toUpperCase() + todayLabel().slice(1)}
-          </Text>
-        </View>
-        <View style={styles.legend}>
-          <Legend color={COLORS.important} label="Quan trọng" />
-          <Legend color={COLORS.amber} label="TB" />
-          <Legend color={COLORS.success} label="Thấp" />
+          <Text style={styles.headerSub}>Châu Á · Châu Âu · Mỹ</Text>
         </View>
       </View>
 
-      <View ref={boxRef} style={styles.chartBox}>
-        {size && Platform.OS === 'web' ? (
-          <iframe
-            title="TradingView Economic Calendar"
-            srcDoc={html}
-            style={{ width: '100%', height: '100%', border: 0, background: COLORS.background }}
-          />
-        ) : size ? (
-          <WebView
-            originWhitelist={['*']}
-            source={{ html }}
-            startInLoadingState
-            javaScriptEnabled
-            style={styles.webview}
-          />
-        ) : null}
+      <View style={styles.filtersBar}>
+        {IMPACT_FILTERS.map((filter) => {
+          const isActive = impact === filter.key;
+          return (
+            <TouchableOpacity
+              key={filter.key}
+              style={[styles.filterChip, isActive && styles.filterChipActive]}
+              onPress={() => setImpact(filter.key)}
+              activeOpacity={0.7}
+            >
+              <View
+                style={[
+                  styles.filterDot,
+                  { backgroundColor: filter.key === 'All' ? COLORS.textSecondary : IMPACT_COLORS[filter.key] },
+                ]}
+              />
+              <Text style={[styles.filterText, isActive && styles.filterTextActive]}>
+                {filter.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
+
+      {error && !loading && (
+        <View style={styles.errorBox}>
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
+      )}
+
+      {loading ? (
+        <View style={styles.center}>
+          <ActivityIndicator color={COLORS.primary} />
+          <Text style={styles.centerText}>Đang tải lịch kinh tế…</Text>
+        </View>
+      ) : listData.length === 0 ? (
+        <View style={styles.center}>
+          <Text style={styles.centerText}>Không có sự kiện nào trong mức này.</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={listData}
+          keyExtractor={(item) => item.key}
+          renderItem={renderItem}
+          initialNumToRender={25}
+          ListFooterComponent={
+            <View style={styles.footer}>
+              <Text style={styles.footerText}>Nguồn: Trading Economics · Cập nhật tự động</Text>
+            </View>
+          }
+          refreshControl={
+            <RefreshControlStyled refreshing={refreshing} onRefresh={() => load('refresh')} />
+          }
+        />
+      )}
     </View>
+  );
+}
+
+function RefreshControlStyled({ refreshing, onRefresh }) {
+  return (
+    <RefreshControl
+      refreshing={refreshing}
+      onRefresh={onRefresh}
+      tintColor={COLORS.primary}
+      colors={[COLORS.primary]}
+      progressBackgroundColor={COLORS.surface}
+    />
   );
 }
 
@@ -143,37 +272,198 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     letterSpacing: 1.2,
   },
-  headerDate: {
+  headerSub: {
     color: COLORS.textMuted,
-    fontSize: 12,
+    fontSize: 11,
     marginTop: 3,
   },
-  legend: {
+  filtersBar: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.borderSoft,
+  },
+  filterChip: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.surface,
   },
-  legendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginLeft: 12,
+  filterChipActive: {
+    borderColor: COLORS.primary,
+    backgroundColor: 'rgba(245,158,11,0.14)',
   },
-  legendDot: {
-    width: 7,
-    height: 7,
+  filterDot: {
+    width: 8,
+    height: 8,
     borderRadius: 4,
+    marginRight: 6,
+  },
+  filterText: {
+    color: COLORS.textSecondary,
+    fontSize: 12,
+    fontWeight: '600',
+    fontFamily: FONT_FAMILY,
+  },
+  filterTextActive: {
+    color: COLORS.primary,
+  },
+  center: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  centerText: {
+    color: COLORS.textMuted,
+    fontSize: 13,
+    marginTop: 10,
+    textAlign: 'center',
+    fontFamily: FONT_FAMILY,
+  },
+  errorBox: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    backgroundColor: 'rgba(244,63,94,0.08)',
+  },
+  errorText: {
+    color: COLORS.danger,
+    fontSize: 12,
+    fontFamily: FONT_FAMILY,
+  },
+  dayCard: {
+    marginHorizontal: 12,
+    marginTop: 10,
+    overflow: 'hidden',
+  },
+  dateHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+    backgroundColor: COLORS.surfaceAlt,
+    borderRadius: 14,
+  },
+  dateHeaderText: {
+    color: COLORS.text,
+    fontSize: 13,
+    fontWeight: '800',
+    fontFamily: FONT_FAMILY,
+  },
+  dateCount: {
+    color: COLORS.textMuted,
+    fontSize: 11,
+    fontWeight: '600',
+    fontFamily: FONT_FAMILY,
+    fontVariant: TABULAR_NUMS,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.borderSoft,
+  },
+  rowLast: {
+    borderBottomWidth: 0,
+  },
+  timeCol: {
+    width: 62,
+  },
+  timeText: {
+    color: COLORS.text,
+    fontSize: 13,
+    fontWeight: '800',
+    fontFamily: FONT_FAMILY,
+    fontVariant: TABULAR_NUMS,
+  },
+  countryCode: {
+    color: COLORS.textMuted,
+    fontSize: 10,
+    fontWeight: '700',
+    marginTop: 2,
+    letterSpacing: 0.5,
+  },
+  titleCol: {
+    flex: 1,
+    paddingRight: 8,
+  },
+  titleText: {
+    color: COLORS.text,
+    fontSize: 12.5,
+    fontWeight: '600',
+    lineHeight: 17,
+    fontFamily: FONT_FAMILY,
+  },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 7,
+  },
+  impactBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 6,
+    marginRight: 8,
+  },
+  impactDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
     marginRight: 4,
   },
-  legendLabel: {
-    color: COLORS.textSecondary,
+  impactText: {
     fontSize: 10,
-    fontWeight: '600',
+    fontWeight: '800',
+    fontFamily: FONT_FAMILY,
   },
-  chartBox: {
-    flex: 1,
-    backgroundColor: COLORS.background,
+  countryName: {
+    color: COLORS.textMuted,
+    fontSize: 11,
+    fontFamily: FONT_FAMILY,
   },
-  webview: {
-    flex: 1,
-    backgroundColor: COLORS.background,
+  statsCol: {
+    alignItems: 'flex-end',
+    minWidth: 78,
+  },
+  statText: {
+    color: COLORS.textSecondary,
+    fontSize: 11,
+    marginTop: 2,
+  },
+  statLabel: {
+    color: COLORS.textMuted,
+  },
+  statValue: {
+    color: COLORS.textSecondary,
+    fontWeight: '700',
+    fontFamily: FONT_FAMILY,
+    fontVariant: TABULAR_NUMS,
+  },
+  statEmpty: {
+    color: COLORS.textMuted,
+    fontSize: 11,
+    fontStyle: 'italic',
+    fontFamily: FONT_FAMILY,
+  },
+  footer: {
+    alignItems: 'center',
+    paddingVertical: 18,
+  },
+  footerText: {
+    color: COLORS.textMuted,
+    fontSize: 11,
+    fontFamily: FONT_FAMILY,
   },
 });

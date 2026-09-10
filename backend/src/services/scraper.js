@@ -10,6 +10,8 @@ import {
   PAYWALL_QUERIES,
   MAX_ITEMS_PER_FEED,
   KNOWN_SOURCES,
+  HOT_GOOGLE_QUERIES,
+  HOT_DIRECT_RSS_FEEDS,
 } from '../config/constants.js';
 import {
   hashUrl,
@@ -45,6 +47,7 @@ function buildGoogleNewsFeeds() {
     url: googleNewsQueryUrl(query),
     category,
     source: KNOWN_SOURCES.GOOGLE_NEWS,
+    hot: HOT_GOOGLE_QUERIES.has(query),
   }));
 }
 
@@ -57,20 +60,28 @@ function detectSource(feedUrl) {
   return KNOWN_SOURCES.GOOGLE_NEWS;
 }
 
-function buildFeedSets() {
+export function buildFeedSets() {
   const googleFeeds = buildGoogleNewsFeeds();
   const directFeeds = DIRECT_RSS_FEEDS.map((url) => ({
     url,
     category: 'Macro',
     source: detectSource(url),
+    hot: HOT_DIRECT_RSS_FEEDS.has(url),
   }));
   const extraFeeds = EXTRA_FEEDS.map((feed) => ({
     url: feed.url,
     category: feed.category || 'Macro',
     source: feed.source || detectSource(feed.url),
     maxAgeHours: feed.maxAgeHours,
+    hot: feed.hot === true,
   }));
   return [...googleFeeds, ...directFeeds, ...extraFeeds];
+}
+
+function selectTier(feeds, tier) {
+  if (tier === 'hot') return feeds.filter((feed) => feed.hot);
+  if (tier === 'standard') return feeds.filter((feed) => !feed.hot);
+  return feeds;
 }
 
 async function fetchFeedOnce(feed) {
@@ -171,8 +182,8 @@ function filterFresh(items, maxAgeHours = 24) {
   });
 }
 
-export async function scrapeAll() {
-  const feeds = buildFeedSets();
+export async function scrapeAll({ tier = 'full' } = {}) {
+  const feeds = selectTier(buildFeedSets(), tier);
   const tasks = feeds.map((feed) =>
     fetchFeed(feed).then((items) => filterFresh(items, feed.maxAgeHours ?? 24)).catch(() => [])
   );

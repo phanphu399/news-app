@@ -63,12 +63,21 @@ async function fetchUserFeedItems() {
   return items;
 }
 
+const TIER_CONFIG = {
+  hot: { lockSeconds: 60, lockId: 11, label: 'hot' },
+  standard: { lockSeconds: 60 * 5, lockId: 12, label: 'standard' },
+  full: { lockSeconds: 60 * 60 * 4, lockId: 13, label: 'full' },
+};
+
 export default async function handler(request, response) {
   const runId = generateRunId();
   const startAt = new Date().toISOString();
+  const tier = TIER_CONFIG[request.query.tier] ? request.query.tier : 'hot';
+  const tierCfg = TIER_CONFIG[tier];
   const payload = {
     run_id: runId,
     status: 'ok',
+    tier,
     started_at: startAt,
     scraped: 0,
     user_feeds: 0,
@@ -85,19 +94,20 @@ export default async function handler(request, response) {
     return response.status(401).json({
       run_id: runId,
       status: 'unauthorized',
+      tier,
       started_at: startAt,
     });
   }
 
   try {
-    const acquired = await cronAcquireLock(60);
+    const acquired = await cronAcquireLock(tierCfg.lockSeconds, tierCfg.lockId);
     if (!acquired) {
       payload.status = 'skipped';
-      payload.message = 'Có một lượt chạy khác đang diễn ra (lock).';
+      payload.message = 'Có một lượt chạy cùng tier đang diễn ra (lock).';
       return response.status(200).json(payload);
     }
 
-    const systemItems = await scrapeAll();
+    const systemItems = await scrapeAll({ tier });
     payload.scraped = systemItems.length;
     const userItems = await fetchUserFeedItems();
     payload.user_feeds = userItems.length;
@@ -117,13 +127,16 @@ export default async function handler(request, response) {
     const notified = await notifyImportantNews(brandNewImportant);
     payload.notified = notified.length;
 
-    const { deleted } = await cleanupOldNews();
-    payload.cleaned = deleted;
+    if (tier === 'full') {
+      const { deleted } = await cleanupOldNews();
+      payload.cleaned = deleted;
 
-    const reclassified = await reclassifyPaywallToMacro();
-    payload.reclassified = reclassified;
+      const reclassified = await reclassifyPaywallToMacro();
+      payload.reclassified = reclassified;
+    }
 
     payload.finished_at = new Date().toISOString();
+    payload.message = `tier=${tier} scraped=${payload.scraped} upserted=${payload.upserted}`;
   } catch (error) {
     payload.status = 'error';
     payload.message = error.message;

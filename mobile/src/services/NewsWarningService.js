@@ -26,9 +26,20 @@ async function playWebBeep() {
   try {
     const Ctx = window.AudioContext || window.webkitAudioContext;
     const ctx = new Ctx();
+
+    const lowpass = ctx.createBiquadFilter();
+    lowpass.type = 'lowpass';
+    lowpass.frequency.value = 1000;
+    lowpass.Q.value = 0.5;
+    lowpass.connect(ctx.destination);
+
+    const master = ctx.createGain();
+    master.gain.value = 0.9;
+    master.connect(lowpass);
+
     const notes = [
-      { freq: 659.25, at: 0.0, dur: 0.35 },
-      { freq: 880.0, at: 0.16, dur: 0.45 },
+      { freq: 392.0, at: 0.0, dur: 0.55, vol: 0.16 },
+      { freq: 523.25, at: 0.18, dur: 0.5, vol: 0.11 },
     ];
     for (const note of notes) {
       const oscillator = ctx.createOscillator();
@@ -37,10 +48,10 @@ async function playWebBeep() {
       oscillator.frequency.value = note.freq;
       const start = ctx.currentTime + note.at;
       gain.gain.setValueAtTime(0.0001, start);
-      gain.gain.exponentialRampToValueAtTime(0.28, start + 0.03);
+      gain.gain.exponentialRampToValueAtTime(note.vol, start + 0.03);
       gain.gain.exponentialRampToValueAtTime(0.0001, start + note.dur);
       oscillator.connect(gain);
-      gain.connect(ctx.destination);
+      gain.connect(master);
       oscillator.start(start);
       oscillator.stop(start + note.dur + 0.05);
     }

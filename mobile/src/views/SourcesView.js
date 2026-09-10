@@ -20,7 +20,7 @@ import {
   removeUserFeed,
   testUserFeed,
 } from '../services/SourceService';
-import { COLORS, categoryStyle } from '../config/constants';
+import { COLORS, categoryStyle, FONT_FAMILY, TABULAR_NUMS } from '../config/constants';
 import { faviconUrl } from '../utils/domain';
 import { showToast } from '../services/ToastService';
 
@@ -509,6 +509,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     marginBottom: 4,
     marginLeft: 4,
+    fontFamily: FONT_FAMILY,
   },
   sectionHint: {
     color: COLORS.textMuted,
@@ -516,6 +517,7 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     marginBottom: 12,
     marginLeft: 4,
+    fontFamily: FONT_FAMILY,
   },
   offlineBar: {
     backgroundColor: 'rgba(244,63,94,0.12)',
@@ -529,14 +531,15 @@ const styles = StyleSheet.create({
     color: COLORS.danger,
     fontSize: 12,
     fontWeight: '600',
+    fontFamily: FONT_FAMILY,
   },
   addBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(99,102,241,0.14)',
+    backgroundColor: 'rgba(245,158,11,0.1)',
     borderWidth: 1,
-    borderColor: 'rgba(99,102,241,0.5)',
+    borderColor: 'rgba(245,158,11,0.45)',
     borderStyle: 'dashed',
     borderRadius: 12,
     paddingVertical: 11,
@@ -552,20 +555,21 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
     fontSize: 13,
     fontWeight: '700',
+    fontFamily: FONT_FAMILY,
   },
   sourceCard: {
     flexDirection: 'row',
     backgroundColor: COLORS.surface,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: COLORS.borderSoft,
+    borderColor: COLORS.border,
     padding: 12,
     marginBottom: 10,
   },
   avatar: {
     width: 40,
     height: 40,
-    borderRadius: 10,
+    borderRadius: 11,
     marginRight: 12,
     backgroundColor: COLORS.surfaceAlt,
   },
@@ -578,6 +582,7 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     fontSize: 16,
     fontWeight: '800',
+    fontFamily: FONT_FAMILY,
   },
   sourceBody: { flex: 1 },
   sourceTop: {
@@ -589,6 +594,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '800',
     flex: 1,
+    fontFamily: FONT_FAMILY,
   },
   badge: {
     flexDirection: 'row',
@@ -598,7 +604,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     backgroundColor: COLORS.surfaceAlt,
   },
-  badgeOk: { backgroundColor: 'rgba(52,211,153,0.12)' },
+  badgeOk: { backgroundColor: 'rgba(16,185,129,0.12)' },
   badgeErr: { backgroundColor: 'rgba(244,63,94,0.12)' },
   badgeDot: {
     width: 6,
@@ -609,6 +615,7 @@ const styles = StyleSheet.create({
   badgeText: {
     fontSize: 10,
     fontWeight: '800',
+    fontFamily: FONT_FAMILY,
   },
   removeBtn: {
     width: 26,
@@ -628,7 +635,7 @@ const styles = StyleSheet.create({
     width: 26,
     height: 26,
     borderRadius: 8,
-    backgroundColor: 'rgba(56,189,248,0.12)',
+    backgroundColor: 'rgba(245,158,11,0.14)',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 8,
@@ -651,6 +658,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '600',
     flex: 1,
+    fontFamily: FONT_FAMILY,
   },
   userTag: {
     color: COLORS.primary,
@@ -741,15 +749,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 10,
-    backgroundColor: 'rgba(99,102,241,0.85)',
+    backgroundColor: COLORS.primary,
     alignItems: 'center',
     justifyContent: 'center',
     minWidth: 74,
   },
   testBtnText: {
-    color: '#fff',
+    color: COLORS.primaryText,
     fontWeight: '800',
     fontSize: 12,
+    fontFamily: FONT_FAMILY,
   },
   testOk: {
     backgroundColor: 'rgba(52,211,153,0.1)',
@@ -799,12 +808,13 @@ const styles = StyleSheet.create({
   },
   catBtnActive: {
     borderColor: COLORS.primary,
-    backgroundColor: 'rgba(99,102,241,0.15)',
+    backgroundColor: 'rgba(245,158,11,0.14)',
   },
   catBtnText: {
     color: COLORS.textMuted,
     fontSize: 12,
     fontWeight: '600',
+    fontFamily: FONT_FAMILY,
   },
   catBtnTextActive: {
     color: COLORS.primary,
@@ -843,9 +853,10 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   saveBtnText: {
-    color: '#fff',
+    color: COLORS.primaryText,
     fontWeight: '800',
     fontSize: 13,
+    fontFamily: FONT_FAMILY,
   },
   chipRow: {
     flexDirection: 'row',
@@ -870,6 +881,8 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '600',
     marginLeft: 'auto',
+    fontFamily: FONT_FAMILY,
+    fontVariant: TABULAR_NUMS,
   },
   urlRow: {
     flexDirection: 'row',

@@ -60,6 +60,14 @@ export const FED_MACRO_QUERIES = [
   { q: 'Trump trade policy stocks dollar', c: 'Macro' },
 ];
 
+export const HOT_GOOGLE_QUERIES = new Set([
+  'Federal Reserve FOMC interest rate decision',
+  'Powell Fed speech rate cut',
+  'CPI inflation report US',
+  'nonfarm payrolls NFP jobs report',
+  'Trump tariff announcement markets',
+]);
+
 export const GEOPOLITICS_QUERIES = [
   { q: 'war conflict escalation markets', c: 'Geopolitics' },
   { q: 'Russia Ukraine war latest', c: 'Geopolitics' },
@@ -100,6 +108,11 @@ export const DIRECT_RSS_FEEDS = [
   'https://feeds.content.dowjones.io/public/rss/mw_topstories',
   'https://oilprice.com/rss/main',
 ];
+
+export const HOT_DIRECT_RSS_FEEDS = new Set([
+  'https://finance.yahoo.com/news/rssindex',
+  'https://www.cnbc.com/id/100003114/device/rss/rss.html',
+]);
 
 export const EXTRA_FEEDS = [
   {
@@ -172,6 +185,18 @@ export const EXTRA_FEEDS = [
     source: 'Fed Financial Accounts',
     category: 'Macro',
     maxAgeHours: 24 * 7,
+  },
+  {
+    url: 'https://www.forexfactory.com/news.xml',
+    source: 'ForexFactory',
+    category: 'Forex',
+    hot: true,
+  },
+  {
+    url: 'https://www.investing.com/rss/news_285.rss',
+    source: 'Investing.com',
+    category: 'Macro',
+    hot: true,
   },
 ];
 

@@ -99,7 +99,7 @@ export function NewsLogoIcon({ size = 24, color = '#ffffff', strokeWidth = 2.6, 
       strokeLinejoin="round"
     >
       <Path d="M4.5 5.5 V18.5 L15.5 5.5 V18.5" />
-      <Circle cx="19.5" cy="5.5" r="1.6" fill="#f5c542" stroke="none" />
+      <Circle cx="19.5" cy="5.5" r="1.6" fill="#D4AF37" stroke="none" />
     </Svg>
   );
 }

@@ -14,6 +14,18 @@ export async function fetchSources() {
   return json.sources || [];
 }
 
+export async function triggerManualFetch() {
+  const endpoint = `${BACKEND_URL}/api/manual-fetch`;
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    signal: AbortSignal.timeout(90000),
+    headers: { Accept: 'application/json' },
+  });
+  const json = await response.json().catch(() => ({}));
+  if (!response.ok || !json?.ok) throw new Error(json?.error || `HTTP ${response.status}`);
+  return json;
+}
+
 export async function addUserFeed({ name, rssUrl, category }) {
   const response = await fetch(FEEDS_ENDPOINT, {
     method: 'POST',

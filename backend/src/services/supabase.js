@@ -124,14 +124,22 @@ export async function updateUserFeedStatus(id, { ok, error: errorText }) {
   await client.from('user_feeds').update(patch).eq('id', id);
 }
 
-export async function cronAcquireLock(lockSeconds = 90) {
+export async function cronAcquireLock(lockSeconds = 90, lockId = 1) {
   if (!isReady()) return true;
   try {
     const cutoff = new Date(Date.now() - lockSeconds * 1000).toISOString();
+    const nowIso = new Date().toISOString();
+
+    const seed = await client
+      .from('cron_state')
+      .upsert({ id: lockId, ran_at: null }, { onConflict: 'id', ignoreDuplicates: true })
+      .select('id');
+    if (seed.error) return true;
+
     const { data, error } = await client
       .from('cron_state')
-      .update({ ran_at: new Date().toISOString() })
-      .eq('id', 1)
+      .update({ ran_at: nowIso })
+      .eq('id', lockId)
       .or(`ran_at.is.null,ran_at.lt.${cutoff}`)
       .select('id');
     if (error) return true;

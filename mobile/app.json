@@ -9,7 +9,7 @@
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#0b0e14"
+      "backgroundColor": "#0d1117"
     },
     "newArchEnabled": true,
     "web": {
@@ -29,7 +29,7 @@
       "package": "com.aster.marketnews",
       "useNextNotificationsApi": true,
       "adaptiveIcon": {
-        "backgroundColor": "#0b0e14"
+        "backgroundColor": "#0d1117"
       }
     },
     "plugins": [

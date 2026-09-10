@@ -10,7 +10,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import NewsCard from './NewsCard';
-import { COLORS, categoryStyle } from '../config/constants';
+import { COLORS, categoryStyle, FONT_FAMILY, TABULAR_NUMS } from '../config/constants';
 
 const ALL = '__all__';
 
@@ -175,12 +175,13 @@ const styles = StyleSheet.create({
   },
   chipActive: {
     borderColor: COLORS.primary,
-    backgroundColor: 'rgba(56,189,248,0.14)',
+    backgroundColor: 'rgba(245,158,11,0.14)',
   },
   chipText: {
     color: COLORS.textSecondary,
     fontSize: 12,
     fontWeight: '600',
+    fontFamily: FONT_FAMILY,
   },
   chipTextActive: {
     color: COLORS.primary,
@@ -202,6 +203,8 @@ const styles = StyleSheet.create({
     color: COLORS.textMuted,
     fontSize: 10,
     fontWeight: '700',
+    fontFamily: FONT_FAMILY,
+    fontVariant: TABULAR_NUMS,
   },
   chipCountTextActive: {
     color: COLORS.primaryText,
@@ -276,10 +279,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 26,
     paddingVertical: 9,
     borderRadius: 10,
-    backgroundColor: 'rgba(56,189,248,0.08)',
+    backgroundColor: 'rgba(245,158,11,0.08)',
   },
   retryText: {
     color: COLORS.primary,
     fontWeight: '700',
+    fontFamily: FONT_FAMILY,
   },
 });

@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { formatRelativeTime } from '../utils/time_format';
-import { categoryStyle, COLORS, GRADIENTS } from '../config/constants';
+import { categoryStyle, COLORS, GRADIENTS, FONT_FAMILY, TABULAR_NUMS } from '../config/constants';
 import { faviconUrl } from '../utils/domain';
 import TranslatedText from '../components/TranslatedText';
 
@@ -81,7 +81,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 12,
     marginVertical: 5,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: COLORS.border,
     overflow: 'hidden',
     shadowColor: '#000',
     shadowOpacity: 0.2,
@@ -139,6 +139,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 21,
     fontWeight: '600',
+    fontFamily: FONT_FAMILY,
   },
   titleImportant: {
     fontWeight: '700',
@@ -170,11 +171,13 @@ const styles = StyleSheet.create({
   },
   time: {
     fontSize: 12,
-    fontVariant: ['tabular-nums'],
+    fontFamily: FONT_FAMILY,
+    fontVariant: TABULAR_NUMS,
   },
   category: {
     fontSize: 12,
     fontWeight: '600',
     flexShrink: 1,
+    fontFamily: FONT_FAMILY,
   },
 });

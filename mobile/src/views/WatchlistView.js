@@ -10,7 +10,8 @@ import {
 import { Search, Sparkles } from 'lucide-react-native';
 import { BookmarkIcon } from '../components/TabIcons';
 import NewsCard from './NewsCard';
-import { COLORS } from '../config/constants';
+import Card from '../components/Card';
+import { COLORS, FONT_FAMILY, TABULAR_NUMS } from '../config/constants';
 
 const SUGGESTIONS = ['FED', 'Lãi suất', 'XAUUSD', 'Dầu thô'];
 
@@ -65,9 +66,9 @@ export default function WatchlistView({
     <View style={styles.flex}>
       <FlatList
         data={[]}
-        ListHeaderComponent={
+ListHeaderComponent={
           <>
-            <View style={styles.section}>
+            <Card style={styles.keywordCard}>
               <View style={styles.inputRow}>
                 <TextInput
                   style={styles.input}
@@ -80,7 +81,7 @@ export default function WatchlistView({
                   autoCapitalize="none"
                 />
                 <TouchableOpacity style={styles.addBtn} onPress={submitKeyword}>
-                  <Sparkles size={16} strokeWidth={2} color="#fff" />
+                  <Sparkles size={16} strokeWidth={2} color={COLORS.primaryText} />
                   <Text style={styles.addBtnText}>Thêm</Text>
                 </TouchableOpacity>
               </View>
@@ -112,18 +113,20 @@ export default function WatchlistView({
                   ))}
                 </View>
               )}
-            </View>
-
-            <View style={styles.sectionDivider} />
+            </Card>
 
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>
                 TIN KHỚP TỪ KHÓA {matched.length > 0 ? `(${matched.length})` : ''}
               </Text>
               {keywords.length === 0 ? (
-                <EmptyState icon={Search} title="Thêm từ khóa để lọc tin" />
+                <Card style={styles.emptyCard}>
+                  <EmptyState icon={Search} title="Thêm từ khóa để lọc tin" />
+                </Card>
               ) : matched.length === 0 ? (
-                <EmptyState icon={Search} title="Chưa có tin khớp từ khóa" />
+                <Card style={styles.emptyCard}>
+                  <EmptyState icon={Search} title="Chưa có tin khớp từ khóa" />
+                </Card>
               ) : (
                 matched.map((item) => (
                   <NewsCard key={item.id} item={item} onPress={onOpenArticle} />
@@ -131,14 +134,14 @@ export default function WatchlistView({
               )}
             </View>
 
-            <View style={styles.sectionDivider} />
-
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>
                 ĐÃ LƯU {bookmarks.length > 0 ? `(${bookmarks.length})` : ''}
               </Text>
               {bookmarks.length === 0 ? (
-                <EmptyState icon={BookmarkIcon} title="Chưa có tin lưu trữ" />
+                <Card style={styles.emptyCard}>
+                  <EmptyState icon={BookmarkIcon} title="Chưa có tin lưu trữ" />
+                </Card>
               ) : (
                 bookmarks.map((item) => (
                   <View key={item.id}>
@@ -165,19 +168,28 @@ export default function WatchlistView({
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  section: {
-    paddingHorizontal: 14,
-    paddingTop: 14,
+  keywordCard: {
+    marginHorizontal: 12,
+    marginTop: 12,
+    padding: 14,
   },
-  sectionDivider: {
-    height: 10,
+  section: {
+    paddingHorizontal: 12,
+    paddingTop: 16,
   },
   sectionTitle: {
     color: COLORS.textSecondary,
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '800',
-    letterSpacing: 1,
-    marginBottom: 8,
+    letterSpacing: 1.2,
+    marginBottom: 10,
+    marginLeft: 4,
+    fontFamily: FONT_FAMILY,
+    fontVariant: TABULAR_NUMS,
+  },
+  emptyCard: {
+    alignItems: 'center',
+    paddingVertical: 6,
   },
   inputRow: {
     flexDirection: 'row',
@@ -185,7 +197,7 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    backgroundColor: COLORS.surface,
+    backgroundColor: COLORS.surfaceAlt,
     borderWidth: 1,
     borderColor: COLORS.border,
     borderRadius: 12,
@@ -193,6 +205,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     fontSize: 14,
+    fontFamily: FONT_FAMILY,
   },
   addBtn: {
     marginLeft: 10,
@@ -203,10 +216,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   addBtnText: {
-    color: '#fff',
+    color: COLORS.primaryText,
     fontWeight: '800',
     fontSize: 13,
     marginLeft: 6,
+    fontFamily: FONT_FAMILY,
   },
   suggestionWrap: {
     flexDirection: 'row',
@@ -217,9 +231,9 @@ const styles = StyleSheet.create({
   suggestionChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(56,189,248,0.08)',
+    backgroundColor: 'rgba(245,158,11,0.08)',
     borderWidth: 1,
-    borderColor: 'rgba(56,189,248,0.35)',
+    borderColor: 'rgba(245,158,11,0.35)',
     borderStyle: 'dashed',
     borderRadius: 999,
     paddingLeft: 9,
@@ -236,6 +250,7 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
     fontSize: 13,
     fontWeight: '600',
+    fontFamily: FONT_FAMILY,
   },
   chips: {
     flexDirection: 'row',
@@ -247,7 +262,7 @@ const styles = StyleSheet.create({
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.surface,
+    backgroundColor: COLORS.surfaceAlt,
     borderWidth: 1,
     borderColor: COLORS.border,
     borderRadius: 999,
@@ -259,6 +274,7 @@ const styles = StyleSheet.create({
     color: COLORS.text,
     fontSize: 13,
     fontWeight: '600',
+    fontFamily: FONT_FAMILY,
   },
   chipX: {
     color: COLORS.textMuted,
@@ -273,10 +289,11 @@ const styles = StyleSheet.create({
     color: COLORS.textMuted,
     fontSize: 13,
     marginTop: 8,
+    fontFamily: FONT_FAMILY,
   },
   removeBookmark: {
     alignSelf: 'flex-end',
-    marginRight: 16,
+    marginRight: 20,
     marginTop: -4,
     marginBottom: 6,
     paddingHorizontal: 10,
@@ -286,5 +303,6 @@ const styles = StyleSheet.create({
     color: COLORS.textMuted,
     fontSize: 11,
     fontWeight: '600',
+    fontFamily: FONT_FAMILY,
   },
 });

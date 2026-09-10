@@ -1,11 +1,34 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Animated, Easing } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { NewsLogoIcon } from '../components/TabIcons';
-import { COLORS, GRADIENTS, APP_NAME, APP_TAGLINE } from '../config/constants';
+import { COLORS, GRADIENTS, APP_NAME, APP_TAGLINE, FONT_FAMILY } from '../config/constants';
 
 export default function AppHeader({ connected, loading, onRefresh }) {
   const friendlyStatus = connected ? 'Trực tuyến' : 'Ngoại tuyến';
+  const spin = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (!loading) {
+      spin.setValue(0);
+      return;
+    }
+    const animation = Animated.loop(
+      Animated.timing(spin, {
+        toValue: 1,
+        duration: 900,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      })
+    );
+    animation.start();
+    return () => animation.stop();
+  }, [loading, spin]);
+
+  const rotate = spin.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
 
   return (
     <LinearGradient colors={GRADIENTS.header} style={styles.header}>
@@ -31,8 +54,11 @@ export default function AppHeader({ connected, loading, onRefresh }) {
           onPress={onRefresh}
           disabled={loading}
           hitSlop={8}
+          accessibilityLabel="Cập nhật tin mới"
         >
-          <Text style={styles.refreshIcon}>↻</Text>
+          <Animated.Text style={[styles.refreshIcon, { transform: [{ rotate }] }]}>
+            ↻
+          </Animated.Text>
         </TouchableOpacity>
       </View>
     </LinearGradient>
@@ -71,11 +97,13 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: '900',
     letterSpacing: 1.5,
+    fontFamily: FONT_FAMILY,
   },
   tagline: {
     color: COLORS.textMuted,
     fontSize: 11,
     marginTop: 1,
+    fontFamily: FONT_FAMILY,
   },
   right: {
     flexDirection: 'row',
@@ -84,16 +112,16 @@ const styles = StyleSheet.create({
   status: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(13,18,25,0.7)',
+    backgroundColor: 'rgba(22,27,34,0.75)',
     paddingHorizontal: 9,
     paddingVertical: 5,
     borderRadius: 20,
     marginRight: 10,
     borderWidth: 1,
-    borderColor: COLORS.borderSoft,
+    borderColor: COLORS.border,
   },
   statusOffline: {
-    borderColor: 'rgba(244,63,94,0.35)',
+    borderColor: 'rgba(239,68,68,0.35)',
   },
   statusDot: {
     width: 7,
@@ -105,12 +133,13 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     fontSize: 11,
     fontWeight: '600',
+    fontFamily: FONT_FAMILY,
   },
   refreshButton: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(13,18,25,0.7)',
+    backgroundColor: 'rgba(22,27,34,0.75)',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,

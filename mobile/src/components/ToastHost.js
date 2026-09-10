@@ -1,19 +1,20 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Text, TouchableOpacity, View, StyleSheet } from 'react-native';
 import { subscribeToasts } from '../services/ToastService';
-import { COLORS } from '../config/constants';
+import { COLORS, FONT_FAMILY } from '../config/constants';
 
 const MAX_TOASTS = 3;
 const TOAST_TYPES = {
-  success: { color: COLORS.success, icon: '✓', label: 'Thành công' },
-  error: { color: COLORS.danger, icon: '✕', label: 'Lỗi' },
-  warning: { color: COLORS.amber, icon: '⚠', label: 'Chú ý' },
-  info: { color: COLORS.primary, icon: 'ℹ', label: 'Thông báo' },
+  success: { color: COLORS.success, icon: '✓', label: 'THÀNH CÔNG', badge: 'ĐÃ XONG' },
+  error: { color: COLORS.danger, icon: '✕', label: 'LỖI', badge: 'THẤT BẠI' },
+  warning: { color: '#F59E0B', icon: '!', label: 'CẢNH BÁO', badge: 'CHÚ Ý' },
+  info: { color: '#38bdf8', icon: 'i', label: 'THÔNG BÁO', badge: 'CẬP NHẬT' },
 };
 
 function ToastRow({ toast, offset, onDismiss }) {
-  const slide = useRef(new Animated.Value(-120)).current;
+  const slide = useRef(new Animated.Value(-140)).current;
   const style = TOAST_TYPES[toast.type] || TOAST_TYPES.info;
+  const bullets = (toast.message || '\u00a0').split('\n').filter((line) => line.length);
 
   useEffect(() => {
     Animated.spring(slide, {
@@ -24,28 +25,67 @@ function ToastRow({ toast, offset, onDismiss }) {
     }).start();
   }, [slide]);
 
+  const handleAction = (action) => {
+    onDismiss();
+    action.onPress?.();
+  };
+
   return (
     <Animated.View
-      style={[styles.wrap, { top: 8 + offset * 96, transform: [{ translateY: slide }] }]}
+      style={[styles.wrap, { top: 10 + offset * 176, transform: [{ translateY: slide }] }]}
     >
-      <View style={[styles.toast, { borderColor: style.color }]}>
-        <View style={[styles.iconWrap, { backgroundColor: style.color }]}>
-          <Text style={styles.iconText}>{style.icon}</Text>
-        </View>
-        <View style={styles.body}>
-          <Text style={[styles.label, { color: style.color }]}>{style.label}</Text>
-          <Text style={styles.title} numberOfLines={2}>
-            {toast.title}
-          </Text>
-          {toast.message ? (
-            <Text style={styles.message} numberOfLines={2}>
-              {toast.message}
+      <View style={[styles.toast, { borderColor: `${style.color}55` }]}>
+        <View style={styles.headerRow}>
+          <View style={[styles.iconSquircle, { backgroundColor: `${style.color}1f` }]}>
+            <Text style={[styles.iconText, { color: style.color }]}>{style.icon}</Text>
+          </View>
+          <View style={styles.headerText}>
+            <Text style={[styles.label, { color: style.color }]}>{style.label}</Text>
+            <Text style={styles.title} numberOfLines={2}>
+              {toast.title}
             </Text>
-          ) : null}
+          </View>
         </View>
-        <TouchableOpacity onPress={onDismiss} style={styles.closeBtn} hitSlop={10}>
-          <Text style={styles.closeText}>✕</Text>
-        </TouchableOpacity>
+
+        {bullets.length > 0 && (
+          <View style={styles.body}>
+            {bullets.map((line, index) => (
+              <View key={index} style={styles.bulletRow}>
+                <View style={[styles.bulletDot, { backgroundColor: style.color }]} />
+                <Text style={styles.bulletText}>{line}</Text>
+              </View>
+            ))}
+          </View>
+        )}
+
+        <View style={styles.footer}>
+          <View style={[styles.badge, { backgroundColor: `${style.color}1f`, borderColor: `${style.color}40` }]}>
+            <Text style={[styles.badgeText, { color: style.color }]}>
+              {toast.badge || style.badge}
+            </Text>
+          </View>
+          <View style={styles.actions}>
+            {toast.actions.map((action, index) => (
+              <TouchableOpacity
+                key={index}
+                style={[
+                  styles.pill,
+                  action.primary ? styles.pillPrimary : styles.pillGhost,
+                  action.primary && { backgroundColor: style.color },
+                ]}
+                onPress={() => handleAction(action)}
+                activeOpacity={0.85}
+              >
+                <Text style={[styles.pillText, action.primary ? styles.pillTextPrimary : { color: style.color }]}>
+                  {action.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+            <TouchableOpacity style={[styles.pill, styles.pillGhost]} onPress={onDismiss} activeOpacity={0.85}>
+              <Text style={[styles.pillText, { color: COLORS.textMuted }]}>Để sau</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </View>
     </Animated.View>
   );
@@ -84,60 +124,117 @@ const styles = StyleSheet.create({
   },
   toast: {
     width: '100%',
-    maxWidth: 520,
-    flexDirection: 'row',
-    backgroundColor: '#0d1420',
-    borderRadius: 14,
+    maxWidth: 420,
+    backgroundColor: '#131722',
+    borderRadius: 16,
     borderWidth: 1,
-    overflow: 'hidden',
+    padding: 14,
     shadowColor: '#000',
-    shadowOpacity: 0.55,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 12,
+    shadowOpacity: 0.6,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 14,
+  },
+  headerRow: {
+    flexDirection: 'row',
     alignItems: 'center',
   },
-  iconWrap: {
+  iconSquircle: {
     width: 38,
-    alignSelf: 'stretch',
+    height: 38,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
+    marginRight: 12,
   },
   iconText: {
-    color: '#fff',
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '900',
   },
-  body: {
+  headerText: {
     flex: 1,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
   },
   label: {
     fontSize: 9,
     fontWeight: '900',
-    letterSpacing: 1,
+    letterSpacing: 1.3,
     marginBottom: 2,
   },
   title: {
     color: COLORS.text,
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 14,
+    lineHeight: 19,
     fontWeight: '700',
+    fontFamily: FONT_FAMILY,
   },
-  message: {
-    color: COLORS.textMuted,
-    fontSize: 11.5,
-    lineHeight: 16,
-    marginTop: 2,
+  body: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.borderSoft,
   },
-  closeBtn: {
-    width: 38,
+  bulletRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginTop: 5,
+  },
+  bulletDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 3,
+    marginTop: 6,
+    marginRight: 8,
+  },
+  bulletText: {
+    flex: 1,
+    color: COLORS.textSecondary,
+    fontSize: 12.5,
+    lineHeight: 17,
+    fontFamily: FONT_FAMILY,
+  },
+  footer: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    marginTop: 12,
   },
-  closeText: {
-    color: COLORS.textMuted,
-    fontSize: 13,
+  badge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 9,
+    paddingVertical: 3,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+  badgeText: {
+    fontSize: 9,
+    fontWeight: '900',
+    letterSpacing: 1,
+  },
+  actions: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 8,
+  },
+  pill: {
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 999,
+  },
+  pillPrimary: {
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  pillGhost: {
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+  },
+  pillText: {
+    fontSize: 12,
+    fontWeight: '800',
+    fontFamily: FONT_FAMILY,
+  },
+  pillTextPrimary: {
+    color: COLORS.primaryText,
   },
 });

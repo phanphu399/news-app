@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, StatusBar, Modal, Platform } from 'react-native';
 import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FlameIcon, MarketIcon, CalendarDotIcon, BookmarkIcon, RadioIcon } from './src/components/TabIcons';
@@ -14,9 +14,10 @@ import TradingViewScreen from './src/views/TradingViewScreen';
 import AppHeader from './src/views/AppHeader';
 import ToastHost from './src/components/ToastHost';
 import { showToast } from './src/services/ToastService';
+import { triggerManualFetch } from './src/services/SourceService';
 import { LocalStorageService } from './src/services/LocalStorageService';
 import { normalizeUrl } from './src/utils/url';
-import { COLORS, TAB_INACTIVE, TAB_ACTIVE } from './src/config/constants';
+import { COLORS, TAB_INACTIVE, TAB_ACTIVE, FONT_FAMILY, TABULAR_NUMS } from './src/config/constants';
 
 const TABS = {
   NEWS: 'news',
@@ -113,6 +114,41 @@ function MainScreen() {
   const vm = viewModelRef.current;
 
   const [state, setState] = useState({ items: [], loading: true, error: null });
+  const [manualRefreshing, setManualRefreshing] = useState(false);
+
+  const reloadAll = useCallback(async () => {
+    if (manualRefreshing) return;
+    setManualRefreshing(true);
+    showToast({ type: 'info', title: 'Đang cào tin mới…' });
+    try {
+      const result = await triggerManualFetch();
+      await vm.refresh();
+      if (!result?.ok) {
+        showToast({
+          type: 'error',
+          title: 'Cập nhật thất bại',
+          message: result?.error || 'Không xác định được lỗi.',
+        });
+      } else if (result.upserted > 0) {
+        showToast({
+          type: 'success',
+          title: `Đã cập nhật ${result.upserted} tin mới`,
+          message: `Scraped ${result.scraped} bài hệ thống + ${result.user_feeds} nguồn của bạn.`,
+        });
+      } else {
+        showToast({
+          type: 'info',
+          title: 'Không có tin mới',
+          message: 'Đã kiểm tra tất cả nguồn tin, mọi thứ đều cập nhật.',
+        });
+      }
+    } catch (error) {
+      await vm.refresh();
+      showToast({ type: 'error', title: 'Cập nhật thất bại', message: error.message });
+    } finally {
+      setManualRefreshing(false);
+    }
+  }, [manualRefreshing, vm]);
 
   const dismissToast = (id) => {
     const timer = toastTimersRef.current.get(id);
@@ -216,16 +252,20 @@ function MainScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.background} />
-      <AppHeader connected={connected} loading={state.loading} onRefresh={() => vm.refresh()} />
+      <AppHeader
+        connected={connected}
+        loading={state.loading || manualRefreshing}
+        onRefresh={reloadAll}
+      />
 
       <View style={styles.content}>
         {activeTab === TABS.NEWS && (
           <NewsListView
             items={state.items}
-            loading={state.loading}
+            loading={state.loading || manualRefreshing}
             error={state.error}
             onItemPress={openArticle}
-            onRefresh={() => vm.refresh()}
+            onRefresh={reloadAll}
           />
         )}
         {activeTab === TABS.GOLD && <TradingViewScreen />}
@@ -346,7 +386,7 @@ const styles = StyleSheet.create({
   },
   tabBar: {
     flexDirection: 'row',
-    backgroundColor: '#0d1119',
+    backgroundColor: '#131722',
     borderTopWidth: 1,
     borderTopColor: COLORS.borderSoft,
     paddingTop: 6,
@@ -368,6 +408,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '600',
     marginTop: 3,
+    fontFamily: FONT_FAMILY,
   },
   tabLabelActive: {
     color: TAB_ACTIVE,
@@ -399,6 +440,8 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 9,
     fontWeight: '800',
+    fontFamily: FONT_FAMILY,
+    fontVariant: TABULAR_NUMS,
   },
   modal: {
     flex: 1,
@@ -407,7 +450,7 @@ const styles = StyleSheet.create({
   modalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#0d1119',
+    backgroundColor: '#131722',
     paddingHorizontal: 8,
     paddingVertical: 10,
     borderBottomWidth: 1,
@@ -432,6 +475,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginLeft: 12,
     flex: 1,
+    fontFamily: FONT_FAMILY,
   },
   externalButton: {
     paddingHorizontal: 12,
@@ -477,10 +521,12 @@ const styles = StyleSheet.create({
     color: COLORS.text,
     fontSize: 13,
     fontWeight: '800',
+    fontFamily: FONT_FAMILY,
   },
   installSub: {
     color: COLORS.textMuted,
     fontSize: 11,
     marginTop: 1,
+    fontFamily: FONT_FAMILY,
   },
 });

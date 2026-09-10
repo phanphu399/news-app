@@ -1,4 +1,5 @@
 import Constants from 'expo-constants';
+import { Platform } from 'react-native';
 
 export const SUPABASE_URL =
   Constants.expoConfig?.extra?.supabaseUrl || process.env.EXPO_PUBLIC_SUPABASE_URL || '';
@@ -10,35 +11,37 @@ export const BACKEND_URL =
   process.env.EXPO_PUBLIC_BACKEND_URL ||
   'https://news-app-realtime-seven.vercel.app';
 
-// Palette
+// Palette — dark mode chuyên nghiệp kiểu trading terminal
 export const COLORS = {
-  background: '#0b0e14',
-  surface: '#131a26',
-  surfaceAlt: '#1a2231',
-  surfaceElevated: '#182134',
-  border: '#223046',
-  borderSoft: '#1a2438',
-  primary: '#38bdf8',
-  primaryText: '#082f49',
+  background: '#0d1117',
+  surface: '#161b22',
+  surfaceAlt: '#1c2128',
+  surfaceElevated: '#1f2630',
+  border: 'rgba(255,255,255,0.08)',
+  borderSoft: 'rgba(255,255,255,0.05)',
+  primary: '#F59E0B',
+  primaryText: '#0d1117',
   important: '#f43f5e',
   importantDeep: '#e11d48',
   importantSoft: '#2a1220',
-  text: '#e8eef7',
-  textSecondary: '#8fa3bf',
-  textMuted: '#5d708c',
-  gold: '#f5c542',
-  green: '#34d399',
-  success: '#34d399',
-  danger: '#fb7185',
-  amber: '#fbbf24',
+  text: '#e6edf3',
+  textSecondary: '#8b949e',
+  textMuted: '#6e7681',
+  gold: '#D4AF37',
+  green: '#10b981',
+  success: '#10b981',
+  danger: '#ef4444',
+  amber: '#F59E0B',
+  up: '#10b981',
+  down: '#ef4444',
 };
 
 export const GRADIENTS = {
-  header: ['#101a2c', '#0b0e14'],
-  brand: ['#38bdf8', '#6366f1'],
-  gold: ['#fbbf24', '#f97316'],
+  header: ['#131722', '#0d1117'],
+  brand: ['#F59E0B', '#D4AF37'],
+  gold: ['#F59E0B', '#B45309'],
   importantRibbon: ['#e11d48', '#9f1239'],
-  cardTop: ['rgba(56,189,248,0.16)', 'rgba(13,18,26,0)'],
+  cardTop: ['rgba(245,158,11,0.14)', 'rgba(13,17,23,0)'],
 };
 
 export const IMPORTANT_BORDER_COLOR = COLORS.importantDeep;
@@ -51,12 +54,12 @@ export const ACCENT_COLOR = COLORS.primary;
 
 export const CATEGORY_STYLES = {
   Macro: { label: 'KINH TẾ VĨ MÔ', short: 'Vĩ mô', color: '#38bdf8', bg: 'rgba(56,189,248,0.12)' },
-  XAUUSD: { label: 'VÀNG & DẦU', short: 'Vàng', color: '#f5c542', bg: 'rgba(245,197,66,0.12)' },
+  XAUUSD: { label: 'VÀNG & DẦU', short: 'Vàng', color: '#D4AF37', bg: 'rgba(212,175,55,0.14)' },
   Forex: { label: 'NGOẠI TỆ', short: 'FX', color: '#22d3ee', bg: 'rgba(34,211,238,0.12)' },
   Crypto: { label: 'TIỀN SỐ', short: 'Crypto', color: '#f97316', bg: 'rgba(249,115,22,0.12)' },
-  Geopolitics: { label: 'ĐỊA CHÍNH TRỊ', short: 'Chiến sự', color: '#fb7185', bg: 'rgba(251,113,133,0.12)' },
+  Geopolitics: { label: 'ĐỊA CHÍNH TRỊ', short: 'Chiến sự', color: '#f43f5e', bg: 'rgba(244,63,94,0.12)' },
   Paywall: { label: 'BÀI TRẢ PHÍ', short: 'Trả phí', color: '#a78bfa', bg: 'rgba(167,139,250,0.12)' },
-  Custom: { label: 'FEED CỦA BẠN', short: 'Bạn', color: '#34d399', bg: 'rgba(52,211,153,0.12)' },
+  Custom: { label: 'FEED CỦA BẠN', short: 'Bạn', color: '#10b981', bg: 'rgba(16,185,129,0.12)' },
 };
 
 export function categoryStyle(category) {
@@ -67,5 +70,14 @@ export const REFRESH_INTERVAL_MS = 5 * 60 * 1000;
 export const APP_NAME = 'NEWS';
 export const APP_TAGLINE = 'Tin thị trường · Forex · Macro';
 
-export const TAB_INACTIVE = '#94a3b8';
-export const TAB_ACTIVE = '#f59e0b';
+export const TAB_INACTIVE = '#8b949e';
+export const TAB_ACTIVE = '#F59E0B';
+
+// Font sans-serif chuyên nghiệp (Inter/Roboto/SF Pro trên web)
+export const FONT_FAMILY = Platform.select({
+  web: "'Inter', 'Roboto', system-ui, -apple-system, 'Segoe UI', sans-serif",
+  default: undefined,
+});
+
+// Dùng cho mọi con số (giá, thời gian, số đếm) để giữ thẳng hàng
+export const TABULAR_NUMS = ['tabular-nums'];

@@ -15,16 +15,16 @@ news-app/
 ├── .github/workflows/ci.yml     # Pipeline CI tự động kiểm tra backend + mobile
 │
 ├── backend/                     # [VERCEL SERVERLESS PROJECT]
-│   ├── api/cron-fetch.js        # Endpoint chạy định kỳ (1 phút/lần) — Controller (Nhạc trưởng)
+│   ├── api/cron-fetch.js        # Endpoint chạy định kỳ theo tier (hot 1p / standard 5p / full 1d) — Controller
 │   ├── src/
-│   │   ├── config/constants.js  # Keywords đỏ, URL Google News, RSS feeds
+│   │   ├── config/constants.js  # Keywords đỏ, URL Google News, RSS feeds + tier hot
 │   │   ├── services/
-│   │   │   ├── scraper.js       # Cào RSS + parse XML (fast-xml-parser)
-│   │   │   ├── supabase.js      # Upsert, kiểm tra tồn tại, dọn dữ liệu 3 ngày
+│   │   │   ├── scraper.js       # Cào RSS theo tier + parse XML (fast-xml-parser)
+│   │   │   ├── supabase.js      # Upsert, lock tier, dọn dữ liệu, realtime
 │   │   │   └── fcm.js           # Firebase Cloud Messaging (HTTP v1)
 │   │   └── utils/helpers.js     # Băm URL → ID, check tin đỏ, sanitize
 │   ├── package.json
-│   ├── vercel.json              # Cron "* * * * *" → /api/cron-fetch
+│   ├── vercel.json              # Cron fallback "0 1 * * *" → /api/cron-fetch?tier=full
 │   └── .env.example
 │
 ├── mobile/                      # [MOBILE APP — EXPO / REACT NATIVE]
@@ -117,16 +117,24 @@ vercel --prod
 Đặt env trên Vercel (xem `backend/.env.example`).
 
 ### External Scheduler — chạy mỗi phút (Hobby plan)
-Vì Hobby không cho cron mỗi phút, dùng 1 dịch vụ scheduler để gọi endpoint mỗi phút:
+Vì Hobby không cho cron mỗi phút, dùng dịch vụ scheduler gọi endpoint theo **tier**:
+
+| Tier | URL | Interval | Mục đích |
+|---|---|---|---|
+| hot | `.../api/cron-fetch?tier=hot` | 1 phút | Cào ~9 feed phát tin liên tục (ForexFactory, Investing, Yahoo, CNBC, 5 query Google macro nóng) → realtime tức thì |
+| standard | `.../api/cron-fetch?tier=standard` | 5 phút | Cào các feed còn lại (geopolitics, vàng, forex, crypto, Fed...) |
+| full (fallback) | `.../api/cron-fetch?tier=full` | 1 ngày (Vercel cron) | Toàn bộ + cleanup + reclassify |
 
 1. Deploy thành công → lấy URL: `https://<your-app>.vercel.app/api/cron-fetch`
 2. Đặt `CRON_SECRET` trong Vercel env (VD: `8f3a...`).
 3. Tạo scheduler tại **cron-job.org** (hoặc Crontap, Upstash QStash):
-   - **URL**: `https://<your-app>.vercel.app/api/cron-fetch`
-   - **Method**: `GET`
-   - **Interval**: `1` phút (`* * * * *`)
-   - **Headers**: `Authorization: Bearer <CRON_SECRET>`
-4. Bấm **Enable/Start** → endpoint sẽ được gọi mỗi phút, hòan toàn không lệ thuộc giới hạn cron của Vercel.
+   - **hot** — URL: `.../api/cron-fetch?tier=hot`, Method `GET`, Interval `1` phút (`* * * * *`)
+   - **standard** — URL: `.../api/cron-fetch?tier=standard`, Method `GET`, Interval `5` phút
+   - Headers mỗi job: `Authorization: Bearer <CRON_SECRET>`
+4. Bấm **Enable/Start** → endpoint được gọi theo nhịp, không lệ thuộc giới hạn cron Vercel.
+5. Vercel cron `0 1 * * *` (`?tier=full`) giữ làm fallback ngày — nguồn hot vẫn đảm bảo realtime khi scheduler ngoài dừng.
+
+**Supabase Realtime chính là WebSocket** — mobile nhận INSERT tức thì qua `postgres_changes`, không cần tự dựng WebSocket riêng. Tiering chỉ giảm tải cào/upsert chứ không đổi kênh truyền.
 
 ### Database (Supabase)
 Chạy `db/schema.sql` trong Supabase SQL Editor (bảng + trigger dọn 3 ngày + realtime).

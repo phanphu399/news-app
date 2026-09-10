@@ -1,10 +1,11 @@
 import React, { useEffect, useRef } from 'react';
 import { Animated, Text, TouchableOpacity, View, StyleSheet } from 'react-native';
-import { COLORS, categoryStyle } from '../config/constants';
+import { COLORS, categoryStyle, FONT_FAMILY } from '../config/constants';
 import TranslatedText from '../components/TranslatedText';
 
 export default function NotificationToast({ item, onPress, onClose, offset }) {
-  const slide = useRef(new Animated.Value(-120)).current;
+  const slide = useRef(new Animated.Value(-140)).current;
+  const cat = categoryStyle(item.category);
 
   useEffect(() => {
     Animated.spring(slide, {
@@ -15,23 +16,32 @@ export default function NotificationToast({ item, onPress, onClose, offset }) {
     }).start();
   }, []);
 
-  const cat = categoryStyle(item.category);
-
   return (
-    <Animated.View style={[styles.wrap, { top: 8 + offset * 96, transform: [{ translateY: slide }] }]}>
-      <TouchableOpacity style={styles.toast} activeOpacity={0.9} onPress={onPress}>
-        <View style={[styles.accent, { backgroundColor: cat.color }]} />
-        <View style={styles.body}>
-          <View style={styles.metaRow}>
-            <Text style={[styles.cat, { color: cat.color }]}>{cat.label}</Text>
-            <Text style={styles.badge}>⚡ TIN MỚI</Text>
+    <Animated.View style={[styles.wrap, { top: 10 + offset * 148, transform: [{ translateY: slide }] }]}>
+      <View style={[styles.toast, { borderColor: `${cat.color}55` }]}>
+        <View style={styles.headerRow}>
+          <View style={[styles.iconSquircle, { backgroundColor: `${cat.color}1f` }]}>
+            <Text style={[styles.iconText, { color: cat.color }]}>⚡</Text>
           </View>
-          <TranslatedText style={styles.title} numberOfLines={2} text={item.title} />
+          <View style={styles.headerText}>
+            <Text style={[styles.label, { color: cat.color }]}>{cat.label}</Text>
+            <TranslatedText style={styles.title} numberOfLines={2} text={item.title} />
+          </View>
         </View>
-        <TouchableOpacity style={styles.closeBtn} onPress={onClose} hitSlop={10}>
-          <Text style={styles.closeText}>✕</Text>
-        </TouchableOpacity>
-      </TouchableOpacity>
+
+        <View style={styles.footer}>
+          <View style={[styles.badge, { backgroundColor: `${cat.color}1f`, borderColor: `${cat.color}40` }]}>
+            <View style={[styles.badgeDot, { backgroundColor: cat.color }]} />
+            <Text style={[styles.badgeText, { color: cat.color }]}>TIN MỚI</Text>
+          </View>
+          <TouchableOpacity style={[styles.pill, { backgroundColor: cat.color }]} onPress={onPress} activeOpacity={0.85}>
+            <Text style={styles.pillText}>Đọc ngay</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.pill, styles.pillGhost]} onPress={onClose} activeOpacity={0.85}>
+            <Text style={[styles.pillText, { color: COLORS.textMuted }]}>Để sau</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
     </Animated.View>
   );
 }
@@ -43,59 +53,95 @@ const styles = StyleSheet.create({
     right: 0,
     zIndex: 1000,
     alignItems: 'center',
+    paddingHorizontal: 10,
   },
   toast: {
     width: '100%',
-    flexDirection: 'row',
-    backgroundColor: '#0d1420',
-    borderRadius: 14,
+    maxWidth: 420,
+    backgroundColor: '#131722',
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: COLORS.border,
-    overflow: 'hidden',
+    padding: 14,
     shadowColor: '#000',
-    shadowOpacity: 0.55,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 10,
+    shadowOpacity: 0.6,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 12,
   },
-  accent: {
-    width: 4,
-    alignSelf: 'stretch',
-  },
-  body: {
-    flex: 1,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-  },
-  metaRow: {
+  headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 3,
   },
-  cat: {
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 0.6,
+  iconSquircle: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
   },
-  badge: {
+  iconText: {
+    fontSize: 17,
+    fontWeight: '900',
+  },
+  headerText: {
+    flex: 1,
+  },
+  label: {
     fontSize: 9,
-    color: COLORS.textMuted,
-    fontWeight: '700',
-    marginLeft: 'auto',
+    fontWeight: '900',
+    letterSpacing: 1.3,
+    marginBottom: 2,
   },
   title: {
     color: COLORS.text,
     fontSize: 13.5,
     lineHeight: 19,
     fontWeight: '600',
+    fontFamily: FONT_FAMILY,
   },
-  closeBtn: {
-    width: 40,
+  footer: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
+    gap: 8,
+    marginTop: 12,
   },
-  closeText: {
-    color: COLORS.textMuted,
-    fontSize: 14,
+  badge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    marginRight: 'auto',
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+  badgeDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 3,
+    marginRight: 5,
+  },
+  badgeText: {
+    fontSize: 9,
+    fontWeight: '900',
+    letterSpacing: 1,
+  },
+  pill: {
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 999,
+  },
+  pillGhost: {
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+  },
+  pillText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: COLORS.primaryText,
+    fontFamily: FONT_FAMILY,
   },
 });

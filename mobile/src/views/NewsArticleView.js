@@ -10,7 +10,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { fetchArticle } from '../services/ReaderService';
-import { COLORS, categoryStyle } from '../config/constants';
+import { COLORS, categoryStyle, FONT_FAMILY } from '../config/constants';
 import TranslatedText from '../components/TranslatedText';
 
 export default function NewsArticleView({ item, onOpenOriginal, onToggleBookmark, isBookmarked }) {
@@ -169,7 +169,7 @@ const styles = StyleSheet.create({
   primaryBtn: {
     borderWidth: 1,
     borderColor: COLORS.primary,
-    backgroundColor: 'rgba(56,189,248,0.1)',
+    backgroundColor: 'rgba(245,158,11,0.1)',
     paddingHorizontal: 26,
     paddingVertical: 11,
     borderRadius: 12,
@@ -178,6 +178,7 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
     fontWeight: '800',
     fontSize: 14,
+    fontFamily: FONT_FAMILY,
   },
   ghostBtn: {
     marginTop: 12,
@@ -194,10 +195,11 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     fontSize: 13,
     fontWeight: '600',
+    fontFamily: FONT_FAMILY,
   },
   reader: {
     flex: 1,
-    backgroundColor: '#0d1320',
+    backgroundColor: COLORS.background,
   },
   readerContent: {
     paddingBottom: 12,
@@ -252,6 +254,7 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     paddingHorizontal: 18,
     marginTop: 14,
+    fontFamily: FONT_FAMILY,
   },
   skeletonTrail: {
     color: COLORS.borderSoft,
