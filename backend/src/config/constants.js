@@ -13,21 +13,24 @@ export const RED_ALERT_KEYWORDS = [
   'FOMC',
   'CPI',
   'PPI',
+  'NFP',
+  'NONFARM',
   'XAUUSD',
   'GOLD',
   'OIL',
   'CRUDE',
   'WAR',
   'ATTACK',
+  'STRIKE',
+  'MISSILE',
   'NUCLEAR',
   'SANCTION',
   'RECESSION',
   'RATE CUT',
   'RATE HIKE',
   'INTEREST RATE',
+  'FED FUNDS',
   'GDP',
-  'NFP',
-  'NONFARM',
   'UNEMPLOYMENT',
   'GEOPOLITICAL',
   'INVASION',
@@ -36,20 +39,53 @@ export const RED_ALERT_KEYWORDS = [
   'COLLAPSE',
   'TREASURY',
   'INFLATION',
+  'BITCOIN',
+  'BTC',
+  'TARIFF',
+  'TRUMP',
+  'YEN',
+  'YUAN',
+  'DOLLAR INDEX',
+  'DXY',
 ];
 
-export const MACRO_QUERIES = [
-  'FED FOMC interest rate',
-  'CPI inflation report',
-  'Federal Reserve Powell speech',
-  'US economic data',
-  'GDP growth forecast',
+export const FED_MACRO_QUERIES = [
+  { q: 'Federal Reserve FOMC interest rate decision', c: 'Macro' },
+  { q: 'Powell Fed speech rate cut', c: 'Macro' },
+  { q: 'CPI inflation report US', c: 'Macro' },
+  { q: 'PPI producer price index US', c: 'Macro' },
+  { q: 'nonfarm payrolls NFP jobs report', c: 'Macro' },
+  { q: 'Fed funds rate expectations', c: 'Macro' },
+  { q: 'Trump tariff announcement markets', c: 'Macro' },
+  { q: 'Trump trade policy stocks dollar', c: 'Macro' },
 ];
 
-export const COMMODITY_QUERIES = [
-  'XAUUSD gold price',
-  'crude oil WTI Brent',
-  'commodities market today',
+export const GEOPOLITICS_QUERIES = [
+  { q: 'war conflict escalation markets', c: 'Geopolitics' },
+  { q: 'Russia Ukraine war latest', c: 'Geopolitics' },
+  { q: 'Middle East Iran Israel conflict oil', c: 'Geopolitics' },
+  { q: 'Red Sea shipping attacks', c: 'Geopolitics' },
+  { q: 'Taiwan China military tension', c: 'Geopolitics' },
+  { q: 'missile strike gold oil price', c: 'Geopolitics' },
+];
+
+export const GOLD_OIL_QUERIES = [
+  { q: 'XAUUSD gold price today', c: 'XAUUSD' },
+  { q: 'crude oil WTI Brent price', c: 'XAUUSD' },
+  { q: 'gold safe haven dollar', c: 'XAUUSD' },
+];
+
+export const FOREX_QUERIES = [
+  { q: 'USD JPY yen exchange rate', c: 'Forex' },
+  { q: 'USD CNY yuan exchange rate', c: 'Forex' },
+  { q: 'dollar index DXY', c: 'Forex' },
+  { q: 'EUR USD euro exchange rate', c: 'Forex' },
+];
+
+export const CRYPTO_QUERIES = [
+  { q: 'Bitcoin BTC price', c: 'Crypto' },
+  { q: 'cryptocurrency market Trump', c: 'Crypto' },
+  { q: 'Ethereum crypto price', c: 'Crypto' },
 ];
 
 export const PAYWALL_QUERIES = [

@@ -2,8 +2,6 @@ import { createClient } from '@supabase/supabase-js';
 import {
   DIRECT_RSS_FEEDS,
   EXTRA_FEEDS,
-  MACRO_QUERIES,
-  COMMODITY_QUERIES,
   KNOWN_SOURCES,
 } from '../src/config/constants.js';
 

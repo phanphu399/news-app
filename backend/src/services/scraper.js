@@ -2,8 +2,11 @@ import { XMLParser } from 'fast-xml-parser';
 import {
   DIRECT_RSS_FEEDS,
   EXTRA_FEEDS,
-  MACRO_QUERIES,
-  COMMODITY_QUERIES,
+  FED_MACRO_QUERIES,
+  GEOPOLITICS_QUERIES,
+  GOLD_OIL_QUERIES,
+  FOREX_QUERIES,
+  CRYPTO_QUERIES,
   PAYWALL_QUERIES,
   MAX_ITEMS_PER_FEED,
   KNOWN_SOURCES,
@@ -26,25 +29,21 @@ function googleNewsQueryUrl(query) {
   return `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=en-US&gl=US&ceid=US:en`;
 }
 
-function categorizeQuery(query) {
-  const lower = query.toLowerCase();
-  if (
-    lower.includes('gold') ||
-    lower.includes('xau') ||
-    lower.includes('oil') ||
-    lower.includes('crude') ||
-    lower.includes('commodit')
-  ) {
-    return 'XAUUSD';
-  }
-  return 'Macro';
-}
-
 function buildGoogleNewsFeeds() {
-  const queries = [...MACRO_QUERIES, ...COMMODITY_QUERIES, ...PAYWALL_QUERIES];
-  return queries.map((query) => ({
+  const tagQueries = (entries, category) =>
+    entries.map((query) => ({ query, category }));
+  const queries = [
+    ...tagQueries(FED_MACRO_QUERIES.map((q) => q.q), 'Macro'),
+    ...tagQueries(GEOPOLITICS_QUERIES.map((q) => q.q), 'Geopolitics'),
+    ...tagQueries(GOLD_OIL_QUERIES.map((q) => q.q), 'XAUUSD'),
+    ...tagQueries(FOREX_QUERIES.map((q) => q.q), 'Forex'),
+    ...tagQueries(CRYPTO_QUERIES.map((q) => q.q), 'Crypto'),
+    ...PAYWALL_QUERIES.map((query) => ({ query, category: 'Paywall' })),
+  ];
+
+  return queries.map(({ query, category }) => ({
     url: googleNewsQueryUrl(query),
-    category: categorizeQuery(query),
+    category,
     source: KNOWN_SOURCES.GOOGLE_NEWS,
   }));
 }

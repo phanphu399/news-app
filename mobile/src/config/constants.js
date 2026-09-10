@@ -52,8 +52,10 @@ export const ACCENT_COLOR = COLORS.primary;
 export const CATEGORY_STYLES = {
   Macro: { label: 'KINH TẾ VĨ MÔ', short: 'Vĩ mô', color: '#38bdf8', bg: 'rgba(56,189,248,0.12)' },
   XAUUSD: { label: 'VÀNG & DẦU', short: 'Vàng', color: '#f5c542', bg: 'rgba(245,197,66,0.12)' },
+  Forex: { label: 'NGOẠI TỆ', short: 'FX', color: '#22d3ee', bg: 'rgba(34,211,238,0.12)' },
+  Crypto: { label: 'TIỀN SỐ', short: 'Crypto', color: '#f97316', bg: 'rgba(249,115,22,0.12)' },
+  Geopolitics: { label: 'ĐỊA CHÍNH TRỊ', short: 'Chiến sự', color: '#fb7185', bg: 'rgba(251,113,133,0.12)' },
   Paywall: { label: 'BÀI TRẢ PHÍ', short: 'Trả phí', color: '#a78bfa', bg: 'rgba(167,139,250,0.12)' },
-  Geopolitics: { label: 'ĐỊA CHÍNH TRỊ', short: 'Địa chính trị', color: '#fb7185', bg: 'rgba(251,113,133,0.12)' },
   Custom: { label: 'FEED CỦA BẠN', short: 'Bạn', color: '#34d399', bg: 'rgba(52,211,153,0.12)' },
 };
 
