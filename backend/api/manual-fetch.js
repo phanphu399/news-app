@@ -4,8 +4,10 @@ import {
   listUserFeeds,
   updateUserFeedStatus,
   cleanupOldNews,
+  deleteSpamNews,
   reclassifyPaywallToMacro,
 } from '../src/services/supabase.js';
+import { isJunkItem, buildTitleSelection } from '../src/utils/spamFilter.js';
 
 const MIN_INTERVAL_MS = 60 * 1000;
 let lastRunAt = 0;
@@ -37,7 +39,10 @@ export default async function handler(request, response) {
     ok: true,
     scraped: 0,
     user_feeds: 0,
+    spam_filtered: 0,
+    duplicate_filtered: 0,
     upserted: 0,
+    junk_deleted: 0,
     message: '',
   };
 
@@ -69,17 +74,25 @@ export default async function handler(request, response) {
     for (const list of results) userItems.push(...list);
     payload.user_feeds = userItems.length;
 
-    const items = [...systemItems, ...userItems];
+    const merged = [...systemItems, ...userItems];
+    const clean = merged.filter((item) => !isJunkItem(item));
+    payload.spam_filtered = merged.length - clean.length;
+    const { kept: items, dropped: duped } = buildTitleSelection(clean);
+    payload.duplicate_filtered = duped.length;
+
     const { inserted } = await upsertNews(items);
     payload.upserted = inserted ?? 0;
+
+    const junk = await deleteSpamNews({ force: true });
+    payload.junk_deleted = junk.deleted ?? 0;
 
     await cleanupOldNews({ force: true });
     await reclassifyPaywallToMacro();
 
     payload.message =
       payload.upserted > 0
-        ? `Đã cập nhật ${payload.upserted} tin mới.`
-        : 'Đã kiểm tra, không có tin mới.';
+        ? `Đã cập nhật ${payload.upserted} tin mới (chặn ${payload.spam_filtered} rác + ${payload.duplicate_filtered} trùng, xóa ${payload.junk_deleted} rác tồn đọng).`
+        : `Không có tin mới (chặn ${payload.spam_filtered} rác + ${payload.duplicate_filtered} trùng, xóa ${payload.junk_deleted} rác tồn đọng).`;
   } catch (error) {
     console.error('[manual-fetch]', error);
     payload.ok = false;

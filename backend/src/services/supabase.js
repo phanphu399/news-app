@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { isJunkTitle, titleKey } from '../utils/spamFilter.js';
 
 const supabaseUrl = process.env.SUPABASE_URL || '';
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
@@ -85,6 +86,77 @@ export async function cleanupOldNews({ force = false } = {}) {
   }
 
   return { deleted: Array.isArray(deletedRows) ? deletedRows.length : 0 };
+}
+
+let lastJunkCleanAt = 0;
+const JUNK_CLEAN_MIN_INTERVAL_MS = 60 * 60 * 1000;
+
+/**
+ * Quét các tin đã lưu, xóa rác (spam title) và bài trùng title dư thừa.
+ * Giữ lại bài "đại diện" mỗi title: ưu tiên important, nguồn thật, mới nhất.
+ * Chạy từ full-tier cron (tự ghìm 1h) hoặc qua /api/cleanup (force).
+ */
+export async function deleteSpamNews({ limit = 500, force = false } = {}) {
+  if (!isReady()) return { checked: 0, deleted: 0 };
+
+  const now = Date.now();
+  if (!force && now - lastJunkCleanAt < JUNK_CLEAN_MIN_INTERVAL_MS) {
+    return { checked: 0, deleted: 0, skipped: true };
+  }
+  if (!force) lastJunkCleanAt = now;
+
+  const { data: rows, error: selectError } = await client
+    .from('market_news')
+    .select('id,title,url,source,category,is_important,published_at')
+    .order('published_at', { ascending: false })
+    .limit(limit);
+
+  if (selectError) throw new Error(`Supabase junk scan failed: ${selectError.message}`);
+  if (!Array.isArray(rows) || rows.length === 0) return { checked: 0, deleted: 0 };
+
+  const toDelete = new Set();
+  const byKey = new Map();
+
+  for (const row of rows) {
+    if (isJunkTitle(row.title)) {
+      toDelete.add(row.id);
+      continue;
+    }
+    const key = titleKey(row.title);
+    if (!key) {
+      toDelete.add(row.id);
+      continue;
+    }
+    const current = byKey.get(key);
+    if (!current) {
+      byKey.set(key, row);
+      continue;
+    }
+    const keepNewest =
+      new Date(row.published_at || 0).getTime() >
+      new Date(current.published_at || 0).getTime();
+    if (keepNewest) {
+      toDelete.add(current.id);
+      byKey.set(key, row);
+    } else {
+      toDelete.add(row.id);
+    }
+  }
+
+  const ids = [...toDelete];
+  let deleted = 0;
+  for (let i = 0; i < ids.length; i += 100) {
+    const batch = ids.slice(i, i + 100);
+    const { data: removed, error: delError } = await client
+      .from('market_news')
+      .delete()
+      .in('id', batch)
+      .select('id');
+    if (delError) throw new Error(`Supabase junk delete failed: ${delError.message}`);
+    deleted += Array.isArray(removed) ? removed.length : 0;
+  }
+
+  return { checked: rows.length, deleted };
 }
 
 export async function listUserFeeds() {

@@ -20,6 +20,7 @@ import {
   sanitizeTitle,
   parseIsoDate,
 } from '../utils/helpers.js';
+import { isJunkItem } from '../utils/spamFilter.js';
 
 const xmlParser = new XMLParser({
   ignoreAttributes: false,
@@ -189,6 +190,7 @@ export async function scrapeAll({ tier = 'full' } = {}) {
   );
   const results = await Promise.all(tasks);
   const flattened = results.flat();
-  const unique = dedupe(flattened);
+  const withoutJunk = flattened.filter((item) => !isJunkItem(item));
+  const unique = dedupe(withoutJunk);
   return unique;
 }

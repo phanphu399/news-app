@@ -2,6 +2,7 @@ import { scrapeAll, fetchFeed } from '../src/services/scraper.js';
 import {
   upsertNews,
   cleanupOldNews,
+  deleteSpamNews,
   reclassifyPaywallToMacro,
   listUserFeeds,
   updateUserFeedStatus,
@@ -9,6 +10,7 @@ import {
 } from '../src/services/supabase.js';
 import { notifyImportantNews } from '../src/services/fcm.js';
 import { generateRunId } from '../src/utils/helpers.js';
+import { isJunkItem, buildTitleSelection } from '../src/utils/spamFilter.js';
 
 async function withRetry(run, label, attempts = 2) {
   for (let attempt = 1; attempt <= attempts; attempt += 1) {
@@ -81,9 +83,12 @@ export default async function handler(request, response) {
     started_at: startAt,
     scraped: 0,
     user_feeds: 0,
+    spam_filtered: 0,
+    duplicate_filtered: 0,
     upserted: 0,
     notified: 0,
     cleaned: 0,
+    junk_deleted: 0,
     reclassified: 0,
     message: '',
   };
@@ -111,16 +116,21 @@ export default async function handler(request, response) {
     payload.scraped = systemItems.length;
     const userItems = await fetchUserFeedItems();
     payload.user_feeds = userItems.length;
-    const items = [...systemItems, ...userItems];
+    const merged = [...systemItems, ...userItems];
+
+    const clean = merged.filter((item) => !isJunkItem(item));
+    payload.spam_filtered = merged.length - clean.length;
+    const { kept: ready, dropped: duped } = buildTitleSelection(clean);
+    payload.duplicate_filtered = duped.length;
 
     const { inserted, data: insertedRows } = await withRetry(
-      () => upsertNews(items),
+      () => upsertNews(ready),
       'upsertNews'
     );
     payload.upserted = inserted ?? 0;
 
     const insertedIds = new Set((insertedRows ?? []).map((row) => row.id));
-    const brandNewImportant = items.filter(
+    const brandNewImportant = ready.filter(
       (item) => item.is_important && insertedIds.has(item.id)
     );
 
@@ -128,6 +138,9 @@ export default async function handler(request, response) {
     payload.notified = notified.length;
 
     if (tier === 'full') {
+      const junk = await deleteSpamNews({ force: false });
+      payload.junk_deleted = junk.deleted ?? 0;
+
       const { deleted } = await cleanupOldNews();
       payload.cleaned = deleted;
 
@@ -136,7 +149,7 @@ export default async function handler(request, response) {
     }
 
     payload.finished_at = new Date().toISOString();
-    payload.message = `tier=${tier} scraped=${payload.scraped} upserted=${payload.upserted}`;
+    payload.message = `tier=${tier} scraped=${payload.scraped} upserted=${payload.upserted} filtered=${payload.spam_filtered}+${payload.duplicate_filtered}`;
   } catch (error) {
     payload.status = 'error';
     payload.message = error.message;
