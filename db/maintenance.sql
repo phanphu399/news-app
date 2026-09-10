@@ -70,9 +70,13 @@ create index if not exists idx_market_news_untranslated
 alter database postgres set statement_timeout = '30s';
 alter database postgres set idle_in_transaction_session_timeout = '30s';
 
--- 5) DỌN RÁC SAU KHI CÓ INDEX (chạy 1 lần, có thể chậm bằng index mới)
+-- 5) CẬP NHẬT STATISTICS CHO INDEX MỚI (chạy được trong SQL Editor)
+--    Lưu ý: VACUUM đầy đủ KHÔNG chạy trong SQL Editor (transaction block).
+--    Chạy riêng qua psql nếu bảng rác nhiều:
+--      psql "<connection-string-psql từ Project Settings > Database>" -c "VACUUM (ANALYZE) public.market_news;"
+--    (connection string lấy trong Connect -> Connection string (psql), dùng DB password.)
 -----------------------------------------------------------
-vacuum (analyze) public.market_news;
+analyze public.market_news;
 
 -- 6) LUÔNG CHẠY CHO CRON (chống chạy chồng lấn)
 -----------------------------------------------------------
