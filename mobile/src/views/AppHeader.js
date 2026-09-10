@@ -79,8 +79,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logoBox: {
-    width: 58,
-    height: 40,
+    width: 86,
+    height: 42,
     borderRadius: 12,
     marginRight: 10,
     alignItems: 'center',
@@ -95,9 +95,9 @@ const styles = StyleSheet.create({
   },
   name: {
     color: COLORS.text,
-    fontSize: 17,
-    fontWeight: '900',
-    letterSpacing: 1.5,
+    fontSize: 16,
+    fontWeight: '800',
+    letterSpacing: 1.4,
     fontFamily: FONT_FAMILY,
   },
   tagline: {

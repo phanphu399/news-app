@@ -82,7 +82,6 @@ export default function NewsListView({ items, loading, error, onItemPress, onRef
   if (error && items.length === 0) {
     return (
       <View style={styles.center}>
-        <Text style={styles.errorIcon}>⚠️</Text>
         <Text style={styles.errorTitle}>Không kết nối được dữ liệu</Text>
         <Text style={styles.errorBody}>{error}</Text>
         <TouchableOpacity style={styles.retry} onPress={onRefresh}>
@@ -95,7 +94,6 @@ export default function NewsListView({ items, loading, error, onItemPress, onRef
   if (items.length === 0) {
     return (
       <View style={styles.center}>
-        <Text style={styles.errorIcon}>📡</Text>
         <Text style={styles.errorTitle}>Chưa có tin tức</Text>
         <Text style={styles.errorBody}>
           Đang chờ dữ liệu từ server... Tin mới sẽ xuất hiện ngay khi có.
@@ -117,13 +115,10 @@ export default function NewsListView({ items, loading, error, onItemPress, onRef
               key={chip.key}
               style={[styles.chip, isActive && styles.chipActive]}
               onPress={() => setFilter(chip.key)}
+              activeOpacity={0.7}
             >
               <Text style={[styles.chipText, isActive && styles.chipTextActive]}>{chip.label}</Text>
-              <View style={[styles.chipCount, isActive && styles.chipCountActive]}>
-                <Text style={[styles.chipCountText, isActive && styles.chipCountTextActive]}>
-                  {chip.count}
-                </Text>
-              </View>
+              <Text style={[styles.chipCount, isActive && styles.chipCountActive]}>{chip.count}</Text>
             </TouchableOpacity>
           );
         })}
@@ -165,49 +160,37 @@ const styles = StyleSheet.create({
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: COLORS.borderSoft,
-    backgroundColor: COLORS.surface,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.03)',
     paddingLeft: 12,
-    paddingRight: 7,
+    paddingRight: 9,
     paddingVertical: 6,
   },
   chipActive: {
-    borderColor: COLORS.primary,
-    backgroundColor: 'rgba(245,158,11,0.14)',
+    backgroundColor: 'rgba(245,158,11,0.10)',
+    borderWidth: 1,
+    borderColor: 'rgba(245,158,11,0.30)',
   },
   chipText: {
     color: COLORS.textSecondary,
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '500',
     fontFamily: FONT_FAMILY,
   },
   chipTextActive: {
     color: COLORS.primary,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   chipCount: {
-    marginLeft: 7,
-    backgroundColor: COLORS.surfaceAlt,
-    borderRadius: 999,
-    minWidth: 18,
-    alignItems: 'center',
-    paddingHorizontal: 5,
-    paddingVertical: 1,
-  },
-  chipCountActive: {
-    backgroundColor: COLORS.primary,
-  },
-  chipCountText: {
+    marginLeft: 6,
     color: COLORS.textMuted,
     fontSize: 10,
-    fontWeight: '700',
+    opacity: 0.6,
     fontFamily: FONT_FAMILY,
     fontVariant: TABULAR_NUMS,
   },
-  chipCountTextActive: {
-    color: COLORS.primaryText,
+  chipCountActive: {
+    color: COLORS.primary,
   },
   content: {
     paddingVertical: 10,
@@ -274,16 +257,15 @@ const styles = StyleSheet.create({
   },
   retry: {
     marginTop: 18,
-    borderWidth: 1,
-    borderColor: COLORS.primary,
+    backgroundColor: COLORS.primary,
     paddingHorizontal: 26,
     paddingVertical: 9,
     borderRadius: 10,
-    backgroundColor: 'rgba(245,158,11,0.08)',
   },
   retryText: {
-    color: COLORS.primary,
+    color: COLORS.primaryText,
     fontWeight: '700',
+    fontSize: 13,
     fontFamily: FONT_FAMILY,
   },
 });

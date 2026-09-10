@@ -1,58 +1,33 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { formatRelativeTime } from '../utils/time_format';
-import { categoryStyle, COLORS, GRADIENTS, FONT_FAMILY, TABULAR_NUMS } from '../config/constants';
+import { categoryStyle, COLORS, FONT_FAMILY, TABULAR_NUMS } from '../config/constants';
 import { faviconUrl } from '../utils/domain';
 import TranslatedText from '../components/TranslatedText';
-
-function timeTone(publishedAt) {
-  const ageMinutes = (Date.now() - new Date(publishedAt).getTime()) / (1000 * 60);
-  if (ageMinutes <= 60) return COLORS.success;
-  if (ageMinutes <= 180) return COLORS.amber;
-  return COLORS.textSecondary;
-}
 
 export default function NewsCard({ item, onPress, dimmed }) {
   const isImportant = Boolean(item.isImportant);
   const cat = categoryStyle(item.category);
-  const accentColor = isImportant ? COLORS.important : cat.color;
   const favicon = faviconUrl(item.source, item.url);
 
   return (
     <TouchableOpacity
-      activeOpacity={0.75}
+      activeOpacity={0.8}
       onPress={() => onPress?.(item)}
       style={[styles.card, dimmed && styles.cardDimmed]}
     >
-      {isImportant ? (
-        <LinearGradient
-          colors={GRADIENTS.importantRibbon}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.accent}
-        />
-      ) : (
-        <View style={[styles.accent, { backgroundColor: accentColor }]} />
-      )}
-
       {isImportant && (
         <View style={styles.hotBadge}>
-          <View style={styles.hotDot} />
-          <Text style={styles.hotText}>Nóng</Text>
+          <Text style={styles.hotText}>🔥 Nóng</Text>
         </View>
       )}
 
-      {isImportant ? (
-        <LinearGradient
-          colors={GRADIENTS.cardTop}
-          style={styles.topGlow}
-          pointerEvents="none"
-        />
-      ) : null}
-
       <View style={styles.body}>
-        <TranslatedText style={[styles.title, isImportant && styles.titleImportant]} numberOfLines={3} text={item.title} />
+        <TranslatedText
+          style={[styles.title, isImportant && styles.titleImportant]}
+          numberOfLines={3}
+          text={item.title}
+        />
 
         <View style={styles.metaRow}>
           {favicon ? <Image source={{ uri: favicon }} style={styles.favicon} /> : null}
@@ -60,13 +35,12 @@ export default function NewsCard({ item, onPress, dimmed }) {
             {item.source || 'Unknown'}
           </Text>
           <Text style={styles.dot}>·</Text>
-          <Text style={[styles.time, { color: timeTone(item.publishedAt) }]}>
-            {formatRelativeTime(item.publishedAt)}
-          </Text>
-          <Text style={styles.dot}>·</Text>
-          <Text style={[styles.category, { color: cat.color }]} numberOfLines={1}>
-            #{cat.short || cat.label.split(' ')[0]}
-          </Text>
+          <Text style={styles.time}>{formatRelativeTime(item.publishedAt)}</Text>
+          <View style={styles.categoryTag}>
+            <Text style={styles.categoryText} numberOfLines={1}>
+              #{cat.short || cat.label.split(' ')[0]}
+            </Text>
+          </View>
         </View>
       </View>
     </TouchableOpacity>
@@ -75,75 +49,49 @@ export default function NewsCard({ item, onPress, dimmed }) {
 
 const styles = StyleSheet.create({
   card: {
-    flexDirection: 'row',
-    backgroundColor: COLORS.surface,
     borderRadius: 14,
-    marginHorizontal: 12,
-    marginVertical: 5,
+    backgroundColor: COLORS.surface,
     borderWidth: 1,
     borderColor: COLORS.border,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
+    marginHorizontal: 12,
+    marginVertical: 5,
   },
   cardDimmed: {
     opacity: 0.55,
   },
-  accent: {
-    width: 3,
-    alignSelf: 'stretch',
-  },
-  topGlow: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 42,
-  },
   hotBadge: {
     position: 'absolute',
-    top: 10,
-    right: 10,
+    top: 12,
+    right: 12,
+    zIndex: 2,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 7,
+    paddingHorizontal: 9,
     paddingVertical: 3,
     borderRadius: 999,
-    backgroundColor: 'rgba(244,63,94,0.14)',
+    backgroundColor: 'rgba(244,63,94,0.10)',
     borderWidth: 1,
-    borderColor: 'rgba(244,63,94,0.4)',
-  },
-  hotDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 3,
-    backgroundColor: COLORS.important,
-    marginRight: 4,
+    borderColor: 'rgba(244,63,94,0.22)',
   },
   hotText: {
-    color: COLORS.important,
-    fontSize: 10,
-    fontWeight: '800',
+    color: '#FB7185',
+    fontSize: 11,
+    fontWeight: '600',
+    fontFamily: FONT_FAMILY,
   },
   body: {
-    flex: 1,
-    paddingVertical: 12,
-    paddingRight: 14,
-    paddingLeft: 12,
+    padding: 14,
   },
   title: {
     color: COLORS.text,
     fontSize: 15,
     lineHeight: 21,
-    fontWeight: '600',
+    fontWeight: '500',
     fontFamily: FONT_FAMILY,
   },
   titleImportant: {
-    fontWeight: '700',
-    paddingRight: 54,
+    fontWeight: '600',
+    paddingRight: 58,
   },
   metaRow: {
     flexDirection: 'row',
@@ -161,8 +109,9 @@ const styles = StyleSheet.create({
   source: {
     color: COLORS.textSecondary,
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '500',
     flexShrink: 1,
+    fontFamily: FONT_FAMILY,
   },
   dot: {
     color: COLORS.textMuted,
@@ -170,14 +119,22 @@ const styles = StyleSheet.create({
     marginHorizontal: 5,
   },
   time: {
+    color: COLORS.textSecondary,
     fontSize: 12,
     fontFamily: FONT_FAMILY,
     fontVariant: TABULAR_NUMS,
   },
-  category: {
-    fontSize: 12,
-    fontWeight: '600',
-    flexShrink: 1,
+  categoryTag: {
+    marginLeft: 8,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 6,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+  },
+  categoryText: {
+    color: COLORS.textSecondary,
+    fontSize: 10.5,
+    fontWeight: '500',
     fontFamily: FONT_FAMILY,
   },
 });

@@ -4,7 +4,7 @@ import { COLORS } from '../config/constants';
 
 /**
  * Card dùng chung cho toàn app.
- * - Bo góc 14px, border mờ rgba(255,255,255,0.08), nền sáng hơn nền app 1 tông.
+ * - Bề mặt #151921, viền siêu mỏng rgba(255,255,255,0.07), bo góc 14px.
  * - Khi có onPress tự chuyển thành TouchableOpacity.
  */
 export default function Card({ children, style, onPress, borderColor, radius = 14, ...rest }) {
@@ -32,9 +32,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.border,
     shadowColor: '#000',
-    shadowOpacity: 0.22,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 2,
+    shadowOpacity: 0.08,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
   },
 });

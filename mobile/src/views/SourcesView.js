@@ -47,49 +47,50 @@ function SourceCard({ sourceItem, onPress, onRemove, onEdit, onToggle, removing 
           <Text style={styles.sourceName} numberOfLines={1}>
             {sourceItem.source}
           </Text>
+          {healthy !== null && (
+            <View style={styles.health}>
+              <View
+                style={[
+                  styles.healthDot,
+                  { backgroundColor: healthy ? COLORS.success : COLORS.danger },
+                ]}
+              />
+              {!healthy ? <Text style={styles.healthErrText}>Lỗi</Text> : null}
+            </View>
+          )}
           {sourceItem.userFeedId ? (
             <>
               <Text style={styles.userTag}>BẠN</Text>
               <TouchableOpacity
-                style={styles.editBtn}
+                style={styles.miniBtn}
                 onPress={onEdit}
                 hitSlop={8}
                 accessibilityLabel="Chỉnh sửa nguồn"
               >
-                <Text style={styles.editBtnText}>✎</Text>
+                <Text style={styles.miniBtnText}>✎</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.miniBtn, styles.miniBtnDanger]}
+                onPress={onRemove}
+                disabled={removing}
+                hitSlop={8}
+              >
+                <Text style={styles.miniBtnTextDanger}>{removing ? '…' : '✕'}</Text>
               </TouchableOpacity>
             </>
-          ) : null}
-          {healthy !== null ? (
-            <View style={[styles.badge, healthy ? styles.badgeOk : styles.badgeErr]}>
-              <View style={[styles.badgeDot, { backgroundColor: healthy ? COLORS.success : COLORS.danger }]} />
-              <Text style={[styles.badgeText, { color: healthy ? COLORS.success : COLORS.danger }]}>
-                {healthy ? 'Hoạt động' : 'Lỗi'}
-              </Text>
-            </View>
-          ) : null}
-          {sourceItem.userFeedId ? (
-            <TouchableOpacity
-              style={styles.removeBtn}
-              onPress={onRemove}
-              disabled={removing}
-              hitSlop={8}
-            >
-              <Text style={styles.removeBtnText}>{removing ? '…' : '✕'}</Text>
-            </TouchableOpacity>
           ) : null}
         </View>
 
         <View style={styles.chipRow}>
           {sourceItem.categories.map((category) => {
-            const style = categoryStyle(category);
+            const label = categoryStyle(category).label;
             return (
-              <View key={category} style={[styles.chip, { borderColor: style.color, backgroundColor: style.bg }]}>
-                <Text style={[styles.chipText, { color: style.color }]}>{style.label}</Text>
+              <View key={category} style={styles.chip}>
+                <Text style={styles.chipText}>{label}</Text>
               </View>
             );
           })}
-          <Text style={styles.count}>{sourceItem.count24h} bài / 24h</Text>
+          <Text style={styles.count}>{sourceItem.count24h} bài/24h</Text>
           <Text style={styles.chevron}>›</Text>
         </View>
 
@@ -101,7 +102,7 @@ function SourceCard({ sourceItem, onPress, onRemove, onEdit, onToggle, removing 
             <Switch
               value={Boolean(sourceItem.enabled)}
               onValueChange={(value) => onToggle?.(value)}
-              trackColor={{ false: COLORS.surfaceAlt, true: 'rgba(52,211,153,0.5)' }}
+              trackColor={{ false: COLORS.surfaceAlt, true: 'rgba(52,211,153,0.45)' }}
               thumbColor={sourceItem.enabled ? COLORS.success : COLORS.textMuted}
             />
           </View>
@@ -537,39 +538,37 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(245,158,11,0.1)',
-    borderWidth: 1,
-    borderColor: 'rgba(245,158,11,0.45)',
-    borderStyle: 'dashed',
+    backgroundColor: COLORS.primary,
     borderRadius: 12,
     paddingVertical: 11,
     marginBottom: 12,
   },
   addBtnIcon: {
-    color: COLORS.primary,
-    fontSize: 16,
+    color: COLORS.primaryText,
+    fontSize: 15,
     fontWeight: '800',
     marginRight: 7,
   },
   addBtnText: {
-    color: COLORS.primary,
+    color: COLORS.primaryText,
     fontSize: 13,
     fontWeight: '700',
     fontFamily: FONT_FAMILY,
   },
   sourceCard: {
     flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: COLORS.surface,
-    borderRadius: 14,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: COLORS.border,
-    padding: 12,
-    marginBottom: 10,
+    padding: 11,
+    marginBottom: 8,
   },
   avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 11,
+    width: 36,
+    height: 36,
+    borderRadius: 10,
     marginRight: 12,
     backgroundColor: COLORS.surfaceAlt,
   },
@@ -580,7 +579,7 @@ const styles = StyleSheet.create({
   },
   avatarText: {
     color: COLORS.textSecondary,
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '800',
     fontFamily: FONT_FAMILY,
   },
@@ -591,59 +590,58 @@ const styles = StyleSheet.create({
   },
   sourceName: {
     color: COLORS.text,
-    fontSize: 15,
-    fontWeight: '800',
-    flex: 1,
+    fontSize: 14.5,
+    fontWeight: '700',
+    flexShrink: 1,
     fontFamily: FONT_FAMILY,
   },
-  badge: {
+  health: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 999,
-    backgroundColor: COLORS.surfaceAlt,
+    marginLeft: 8,
+    marginRight: 6,
   },
-  badgeOk: { backgroundColor: 'rgba(16,185,129,0.12)' },
-  badgeErr: { backgroundColor: 'rgba(244,63,94,0.12)' },
-  badgeDot: {
+  healthDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
-    marginRight: 5,
   },
-  badgeText: {
+  healthErrText: {
+    color: COLORS.danger,
     fontSize: 10,
-    fontWeight: '800',
+    fontWeight: '600',
+    marginLeft: 4,
     fontFamily: FONT_FAMILY,
   },
-  removeBtn: {
-    width: 26,
-    height: 26,
-    borderRadius: 8,
-    backgroundColor: 'rgba(244,63,94,0.12)',
+  miniBtn: {
+    width: 24,
+    height: 24,
+    borderRadius: 7,
+    backgroundColor: COLORS.surfaceAlt,
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: 8,
+    marginLeft: 6,
   },
-  removeBtnText: {
+  miniBtnDanger: {
+    backgroundColor: 'rgba(244,63,94,0.10)',
+  },
+  miniBtnText: {
+    color: COLORS.textSecondary,
+    fontSize: 11,
+    fontWeight: '800',
+  },
+  miniBtnTextDanger: {
     color: COLORS.danger,
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '800',
   },
-  editBtn: {
-    width: 26,
-    height: 26,
-    borderRadius: 8,
-    backgroundColor: 'rgba(245,158,11,0.14)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 8,
-  },
-  editBtnText: {
-    color: COLORS.primary,
-    fontSize: 12,
+  userTag: {
+    color: COLORS.textMuted,
+    fontSize: 9,
     fontWeight: '800',
+    letterSpacing: 0.5,
+    marginLeft: 8,
+    marginRight: 2,
   },
   feedActions: {
     flexDirection: 'row',
@@ -656,16 +654,9 @@ const styles = StyleSheet.create({
   toggleLabel: {
     color: COLORS.textMuted,
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: '500',
     flex: 1,
     fontFamily: FONT_FAMILY,
-  },
-  userTag: {
-    color: COLORS.primary,
-    fontSize: 9,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-    marginRight: 6,
   },
   detailUrlRow: {
     flexDirection: 'row',
@@ -686,14 +677,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 8,
-    backgroundColor: COLORS.surfaceAlt,
+    backgroundColor: 'rgba(255,255,255,0.05)',
     borderWidth: 1,
     borderColor: COLORS.border,
   },
   copyBtnText: {
-    color: COLORS.primary,
+    color: COLORS.textSecondary,
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   modalOverlay: {
     flex: 1,
@@ -728,14 +719,15 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   input: {
-    backgroundColor: COLORS.surfaceAlt,
+    backgroundColor: '#12161F',
     borderWidth: 1,
-    borderColor: COLORS.borderSoft,
+    borderColor: 'rgba(255,255,255,0.10)',
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 9,
     color: COLORS.text,
     fontSize: 14,
+    fontFamily: FONT_FAMILY,
   },
   urlInputRow: {
     flexDirection: 'row',
@@ -799,26 +791,26 @@ const styles = StyleSheet.create({
   catBtn: {
     paddingHorizontal: 12,
     paddingVertical: 7,
-    borderRadius: 999,
+    borderRadius: 8,
     borderWidth: 1,
-    borderColor: COLORS.borderSoft,
-    backgroundColor: COLORS.surfaceAlt,
+    borderColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: 'rgba(255,255,255,0.03)',
     marginRight: 8,
     marginBottom: 6,
   },
   catBtnActive: {
-    borderColor: COLORS.primary,
-    backgroundColor: 'rgba(245,158,11,0.14)',
+    borderColor: 'rgba(245,158,11,0.30)',
+    backgroundColor: 'rgba(245,158,11,0.10)',
   },
   catBtnText: {
     color: COLORS.textMuted,
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '500',
     fontFamily: FONT_FAMILY,
   },
   catBtnTextActive: {
     color: COLORS.primary,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   formError: {
     color: COLORS.danger,
@@ -862,24 +854,28 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     flexWrap: 'wrap',
-    marginTop: 8,
+    marginTop: 6,
   },
   chip: {
     paddingHorizontal: 7,
     paddingVertical: 2,
-    borderRadius: 999,
+    borderRadius: 6,
     borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: 'rgba(255,255,255,0.03)',
     marginRight: 6,
   },
   chipText: {
-    fontSize: 9,
-    fontWeight: '800',
-    letterSpacing: 0.4,
+    color: COLORS.textMuted,
+    fontSize: 9.5,
+    fontWeight: '500',
+    letterSpacing: 0.3,
+    fontFamily: FONT_FAMILY,
   },
   count: {
     color: COLORS.textMuted,
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: '500',
     marginLeft: 'auto',
     fontFamily: FONT_FAMILY,
     fontVariant: TABULAR_NUMS,

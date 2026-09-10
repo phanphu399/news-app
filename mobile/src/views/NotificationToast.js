@@ -1,11 +1,12 @@
 import React, { useEffect, useRef } from 'react';
 import { Animated, Text, TouchableOpacity, View, StyleSheet } from 'react-native';
-import { COLORS, categoryStyle, FONT_FAMILY } from '../config/constants';
+import { COLORS, FONT_FAMILY } from '../config/constants';
 import TranslatedText from '../components/TranslatedText';
+import useSwipeDismiss from '../hooks/useSwipeDismiss';
 
 export default function NotificationToast({ item, onPress, onClose, offset }) {
   const slide = useRef(new Animated.Value(-140)).current;
-  const cat = categoryStyle(item.category);
+  const { panHandlers, drag } = useSwipeDismiss({ onDismiss: onClose });
 
   useEffect(() => {
     Animated.spring(slide, {
@@ -17,25 +18,30 @@ export default function NotificationToast({ item, onPress, onClose, offset }) {
   }, []);
 
   return (
-    <Animated.View style={[styles.wrap, { top: 10 + offset * 148, transform: [{ translateY: slide }] }]}>
-      <View style={[styles.toast, { borderColor: `${cat.color}55` }]}>
+    <Animated.View
+      style={[
+        styles.wrap,
+        { top: 10 + offset * 140, transform: [{ translateY: slide }, { translateX: drag }] },
+      ]}
+    >
+      <View style={styles.toast} {...panHandlers}>
         <View style={styles.headerRow}>
-          <View style={[styles.iconSquircle, { backgroundColor: `${cat.color}1f` }]}>
-            <Text style={[styles.iconText, { color: cat.color }]}>⚡</Text>
+          <View style={styles.iconSquircle}>
+            <Text style={styles.iconText}>⚡</Text>
           </View>
           <View style={styles.headerText}>
-            <Text style={[styles.label, { color: cat.color }]}>{cat.label}</Text>
+            <Text style={styles.label}>TIN MỚI</Text>
             <TranslatedText style={styles.title} numberOfLines={2} text={item.title} />
           </View>
         </View>
 
         <View style={styles.footer}>
-          <View style={[styles.badge, { backgroundColor: `${cat.color}1f`, borderColor: `${cat.color}40` }]}>
-            <View style={[styles.badgeDot, { backgroundColor: cat.color }]} />
-            <Text style={[styles.badgeText, { color: cat.color }]}>TIN MỚI</Text>
-          </View>
-          <TouchableOpacity style={[styles.pill, { backgroundColor: cat.color }]} onPress={onPress} activeOpacity={0.85}>
-            <Text style={styles.pillText}>Đọc ngay</Text>
+          <TouchableOpacity
+            style={[styles.pill, styles.pillPrimary]}
+            onPress={onPress}
+            activeOpacity={0.85}
+          >
+            <Text style={[styles.pillText, styles.pillTextPrimary]}>Đọc ngay</Text>
           </TouchableOpacity>
           <TouchableOpacity style={[styles.pill, styles.pillGhost]} onPress={onClose} activeOpacity={0.85}>
             <Text style={[styles.pillText, { color: COLORS.textMuted }]}>Để sau</Text>
@@ -58,13 +64,14 @@ const styles = StyleSheet.create({
   toast: {
     width: '100%',
     maxWidth: 420,
-    backgroundColor: '#131722',
-    borderRadius: 16,
+    backgroundColor: COLORS.surface,
+    borderRadius: 14,
     borderWidth: 1,
+    borderColor: COLORS.border,
     padding: 14,
     shadowColor: '#000',
-    shadowOpacity: 0.6,
-    shadowRadius: 20,
+    shadowOpacity: 0.5,
+    shadowRadius: 18,
     shadowOffset: { width: 0, height: 8 },
     elevation: 12,
   },
@@ -73,65 +80,48 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   iconSquircle: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
+    width: 36,
+    height: 36,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
+    backgroundColor: 'rgba(244,63,94,0.10)',
   },
   iconText: {
-    fontSize: 17,
-    fontWeight: '900',
+    fontSize: 15,
   },
   headerText: {
     flex: 1,
   },
   label: {
+    color: '#FB7185',
     fontSize: 9,
-    fontWeight: '900',
+    fontWeight: '800',
     letterSpacing: 1.3,
-    marginBottom: 2,
+    marginBottom: 3,
+    fontFamily: FONT_FAMILY,
   },
   title: {
     color: COLORS.text,
     fontSize: 13.5,
     lineHeight: 19,
-    fontWeight: '600',
+    fontWeight: '500',
     fontFamily: FONT_FAMILY,
   },
   footer: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'flex-end',
     gap: 8,
     marginTop: 12,
   },
-  badge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    marginRight: 'auto',
-    paddingHorizontal: 9,
-    paddingVertical: 4,
-    borderRadius: 999,
-    borderWidth: 1,
-  },
-  badgeDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 3,
-    marginRight: 5,
-  },
-  badgeText: {
-    fontSize: 9,
-    fontWeight: '900',
-    letterSpacing: 1,
-  },
   pill: {
-    paddingHorizontal: 14,
+    paddingHorizontal: 13,
     paddingVertical: 7,
-    borderRadius: 999,
+    borderRadius: 8,
+  },
+  pillPrimary: {
+    backgroundColor: COLORS.primary,
   },
   pillGhost: {
     borderWidth: 1,
@@ -140,8 +130,10 @@ const styles = StyleSheet.create({
   },
   pillText: {
     fontSize: 12,
-    fontWeight: '800',
-    color: COLORS.primaryText,
+    fontWeight: '700',
     fontFamily: FONT_FAMILY,
+  },
+  pillTextPrimary: {
+    color: COLORS.primaryText,
   },
 });

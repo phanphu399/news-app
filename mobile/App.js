@@ -386,9 +386,10 @@ const styles = StyleSheet.create({
   },
   tabBar: {
     flexDirection: 'row',
-    backgroundColor: '#131722',
+    backgroundColor: 'rgba(11,14,20,0.92)',
+    backdropFilter: 'blur(14px)',
     borderTopWidth: 1,
-    borderTopColor: COLORS.borderSoft,
+    borderTopColor: 'rgba(255,255,255,0.08)',
     paddingTop: 6,
     width: '100%',
     maxWidth: 820,
@@ -406,17 +407,17 @@ const styles = StyleSheet.create({
   tabLabel: {
     color: TAB_INACTIVE,
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: '500',
     marginTop: 3,
     fontFamily: FONT_FAMILY,
   },
   tabLabelActive: {
     color: TAB_ACTIVE,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   tabIndicator: {
     marginTop: 5,
-    width: 22,
+    width: 20,
     height: 2,
     borderRadius: 2,
     backgroundColor: 'transparent',
@@ -450,7 +451,7 @@ const styles = StyleSheet.create({
   modalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#131722',
+    backgroundColor: COLORS.surface,
     paddingHorizontal: 8,
     paddingVertical: 10,
     borderBottomWidth: 1,

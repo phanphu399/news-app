@@ -140,20 +140,32 @@ export default function EconomicCalendarView() {
     const list =
       impact === 'All' ? events : events.filter((event) => event.impact === impact);
     const now = Date.now();
-    const upcoming = list.filter((event) => new Date(event.date) >= now - 3600_000);
-    const past = list.filter((event) => new Date(event.date) < now - 3600_000);
+    const valid = list.filter((event) => {
+      if (!event || !event.date) return false;
+      const time = new Date(event.date).getTime();
+      return !Number.isNaN(time);
+    });
+    const upcoming = valid.filter((event) => new Date(event.date) >= now - 3600_000);
+    const past = valid.filter((event) => new Date(event.date) < now - 3600_000);
     return [...upcoming, ...past];
   }, [events, impact]);
 
   const sections = useMemo(() => {
     const map = new Map();
     for (const event of filtered) {
-      const key = new Date(event.date).toDateString();
+      const time = new Date(event.date).getTime();
+      const key = Number.isNaN(time) ? '__unknown__' : new Date(event.date).toDateString();
       if (!map.has(key)) map.set(key, []);
       map.get(key).push(event);
     }
     return [...map.entries()]
-      .sort((a, b) => new Date(a[0]) - new Date(b[0]))
+      .sort((a, b) => {
+        const ta = new Date(a[0]).getTime();
+        const tb = new Date(b[0]).getTime();
+        if (Number.isNaN(ta)) return 1;
+        if (Number.isNaN(tb)) return -1;
+        return ta - tb;
+      })
       .map(([date, items]) => ({ date, items }));
   }, [filtered]);
 
@@ -206,20 +218,34 @@ export default function EconomicCalendarView() {
 
       {error && !loading && (
         <View style={styles.errorBox}>
-          <Text style={styles.errorText}>{error}</Text>
+          <Text style={styles.errorText}>Không tải được lịch kinh tế — {error}</Text>
+          <TouchableOpacity
+            style={[styles.retryBtn, styles.errorRetry]}
+            onPress={() => load('refresh')}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.retryBtnText}>Thử lại</Text>
+          </TouchableOpacity>
         </View>
       )}
 
-      {loading ? (
+      {loading && !error ? (
         <View style={styles.center}>
           <ActivityIndicator color={COLORS.primary} />
           <Text style={styles.centerText}>Đang tải lịch kinh tế…</Text>
         </View>
-      ) : listData.length === 0 ? (
+      ) : !error && listData.length === 0 ? (
         <View style={styles.center}>
-          <Text style={styles.centerText}>Không có sự kiện nào trong mức này.</Text>
+          <Text style={styles.centerText}>Chưa có sự kiện cho kỳ này.</Text>
+          <TouchableOpacity
+            style={styles.retryBtn}
+            onPress={() => load('refresh')}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.retryBtnText}>Làm mới</Text>
+          </TouchableOpacity>
         </View>
-      ) : (
+      ) : error ? null : (
         <FlatList
           data={listData}
           keyExtractor={(item) => item.key}
@@ -291,29 +317,29 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 12,
     paddingVertical: 7,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.surface,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.03)',
   },
   filterChipActive: {
-    borderColor: COLORS.primary,
-    backgroundColor: 'rgba(245,158,11,0.14)',
+    backgroundColor: 'rgba(245,158,11,0.10)',
+    borderWidth: 1,
+    borderColor: 'rgba(245,158,11,0.30)',
   },
   filterDot: {
-    width: 8,
-    height: 8,
+    width: 7,
+    height: 7,
     borderRadius: 4,
     marginRight: 6,
   },
   filterText: {
     color: COLORS.textSecondary,
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '500',
     fontFamily: FONT_FAMILY,
   },
   filterTextActive: {
     color: COLORS.primary,
+    fontWeight: '600',
   },
   center: {
     flex: 1,
@@ -329,6 +355,8 @@ const styles = StyleSheet.create({
     fontFamily: FONT_FAMILY,
   },
   errorBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 10,
     backgroundColor: 'rgba(244,63,94,0.08)',
@@ -336,6 +364,26 @@ const styles = StyleSheet.create({
   errorText: {
     color: COLORS.danger,
     fontSize: 12,
+    flex: 1,
+    fontFamily: FONT_FAMILY,
+  },
+  retryBtn: {
+    marginTop: 12,
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    borderRadius: 9,
+  },
+  errorRetry: {
+    marginTop: 0,
+    marginLeft: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+  },
+  retryBtnText: {
+    color: COLORS.primaryText,
+    fontSize: 12,
+    fontWeight: '700',
     fontFamily: FONT_FAMILY,
   },
   dayCard: {

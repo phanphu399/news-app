@@ -2,17 +2,19 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Text, TouchableOpacity, View, StyleSheet } from 'react-native';
 import { subscribeToasts } from '../services/ToastService';
 import { COLORS, FONT_FAMILY } from '../config/constants';
+import useSwipeDismiss from '../hooks/useSwipeDismiss';
 
 const MAX_TOASTS = 3;
 const TOAST_TYPES = {
   success: { color: COLORS.success, icon: '✓', label: 'THÀNH CÔNG', badge: 'ĐÃ XONG' },
   error: { color: COLORS.danger, icon: '✕', label: 'LỖI', badge: 'THẤT BẠI' },
-  warning: { color: '#F59E0B', icon: '!', label: 'CẢNH BÁO', badge: 'CHÚ Ý' },
-  info: { color: '#38bdf8', icon: 'i', label: 'THÔNG BÁO', badge: 'CẬP NHẬT' },
+  warning: { color: COLORS.primary, icon: '!', label: 'CẢNH BÁO', badge: 'CHÚ Ý' },
+  info: { color: COLORS.textSecondary, icon: 'i', label: 'THÔNG BÁO', badge: 'CẬP NHẬT' },
 };
 
 function ToastRow({ toast, offset, onDismiss }) {
   const slide = useRef(new Animated.Value(-140)).current;
+  const { panHandlers, drag } = useSwipeDismiss({ onDismiss });
   const style = TOAST_TYPES[toast.type] || TOAST_TYPES.info;
   const bullets = (toast.message || '\u00a0').split('\n').filter((line) => line.length);
 
@@ -32,11 +34,14 @@ function ToastRow({ toast, offset, onDismiss }) {
 
   return (
     <Animated.View
-      style={[styles.wrap, { top: 10 + offset * 176, transform: [{ translateY: slide }] }]}
+      style={[
+        styles.wrap,
+        { top: 10 + offset * 172, transform: [{ translateY: slide }, { translateX: drag }] },
+      ]}
     >
-      <View style={[styles.toast, { borderColor: `${style.color}55` }]}>
+      <View style={[styles.toast, { borderColor: `${style.color}33` }]} {...panHandlers}>
         <View style={styles.headerRow}>
-          <View style={[styles.iconSquircle, { backgroundColor: `${style.color}1f` }]}>
+          <View style={[styles.iconSquircle, { backgroundColor: `${style.color}14` }]}>
             <Text style={[styles.iconText, { color: style.color }]}>{style.icon}</Text>
           </View>
           <View style={styles.headerText}>
@@ -59,7 +64,7 @@ function ToastRow({ toast, offset, onDismiss }) {
         )}
 
         <View style={styles.footer}>
-          <View style={[styles.badge, { backgroundColor: `${style.color}1f`, borderColor: `${style.color}40` }]}>
+          <View style={[styles.badge, { backgroundColor: `${style.color}14`, borderColor: `${style.color}33` }]}>
             <Text style={[styles.badgeText, { color: style.color }]}>
               {toast.badge || style.badge}
             </Text>
@@ -125,13 +130,13 @@ const styles = StyleSheet.create({
   toast: {
     width: '100%',
     maxWidth: 420,
-    backgroundColor: '#131722',
-    borderRadius: 16,
+    backgroundColor: COLORS.surface,
+    borderRadius: 14,
     borderWidth: 1,
     padding: 14,
     shadowColor: '#000',
-    shadowOpacity: 0.6,
-    shadowRadius: 20,
+    shadowOpacity: 0.5,
+    shadowRadius: 18,
     shadowOffset: { width: 0, height: 8 },
     elevation: 14,
   },
