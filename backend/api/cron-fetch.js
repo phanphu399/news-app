@@ -2,6 +2,7 @@ import { scrapeAll } from '../src/services/scraper.js';
 import {
   upsertNews,
   cleanupOldNews,
+  reclassifyPaywallToMacro,
   findExistingIds,
   fetchUntranslatedRows,
   updateVietnameseTitles,
@@ -23,6 +24,7 @@ export default async function handler(request, response) {
     upserted: 0,
     notified: 0,
     cleaned: 0,
+    reclassified: 0,
     translated: 0,
     message: '',
   };
@@ -66,6 +68,9 @@ export default async function handler(request, response) {
 
     const { deleted } = await cleanupOldNews();
     payload.cleaned = deleted;
+
+    const reclassified = await reclassifyPaywallToMacro();
+    payload.reclassified = reclassified;
 
     payload.finished_at = new Date().toISOString();
   } catch (error) {

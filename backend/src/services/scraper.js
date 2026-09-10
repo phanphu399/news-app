@@ -36,9 +36,6 @@ function categorizeQuery(query) {
   ) {
     return 'XAUUSD';
   }
-  if (lower.includes('bloomberg') || lower.includes('wsj') || lower.includes('reuters')) {
-    return 'Paywall';
-  }
   return 'Macro';
 }
 

@@ -120,3 +120,19 @@ export async function cleanupOldNews() {
 
   return { deleted: data?.length ?? 0 };
 }
+
+export async function reclassifyPaywallToMacro(limit = 100) {
+  if (!isReady()) return 0;
+
+  const { error } = await client
+    .from('market_news')
+    .update({ category: 'Macro' })
+    .eq('category', 'Paywall')
+    .limit(limit);
+
+  if (error) {
+    throw new Error(`Supabase reclassify failed: ${error.message}`);
+  }
+
+  return limit;
+}
