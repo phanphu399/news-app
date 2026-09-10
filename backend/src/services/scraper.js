@@ -52,6 +52,8 @@ function detectSource(feedUrl) {
   if (feedUrl.includes('yahoo')) return KNOWN_SOURCES.YAHOO_FINANCE;
   if (feedUrl.includes('cnbc')) return KNOWN_SOURCES.CNBC;
   if (feedUrl.includes('whitehouse')) return KNOWN_SOURCES.WHITE_HOUSE;
+  if (feedUrl.includes('dowjones') || feedUrl.includes('mw_')) return 'MarketWatch';
+  if (feedUrl.includes('oilprice')) return 'OilPrice';
   return KNOWN_SOURCES.GOOGLE_NEWS;
 }
 
@@ -65,12 +67,13 @@ function buildFeedSets() {
   return [...googleFeeds, ...directFeeds];
 }
 
-async function fetchFeed(feed) {
+async function fetchFeedOnce(feed) {
   const response = await fetch(feed.url, {
     headers: {
       'User-Agent':
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36',
       Accept: 'application/rss+xml, application/xml, text/xml, */*',
+      'Accept-Language': 'en-US,en;q=0.9',
     },
     signal: AbortSignal.timeout(8000),
   });
@@ -101,6 +104,18 @@ async function fetchFeed(feed) {
       published_at: parseIsoDate(item.pubDate || item.published),
     };
   });
+}
+
+async function fetchFeed(feed, attempt = 1) {
+  try {
+    return await fetchFeedOnce(feed);
+  } catch (error) {
+    if (attempt < 3 && /(40[0-9]|429|timeout|abort)/i.test(String(error.message))) {
+      await new Promise((resolve) => setTimeout(resolve, 600 * attempt));
+      return fetchFeed(feed, attempt + 1);
+    }
+    throw error;
+  }
 }
 
 function dedupe(items) {

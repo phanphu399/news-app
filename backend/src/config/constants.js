@@ -62,6 +62,8 @@ export const DIRECT_RSS_FEEDS = [
   'https://finance.yahoo.com/news/rssindex',
   'https://www.cnbc.com/id/100003114/device/rss/rss.html',
   'https://www.whitehouse.gov/feed/',
+  'https://feeds.content.dowjones.io/public/rss/mw_topstories',
+  'https://oilprice.com/rss/main',
 ];
 
 export const CACHE_TTL_HOURS = 1;

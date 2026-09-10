@@ -36,12 +36,37 @@ export default function NewsArticleView({ item, onOpenOriginal, onToggleBookmark
   }, [item.url]);
 
   const cat = categoryStyle(item.category);
+  const isGoogleNews = String(item.url || '').includes('news.google.com');
 
   if (status === 'loading') {
     return (
       <View style={styles.center}>
         <ActivityIndicator color={COLORS.primary} />
         <Text style={styles.loadingText}>Đang đọc nội dung...</Text>
+      </View>
+    );
+  }
+
+  if (isGoogleNews && (status === 'error' || (article && article.paragraphs.length === 0))) {
+    return (
+      <View style={styles.center}>
+        <Text style={styles.errorIcon}>📰</Text>
+        <Text style={styles.errorTitle}>Tin tổng hợp từ Google News</Text>
+        <Text style={styles.errorBody}>
+          Google chặn hiển thị nội dung bài này trong ứng dụng. Bấm mở tab bên dưới — trình duyệt
+          sẽ tự chuyển tới trang nguồn gốc để bạn đọc bình thường.
+        </Text>
+        <TouchableOpacity style={styles.primaryBtn} onPress={onOpenOriginal}>
+          <Text style={styles.primaryBtnText}>↗ Mở bài trên Google News</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.ghostBtn, isBookmarked && styles.ghostBtnActive]}
+          onPress={onToggleBookmark}
+        >
+          <Text style={styles.ghostBtnText}>
+            {isBookmarked ? '★ Đã lưu' : '☆ Lưu lại để đọc sau'}
+          </Text>
+        </TouchableOpacity>
       </View>
     );
   }

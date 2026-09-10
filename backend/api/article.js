@@ -77,6 +77,11 @@ export default async function handler(request, response) {
     return errorResponse(response, 'Thiếu tham số url hợp lệ');
   }
 
+  const host = safeHost(url);
+  if (host === 'news.google.com') {
+    return errorResponse(response, 'GOOGLE_NEWS');
+  }
+
   try {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 9000);
