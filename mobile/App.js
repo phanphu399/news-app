@@ -8,7 +8,7 @@ import NewsWebView from './src/views/NewsWebView';
 import NotificationToast from './src/views/NotificationToast';
 import WatchlistView from './src/views/WatchlistView';
 import EconomicCalendarView from './src/views/EconomicCalendarView';
-import CustomFeedView from './src/views/CustomFeedView';
+import SourcesView from './src/views/SourcesView';
 import TradingViewScreen from './src/views/TradingViewScreen';
 import AppHeader from './src/views/AppHeader';
 import { LocalStorageService } from './src/services/LocalStorageService';
@@ -230,9 +230,7 @@ function MainScreen() {
             onOpenArticle={openArticle}
           />
         )}
-        {activeTab === TABS.FEEDS && (
-          <CustomFeedView onAdded={() => vm.refresh()} onOpenArticle={openArticle} />
-        )}
+        {activeTab === TABS.FEEDS && <SourcesView items={state.items} onOpenArticle={openArticle} />}
 
         {toasts.map((toast, index) => (
           <NotificationToast

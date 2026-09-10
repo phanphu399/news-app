@@ -1,6 +1,4 @@
 import { fetchLatestNews, subscribeRealtime } from '../services/SupabaseService';
-import { CustomFeedService } from '../services/CustomFeedService';
-import { LocalStorageService } from '../services/LocalStorageService';
 import { NewsWarningService } from '../services/NewsWarningService';
 import { REFRESH_INTERVAL_MS } from '../config/constants';
 
@@ -69,14 +67,9 @@ export default class NewsViewModel {
     this.error = null;
     this.emit();
     try {
-      const [global, custom] = await Promise.all([
-        fetchLatestNews(),
-        CustomFeedService.fetchAll(),
-      ]);
-      const merged = this.merge(global, custom);
-      this.items = merged;
+      this.items = await fetchLatestNews();
       this.importantIds = new Set(
-        merged.filter((item) => item.isImportant).map((item) => item.id)
+        this.items.filter((item) => item.isImportant).map((item) => item.id)
       );
     } catch (error) {
       this.error = error.message;
@@ -88,28 +81,11 @@ export default class NewsViewModel {
 
   async refresh() {
     try {
-      const global = await fetchLatestNews();
-      const custom = await CustomFeedService.fetchAll();
-      this.items = this.merge(global, custom);
+      this.items = await fetchLatestNews();
       this.error = null;
     } catch (error) {
       this.error = error.message;
     }
     this.emit();
-  }
-
-  merge(global, custom) {
-    const map = new Map();
-    for (const item of global) map.set(item.id, item);
-    for (const item of custom) if (!map.has(item.id)) map.set(item.id, item);
-    return [...map.values()].sort((a, b) => b.publishedAt - a.publishedAt);
-  }
-
-  markAllRead() {
-    LocalStorageService.setLastReadAt();
-  }
-
-  getUnreadCount() {
-    return this.items.length;
   }
 }
