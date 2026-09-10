@@ -167,6 +167,46 @@ export function resizeRgba(src, sw, sh, dw, dh) {
   return out;
 }
 
+/** Cắt bỏ vùng trong suốt quanh content thực (alpha > 10), với lề padRatio. */
+export function cropToContent(src, sw, sh, padRatio = 0.04) {
+  let minX = sw, minY = sh, maxX = -1, maxY = -1;
+  for (let y = 0; y < sh; y++) {
+    for (let x = 0; x < sw; x++) {
+      if (src[(y * sw + x) * 4 + 3] > 10) {
+        if (x < minX) minX = x;
+        if (x > maxX) maxX = x;
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
+      }
+    }
+  }
+  if (maxX < 0) return { width: sw, height: sh, data: src };
+  const padX = Math.round((maxX - minX + 1) * padRatio);
+  const padY = Math.round((maxY - minY + 1) * padRatio);
+  const x0 = Math.max(0, minX - padX);
+  const y0 = Math.max(0, minY - padY);
+  const cw = Math.min(sw - x0, maxX - minX + 1 + 2 * padX);
+  const ch = Math.min(sh - y0, maxY - minY + 1 + 2 * padY);
+  const out = new Uint8Array(cw * ch * 4);
+  for (let y = 0; y < ch; y++) {
+    for (let x = 0; x < cw; x++) {
+      const s = ((y0 + y) * sw + x0 + x) * 4;
+      const o = (y * cw + x) * 4;
+      out[o] = src[s];
+      out[o + 1] = src[s + 1];
+      out[o + 2] = src[s + 2];
+      out[o + 3] = src[s + 3];
+    }
+  }
+  return { width: cw, height: ch, data: out };
+}
+
+/** Icon vuông đầy đủ: crop lề rồi phóng to vừa canvas (aspect giữ nguyên, canh giữa). */
+export function makeSquareIcon(src, sw, sh, outSize, coverage = 0.98, padRatio = 0.04) {
+  const { width: cw, height: ch, data: px } = cropToContent(src, sw, sh, padRatio);
+  return fitMaskable(px, cw, ch, outSize, coverage);
+}
+
 /** Đặt ảnh đã scale vào giữa canvas vuông outSize, với phần trăm lề cho MASKABLE. */
 export function fitMaskable(src, sw, sh, outSize, coverage = 0.82) {
   const px = new Uint8Array(outSize * outSize * 4); // transparent

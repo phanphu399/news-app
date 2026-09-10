@@ -110,6 +110,7 @@ export default function EconomicCalendarView() {
   const load = useCallback(async (mode = 'initial') => {
     const abort = new AbortController();
     abortRef.current = abort;
+    const timeout = setTimeout(() => abort.abort(), 12000);
     if (mode === 'initial') setLoading(true);
     else setRefreshing(true);
     setError(null);
@@ -122,10 +123,15 @@ export default function EconomicCalendarView() {
       if (!res.ok || !json?.ok) throw new Error(json?.error || `HTTP ${res.status}`);
       setEvents(json.events || []);
     } catch (err) {
-      if (err.name === 'AbortError') return;
+      if (err.name === 'AbortError') {
+        setError('Quá thời gian chờ (12s), thử lại.');
+        showToast({ type: 'error', title: 'Lịch kinh tế quá chậm', message: 'Kết nối tới server bị treo, hãy thử lại.' });
+        return;
+      }
       setError(err.message);
       showToast({ type: 'error', title: 'Lỗi lịch kinh tế', message: err.message });
     } finally {
+      clearTimeout(timeout);
       if (mode === 'initial') setLoading(false);
       else setRefreshing(false);
     }

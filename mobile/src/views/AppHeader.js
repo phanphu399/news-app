@@ -1,11 +1,23 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Animated, Easing, Image } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Animated,
+  Easing,
+  Image,
+  useWindowDimensions,
+} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, GRADIENTS, APP_NAME, APP_TAGLINE, FONT_FAMILY } from '../config/constants';
 
 const LOGO_SOURCE = require('../../assets/breaking-news-logo-design.png');
 
 export default function AppHeader({ connected, loading, onRefresh }) {
+  const { width } = useWindowDimensions();
+  const wide = width >= 720;
+  const logoBox = wide ? styles.logoBoxWide : styles.logoBox;
   const friendlyStatus = connected ? 'Trực tuyến' : 'Ngoại tuyến';
   const spin = useRef(new Animated.Value(0)).current;
 
@@ -34,7 +46,7 @@ export default function AppHeader({ connected, loading, onRefresh }) {
   return (
     <LinearGradient colors={GRADIENTS.header} style={styles.header}>
       <View style={styles.brand}>
-        <View style={styles.logoBox}>
+        <View style={[styles.logoBox, logoBox]}>
           <Image source={LOGO_SOURCE} style={styles.logo} resizeMode="contain" />
         </View>
         <View>
@@ -79,7 +91,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logoBox: {
-    width: 86,
+    width: 92,
     height: 42,
     borderRadius: 12,
     marginRight: 10,
@@ -88,6 +100,11 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.04)',
     borderWidth: 1,
     borderColor: COLORS.border,
+  },
+  logoBoxWide: {
+    width: 132,
+    height: 54,
+    marginRight: 14,
   },
   logo: {
     width: '100%',

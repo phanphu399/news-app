@@ -29,26 +29,28 @@ async function playWebBeep() {
 
     const lowpass = ctx.createBiquadFilter();
     lowpass.type = 'lowpass';
-    lowpass.frequency.value = 1000;
-    lowpass.Q.value = 0.5;
+    lowpass.frequency.value = 1400;
+    lowpass.Q.value = 0.4;
     lowpass.connect(ctx.destination);
 
     const master = ctx.createGain();
-    master.gain.value = 0.9;
+    master.gain.value = 0.6;
     master.connect(lowpass);
 
     const notes = [
-      { freq: 392.0, at: 0.0, dur: 0.55, vol: 0.16 },
-      { freq: 523.25, at: 0.18, dur: 0.5, vol: 0.11 },
+      { freq: 659.25, at: 0.0, dur: 0.9 }, // E5
+      { freq: 987.77, at: 0.17, dur: 0.9 }, // B5 — quãng năm, dễ chịu
+      { freq: 1318.5, at: 0.35, dur: 0.6 }, // E6 — lấp lánh nhẹ
     ];
-    for (const note of notes) {
+    const vols = [0.13, 0.095, 0.045];
+    for (const [index, note] of notes.entries()) {
       const oscillator = ctx.createOscillator();
       const gain = ctx.createGain();
       oscillator.type = 'sine';
       oscillator.frequency.value = note.freq;
       const start = ctx.currentTime + note.at;
       gain.gain.setValueAtTime(0.0001, start);
-      gain.gain.exponentialRampToValueAtTime(note.vol, start + 0.03);
+      gain.gain.exponentialRampToValueAtTime(vols[index], start + 0.025);
       gain.gain.exponentialRampToValueAtTime(0.0001, start + note.dur);
       oscillator.connect(gain);
       gain.connect(master);
@@ -72,7 +74,7 @@ export const NewsWarningService = {
       Notif.setNotificationChannelAsync('market_alerts', {
         name: 'Market Alerts',
         importance: Notif.AndroidImportance.MAX,
-        sound: 'beep.wav',
+        sound: 'chime-soft.wav',
         vibrationPattern: [0, 250, 100, 250],
       });
     } catch {
@@ -95,7 +97,7 @@ export const NewsWarningService = {
         content: {
           title: `\u26A0 ${newsItem.title}`,
           body: newsItem.source ? `Source: ${newsItem.source}` : 'Market alert',
-          sound: 'beep.wav',
+          sound: 'chime-soft.wav',
           data: { url: newsItem.url },
         },
         trigger: null,

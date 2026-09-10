@@ -40,7 +40,7 @@
           "icon": "./assets/notification-icon.png",
           "color": "#e11d48",
           "sounds": [
-            "./assets/sounds/beep.wav"
+            "./assets/sounds/chime-soft.wav"
           ]
         }
       ],

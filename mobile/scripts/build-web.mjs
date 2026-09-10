@@ -1,7 +1,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { decodePng, encodePng, resizeRgba, fitMaskable } from './png.mjs';
+import { decodePng, encodePng, makeSquareIcon, fitMaskable, cropToContent } from './png.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const DIST = join(ROOT, 'dist');
@@ -21,9 +21,13 @@ export function writeSquareIcon(path, size, maskable = false) {
       throw new Error(`Không đọc được ${SOURCE_PNG}`);
     }
   })();
-  const px = maskable
-    ? fitMaskable(src.data, src.width, src.height, size)
-    : resizeRgba(src.data, src.width, src.height, size, size);
+  let px;
+  if (maskable) {
+    const cropped = cropToContent(src.data, src.width, src.height);
+    px = fitMaskable(cropped.data, cropped.width, cropped.height, size, 0.82);
+  } else {
+    px = makeSquareIcon(src.data, src.width, src.height, size, 0.98);
+  }
   writeFileSync(path, encodePng(size, px));
 }
 
@@ -54,7 +58,7 @@ const manifest = {
   ],
 };
 
-const SW = `const CACHE='aster-v4';
+const SW = `const CACHE='aster-v5';
 self.addEventListener('install',()=>{self.skipWaiting();});
 self.addEventListener('activate',(e)=>{
   e.waitUntil((async()=>{

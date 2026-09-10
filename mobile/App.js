@@ -13,6 +13,7 @@ import SourcesView from './src/views/SourcesView';
 import TradingViewScreen from './src/views/TradingViewScreen';
 import AppHeader from './src/views/AppHeader';
 import ToastHost from './src/components/ToastHost';
+import ErrorBoundary from './src/components/ErrorBoundary';
 import { showToast } from './src/services/ToastService';
 import { triggerManualFetch } from './src/services/SourceService';
 import { LocalStorageService } from './src/services/LocalStorageService';
@@ -260,28 +261,44 @@ function MainScreen() {
 
       <View style={styles.content}>
         {activeTab === TABS.NEWS && (
-          <NewsListView
-            items={state.items}
-            loading={state.loading || manualRefreshing}
-            error={state.error}
-            onItemPress={openArticle}
-            onRefresh={reloadAll}
-          />
+          <ErrorBoundary>
+            <NewsListView
+              items={state.items}
+              loading={state.loading || manualRefreshing}
+              error={state.error}
+              onItemPress={openArticle}
+              onRefresh={reloadAll}
+            />
+          </ErrorBoundary>
         )}
-        {activeTab === TABS.GOLD && <TradingViewScreen />}
-        {activeTab === TABS.CALENDAR && <EconomicCalendarView />}
+        {activeTab === TABS.GOLD && (
+          <ErrorBoundary>
+            <TradingViewScreen />
+          </ErrorBoundary>
+        )}
+        {activeTab === TABS.CALENDAR && (
+          <ErrorBoundary>
+            <EconomicCalendarView />
+          </ErrorBoundary>
+        )}
         {activeTab === TABS.FOLLOW && (
-          <WatchlistView
-            items={state.items}
-            keywords={keywords}
-            onAddKeyword={addKeyword}
-            onRemoveKeyword={removeKeyword}
-            bookmarks={bookmarks}
-            onToggleBookmark={toggleBookmark}
-            onOpenArticle={openArticle}
-          />
+          <ErrorBoundary>
+            <WatchlistView
+              items={state.items}
+              keywords={keywords}
+              onAddKeyword={addKeyword}
+              onRemoveKeyword={removeKeyword}
+              bookmarks={bookmarks}
+              onToggleBookmark={toggleBookmark}
+              onOpenArticle={openArticle}
+            />
+          </ErrorBoundary>
         )}
-        {activeTab === TABS.FEEDS && <SourcesView items={state.items} onOpenArticle={openArticle} />}
+        {activeTab === TABS.FEEDS && (
+          <ErrorBoundary>
+            <SourcesView items={state.items} onOpenArticle={openArticle} />
+          </ErrorBoundary>
+        )}
 
         {toasts.map((toast, index) => (
           <NotificationToast
