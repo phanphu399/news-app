@@ -109,12 +109,7 @@ export default function NewsListView({ items, loading, error, onItemPress, onRef
 
   return (
     <View style={styles.flex}>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.chipsBar}
-        contentContainerStyle={styles.chipsContent}
-      >
+      <View style={styles.chipsBar}>
         {chips.map((chip) => {
           const isActive = filter === chip.key;
           return (
@@ -132,7 +127,7 @@ export default function NewsListView({ items, loading, error, onItemPress, onRef
             </TouchableOpacity>
           );
         })}
-      </ScrollView>
+      </View>
 
       <FlatList
         data={flatList}
@@ -158,15 +153,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   chipsBar: {
-    flexGrow: 0,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.borderSoft,
     backgroundColor: COLORS.background,
-  },
-  chipsContent: {
     paddingHorizontal: 10,
     paddingVertical: 9,
-    gap: 8,
   },
   chip: {
     flexDirection: 'row',

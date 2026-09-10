@@ -14,10 +14,13 @@ function sortByTime(items) {
     });
 }
 
+const NEW_ITEM_MAX_AGE_MS = 6 * 60 * 60 * 1000;
+
 export default class NewsViewModel {
   constructor() {
     this.items = [];
     this.importantIds = new Set();
+    this.knownIds = new Set();
     this.listeners = new Set();
     this.newItemListeners = new Set();
     this.loading = false;
@@ -44,14 +47,22 @@ export default class NewsViewModel {
     await this.initialLoad();
     this.offRealtime = subscribeRealtime(
       (item) => {
-        if (item && this.importantIds.has(item.id)) return;
+        if (!item) return;
+        if (this.knownIds.has(item.id)) return;
+        this.knownIds.add(item.id);
+
+        const ageMs = Date.now() - new Date(item.publishedAt).getTime();
+        const isFresh = ageMs >= 0 && ageMs <= NEW_ITEM_MAX_AGE_MS;
+
         this.items = sortByTime([item, ...this.items]).slice(0, 150);
         if (item?.isImportant) {
           this.importantIds.add(item.id);
           NewsWarningService.playBeep();
           NewsWarningService.scheduleLocal(item);
         }
-        this.newItemListeners.forEach((listener) => listener(item));
+        if (isFresh) {
+          this.newItemListeners.forEach((listener) => listener(item));
+        }
         this.emit();
       },
       () => this.refresh(),
@@ -60,6 +71,7 @@ export default class NewsViewModel {
         this.items = this.items.map((existing) =>
           existing.id === updated.id ? updated : existing
         );
+        if (updated?.isImportant) this.importantIds.add(updated.id);
         this.emit();
       }
     );
@@ -81,6 +93,7 @@ export default class NewsViewModel {
       this.importantIds = new Set(
         this.items.filter((item) => item.isImportant).map((item) => item.id)
       );
+      this.knownIds = new Set(this.items.map((item) => item.id));
       this.loading = false;
       this.error = null;
       this.emit();
@@ -95,6 +108,7 @@ export default class NewsViewModel {
       this.importantIds = new Set(
         this.items.filter((item) => item.isImportant).map((item) => item.id)
       );
+      this.knownIds = new Set(this.items.map((item) => item.id));
       this.error = null;
       await LocalStorageService.setNewsCache(this.items);
     } catch (error) {
@@ -108,6 +122,10 @@ export default class NewsViewModel {
   async refresh() {
     try {
       this.items = sortByTime(await fetchLatestNews());
+      this.importantIds = new Set(
+        this.items.filter((item) => item.isImportant).map((item) => item.id)
+      );
+      this.knownIds = new Set(this.items.map((item) => item.id));
       this.error = null;
       await LocalStorageService.setNewsCache(this.items);
     } catch (error) {

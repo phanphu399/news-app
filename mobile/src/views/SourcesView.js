@@ -8,12 +8,21 @@ import {
   Modal,
   TextInput,
   Image,
+  Switch,
   StyleSheet,
 } from 'react-native';
 import NewsCard from './NewsCard';
-import { fetchSources, sourcesFromItems, addUserFeed, removeUserFeed } from '../services/SourceService';
+import {
+  fetchSources,
+  sourcesFromItems,
+  addUserFeed,
+  updateUserFeed,
+  removeUserFeed,
+  testUserFeed,
+} from '../services/SourceService';
 import { COLORS, categoryStyle } from '../config/constants';
 import { faviconUrl } from '../utils/domain';
+import { showToast } from '../services/ToastService';
 
 function SourceAvatar({ sourceItem }) {
   const favicon = faviconUrl(sourceItem.source, sourceItem.url);
@@ -28,7 +37,7 @@ function SourceAvatar({ sourceItem }) {
   );
 }
 
-function SourceCard({ sourceItem, onPress, onRemove, removing }) {
+function SourceCard({ sourceItem, onPress, onRemove, onEdit, onToggle, removing }) {
   const healthy = sourceItem.healthy;
   return (
     <TouchableOpacity style={styles.sourceCard} activeOpacity={0.8} onPress={onPress}>
@@ -39,7 +48,17 @@ function SourceCard({ sourceItem, onPress, onRemove, removing }) {
             {sourceItem.source}
           </Text>
           {sourceItem.userFeedId ? (
-            <Text style={styles.userTag}>BẠN</Text>
+            <>
+              <Text style={styles.userTag}>BẠN</Text>
+              <TouchableOpacity
+                style={styles.editBtn}
+                onPress={onEdit}
+                hitSlop={8}
+                accessibilityLabel="Chỉnh sửa nguồn"
+              >
+                <Text style={styles.editBtnText}>✎</Text>
+              </TouchableOpacity>
+            </>
           ) : null}
           {healthy !== null ? (
             <View style={[styles.badge, healthy ? styles.badgeOk : styles.badgeErr]}>
@@ -73,6 +92,20 @@ function SourceCard({ sourceItem, onPress, onRemove, removing }) {
           <Text style={styles.count}>{sourceItem.count24h} bài / 24h</Text>
           <Text style={styles.chevron}>›</Text>
         </View>
+
+        {sourceItem.userFeedId ? (
+          <View style={styles.feedActions}>
+            <Text style={styles.toggleLabel}>
+              {sourceItem.enabled ? 'Đang theo dõi' : 'Đã tạm dừng'}
+            </Text>
+            <Switch
+              value={Boolean(sourceItem.enabled)}
+              onValueChange={(value) => onToggle?.(value)}
+              trackColor={{ false: COLORS.surfaceAlt, true: 'rgba(52,211,153,0.5)' }}
+              thumbColor={sourceItem.enabled ? COLORS.success : COLORS.textMuted}
+            />
+          </View>
+        ) : null}
       </View>
     </TouchableOpacity>
   );
@@ -82,6 +115,9 @@ const CATEGORY_OPTIONS = [
   { key: 'Custom', label: 'Tin của bạn' },
   { key: 'Macro', label: 'Kinh tế vĩ mô' },
   { key: 'XAUUSD', label: 'Vàng & Dầu' },
+  { key: 'Forex', label: 'Ngoại tệ' },
+  { key: 'Crypto', label: 'Tiền số' },
+  { key: 'Geopolitics', label: 'Địa chính trị' },
 ];
 
 export default function SourcesView({ items, onOpenArticle }) {
@@ -90,12 +126,16 @@ export default function SourcesView({ items, onOpenArticle }) {
   const [selected, setSelected] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [showAdd, setShowAdd] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [feedName, setFeedName] = useState('');
   const [feedUrl, setFeedUrl] = useState('');
   const [feedCategory, setFeedCategory] = useState('Custom');
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
   const [removingId, setRemovingId] = useState(null);
+  const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState(null);
+  const [patchingId, setPatchingId] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -123,6 +163,50 @@ export default function SourcesView({ items, onOpenArticle }) {
 
   const refresh = () => setRefreshKey((key) => key + 1);
 
+  const openAddModal = () => {
+    setEditingId(null);
+    setFeedName('');
+    setFeedUrl('');
+    setFeedCategory('Custom');
+    setFormError('');
+    setTestResult(null);
+    setShowAdd(true);
+  };
+
+  const openEditModal = (item) => {
+    setEditingId(item.userFeedId);
+    setFeedName(item.source || '');
+    setFeedUrl(item.url || '');
+    setFeedCategory(item.categories?.[0] || 'Custom');
+    setFormError('');
+    setTestResult(null);
+    setShowAdd(true);
+  };
+
+  const testFeed = async () => {
+    setFormError('');
+    if (!feedUrl.trim()) {
+      setFormError('Vui lòng nhập link RSS để kiểm tra.');
+      return;
+    }
+    setTesting(true);
+    setTestResult(null);
+    try {
+      const result = await testUserFeed(feedUrl.trim());
+      setTestResult(result);
+      if (result?.valid) {
+        showToast({ type: 'success', title: 'Cào thử thành công' });
+      } else {
+        showToast({ type: 'warning', title: result?.message || 'Không cào được bài nào' });
+      }
+    } catch (error) {
+      setTestResult({ ok: true, valid: false, message: error.message, items: [] });
+      showToast({ type: 'error', title: 'Kiểm tra feed thất bại', message: error.message });
+    } finally {
+      setTesting(false);
+    }
+  };
+
   const submitFeed = async () => {
     setFormError('');
     if (!feedName.trim()) {
@@ -135,14 +219,22 @@ export default function SourcesView({ items, onOpenArticle }) {
     }
     setSubmitting(true);
     try {
-      await addUserFeed({ name: feedName.trim(), rssUrl: feedUrl.trim(), category: feedCategory });
+      if (editingId) {
+        await updateUserFeed(editingId, {
+          name: feedName.trim(),
+          rssUrl: feedUrl.trim(),
+          category: feedCategory,
+        });
+        showToast({ type: 'success', title: 'Đã cập nhật nguồn tin', message: feedName.trim() });
+      } else {
+        await addUserFeed({ name: feedName.trim(), rssUrl: feedUrl.trim(), category: feedCategory });
+        showToast({ type: 'success', title: 'Đã thêm nguồn tin', message: feedName.trim() });
+      }
       setShowAdd(false);
-      setFeedName('');
-      setFeedUrl('');
-      setFeedCategory('Custom');
       refresh();
     } catch (error) {
       setFormError(error.message);
+      showToast({ type: 'error', title: 'Lưu nguồn tin thất bại', message: error.message });
     } finally {
       setSubmitting(false);
     }
@@ -152,11 +244,34 @@ export default function SourcesView({ items, onOpenArticle }) {
     setRemovingId(item.userFeedId);
     try {
       await removeUserFeed(item.userFeedId);
+      showToast({ type: 'info', title: 'Đã xóa nguồn tin', message: item.source });
       refresh();
     } catch (error) {
-      setFormError(error.message);
+      showToast({ type: 'error', title: 'Xóa nguồn tin thất bại', message: error.message });
     } finally {
       setRemovingId(null);
+    }
+  };
+
+  const toggleFeed = async (value, item) => {
+    setPatchingId(item.userFeedId);
+    try {
+      await updateUserFeed(item.userFeedId, { enabled: value });
+      setSources((prev) =>
+        (prev || []).map((entry) =>
+          entry.userFeedId === item.userFeedId ? { ...entry, enabled: value } : entry
+        )
+      );
+      showToast({
+        type: value ? 'success' : 'warning',
+        title: value ? 'Đã bật theo dõi nguồn' : 'Đã tạm dừng nguồn',
+        message: item.source,
+      });
+      refresh();
+    } catch (error) {
+      showToast({ type: 'error', title: 'Cập nhật trạng thái thất bại', message: error.message });
+    } finally {
+      setPatchingId(null);
     }
   };
 
@@ -231,7 +346,7 @@ export default function SourcesView({ items, onOpenArticle }) {
               Bấm vào một nguồn để xem các bài của nguồn đó. Trạng thái "Lỗi" nghĩa là nguồn vừa
               từ chối kết nối trong lần kiểm tra gần nhất.
             </Text>
-            <TouchableOpacity style={styles.addBtn} onPress={() => setShowAdd(true)} activeOpacity={0.85}>
+            <TouchableOpacity style={styles.addBtn} onPress={openAddModal} activeOpacity={0.85}>
               <Text style={styles.addBtnIcon}>＋</Text>
               <Text style={styles.addBtnText}>Thêm nguồn tin của bạn</Text>
             </TouchableOpacity>
@@ -247,7 +362,9 @@ export default function SourcesView({ items, onOpenArticle }) {
             sourceItem={item}
             onPress={() => setSelected(item)}
             onRemove={() => removeFeed(item)}
-            removing={removingId === item.userFeedId}
+            onEdit={() => openEditModal(item)}
+            onToggle={(value) => toggleFeed(value, item)}
+            removing={removingId === item.userFeedId || patchingId === item.userFeedId}
           />
         )}
       />
@@ -259,10 +376,12 @@ export default function SourcesView({ items, onOpenArticle }) {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Thêm nguồn tin mới</Text>
+            <Text style={styles.modalTitle}>
+              {editingId ? 'Chỉnh sửa nguồn tin' : 'Thêm nguồn tin mới'}
+            </Text>
             <Text style={styles.modalHint}>
-              Dán link RSS/Atom của trang web bạn muốn theo dõi. Hệ thống sẽ xác thực feed, sau đó
-              cron cào bài và đưa vào danh sách tin (cập nhật sau vài phút).
+              Dán link RSS/Atom của trang web bạn muốn theo dõi. Bấm "Cào thử" để kiểm tra feed lấy
+              được tin không, rồi mới lưu.
             </Text>
 
             <Text style={styles.fieldLabel}>Tên nguồn *</Text>
@@ -275,16 +394,51 @@ export default function SourcesView({ items, onOpenArticle }) {
             />
 
             <Text style={styles.fieldLabel}>Link RSS *</Text>
-            <TextInput
-              style={styles.input}
-              value={feedUrl}
-              onChangeText={setFeedUrl}
-              placeholder="https://example.com/feed/"
-              placeholderTextColor={COLORS.textMuted}
-              autoCapitalize="none"
-              autoCorrect={false}
-              keyboardType="url"
-            />
+            <View style={styles.urlInputRow}>
+              <TextInput
+                style={[styles.input, styles.urlInput]}
+                value={feedUrl}
+                onChangeText={(value) => {
+                  setFeedUrl(value);
+                  setTestResult(null);
+                }}
+                placeholder="https://example.com/feed/"
+                placeholderTextColor={COLORS.textMuted}
+                autoCapitalize="none"
+                autoCorrect={false}
+                keyboardType="url"
+              />
+              <TouchableOpacity
+                style={[styles.testBtn, testing && styles.saveBtnDisabled]}
+                onPress={testFeed}
+                disabled={testing}
+              >
+                {testing ? (
+                  <ActivityIndicator color="#fff" size="small" />
+                ) : (
+                  <Text style={styles.testBtnText}>Cào thử</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+
+            {testResult ? (
+              testResult.valid ? (
+                <View style={styles.testOk}>
+                  <Text style={styles.testOkTitle}>
+                    ✓ {testResult.items?.length || 0} bài mẫu:
+                  </Text>
+                  {(testResult.items || []).slice(0, 3).map((sample, index) => (
+                    <Text key={`${index}-${sample.title}`} style={styles.testOkItem} numberOfLines={1}>
+                      • {sample.title}
+                    </Text>
+                  ))}
+                </View>
+              ) : (
+                <View style={styles.testErr}>
+                  <Text style={styles.testErrText}>{testResult.message}</Text>
+                </View>
+              )
+            ) : null}
 
             <Text style={styles.fieldLabel}>Chuyên mục</Text>
             <View style={styles.catRow}>
@@ -316,7 +470,11 @@ export default function SourcesView({ items, onOpenArticle }) {
                 disabled={submitting}
               >
                 <Text style={styles.saveBtnText}>
-                  {submitting ? 'Đang kiểm tra feed...' : 'Thêm nguồn'}
+                  {submitting
+                    ? 'Đang lưu...'
+                    : editingId
+                    ? 'Lưu thay đổi'
+                    : 'Thêm nguồn'}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -466,6 +624,34 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '800',
   },
+  editBtn: {
+    width: 26,
+    height: 26,
+    borderRadius: 8,
+    backgroundColor: 'rgba(56,189,248,0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8,
+  },
+  editBtnText: {
+    color: COLORS.primary,
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  feedActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.borderSoft,
+  },
+  toggleLabel: {
+    color: COLORS.textMuted,
+    fontSize: 11,
+    fontWeight: '600',
+    flex: 1,
+  },
   userTag: {
     color: COLORS.primary,
     fontSize: 9,
@@ -542,6 +728,60 @@ const styles = StyleSheet.create({
     paddingVertical: 9,
     color: COLORS.text,
     fontSize: 14,
+  },
+  urlInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  urlInput: {
+    flex: 1,
+  },
+  testBtn: {
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 10,
+    backgroundColor: 'rgba(99,102,241,0.85)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 74,
+  },
+  testBtnText: {
+    color: '#fff',
+    fontWeight: '800',
+    fontSize: 12,
+  },
+  testOk: {
+    backgroundColor: 'rgba(52,211,153,0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(52,211,153,0.4)',
+    borderRadius: 10,
+    padding: 10,
+    marginTop: 10,
+  },
+  testOkTitle: {
+    color: COLORS.success,
+    fontSize: 12,
+    fontWeight: '800',
+    marginBottom: 5,
+  },
+  testOkItem: {
+    color: COLORS.textSecondary,
+    fontSize: 12,
+    marginTop: 3,
+  },
+  testErr: {
+    backgroundColor: 'rgba(244,63,94,0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(244,63,94,0.4)',
+    borderRadius: 10,
+    padding: 10,
+    marginTop: 10,
+  },
+  testErrText: {
+    color: COLORS.danger,
+    fontSize: 12,
+    fontWeight: '600',
   },
   catRow: {
     flexDirection: 'row',

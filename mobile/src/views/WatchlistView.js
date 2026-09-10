@@ -145,7 +145,7 @@ export default function WatchlistView({
                     <NewsCard item={item} onPress={onOpenArticle} />
                     <TouchableOpacity
                       style={styles.removeBookmark}
-                      onPress={() => onToggleBookmark(item.id)}
+                      onPress={() => onToggleBookmark(item)}
                     >
                       <Text style={styles.removeBookmarkText}>✕ Bỏ lưu</Text>
                     </TouchableOpacity>

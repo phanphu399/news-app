@@ -12,6 +12,8 @@ import EconomicCalendarView from './src/views/EconomicCalendarView';
 import SourcesView from './src/views/SourcesView';
 import TradingViewScreen from './src/views/TradingViewScreen';
 import AppHeader from './src/views/AppHeader';
+import ToastHost from './src/components/ToastHost';
+import { showToast } from './src/services/ToastService';
 import { LocalStorageService } from './src/services/LocalStorageService';
 import { normalizeUrl } from './src/utils/url';
 import { COLORS, TAB_INACTIVE, TAB_ACTIVE } from './src/config/constants';
@@ -172,9 +174,11 @@ function MainScreen() {
     if (exists) {
       await LocalStorageService.removeBookmark(item.id);
       setBookmarks(bookmarks.filter((bookmark) => bookmark.id !== item.id));
+      showToast({ type: 'info', title: 'Đã bỏ lưu bài viết' });
     } else {
       await LocalStorageService.addBookmark(item);
       setBookmarks([item, ...bookmarks]);
+      showToast({ type: 'success', title: 'Đã lưu bài viết', message: 'Vào tab "Quan tâm" để xem lại.' });
     }
   };
 
@@ -182,12 +186,16 @@ function MainScreen() {
     const next = keywords.includes(keyword) ? keywords : [...keywords, keyword];
     setKeywords(next);
     await LocalStorageService.setWatchKeywords(next);
+    if (!keywords.includes(keyword)) {
+      showToast({ type: 'success', title: 'Đã thêm từ khóa', message: keyword });
+    }
   };
 
   const removeKeyword = async (keyword) => {
     const next = keywords.filter((k) => k !== keyword);
     setKeywords(next);
     await LocalStorageService.setWatchKeywords(next);
+    showToast({ type: 'info', title: 'Đã xóa từ khóa', message: keyword });
   };
 
   const openArticle = (item) => {
@@ -248,6 +256,7 @@ function MainScreen() {
             }}
           />
         ))}
+        <ToastHost />
       </View>
 
       <TabBar

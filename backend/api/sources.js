@@ -92,8 +92,7 @@ export default async function handler(request, response) {
     try {
       const { data } = await client
         .from('user_feeds')
-        .select('id,name,rss_url,category')
-        .eq('enabled', true)
+        .select('id,name,rss_url,category,enabled')
         .limit(60);
       if (Array.isArray(data)) {
         for (const feed of data) {
@@ -102,8 +101,9 @@ export default async function handler(request, response) {
             url: feed.rss_url,
             categories: [feed.category || 'Custom'],
             userFeedId: feed.id,
+            enabled: feed.enabled !== false,
           });
-          userFeedIds.add(feed.id);
+          if (feed.enabled !== false) userFeedIds.add(feed.id);
         }
       }
     } catch {
@@ -151,6 +151,7 @@ export default async function handler(request, response) {
         error: health.error,
         count24h: counts.get(source.source) || 0,
         userFeedId: source.userFeedId || null,
+        enabled: source.enabled !== false,
       };
     })
   );

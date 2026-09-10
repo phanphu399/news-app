@@ -28,6 +28,34 @@ export async function addUserFeed({ name, rssUrl, category }) {
   return json.feed;
 }
 
+export async function updateUserFeed(id, { name, rssUrl, category, enabled }) {
+  const response = await fetch(`${FEEDS_ENDPOINT}?id=${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    signal: AbortSignal.timeout(20000),
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, rssUrl, category, enabled }),
+  });
+  const json = await response.json().catch(() => ({}));
+  if (!response.ok || !json?.ok) {
+    throw new Error(json?.error || `HTTP ${response.status}`);
+  }
+  return json.feed;
+}
+
+export async function testUserFeed(rssUrl) {
+  const response = await fetch(`${FEEDS_ENDPOINT}?action=test`, {
+    method: 'POST',
+    signal: AbortSignal.timeout(25000),
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ rssUrl }),
+  });
+  const json = await response.json().catch(() => ({}));
+  if (!response.ok || !json?.ok) {
+    throw new Error(json?.error || `HTTP ${response.status}`);
+  }
+  return json;
+}
+
 export async function removeUserFeed(id) {
   const response = await fetch(`${FEEDS_ENDPOINT}?id=${encodeURIComponent(id)}`, {
     method: 'DELETE',
@@ -45,7 +73,16 @@ export function sourcesFromItems(items) {
   for (const item of items) {
     const source = item.source || 'Unknown';
     if (!map.has(source)) {
-      map.set(source, { source, url: '', categories: new Set(), count24h: 0, healthy: null, error: '' });
+      map.set(source, {
+        source,
+        url: '',
+        categories: new Set(),
+        count24h: 0,
+        healthy: null,
+        error: '',
+        userFeedId: null,
+        enabled: true,
+      });
     }
     const entry = map.get(source);
     entry.count24h += 1;
