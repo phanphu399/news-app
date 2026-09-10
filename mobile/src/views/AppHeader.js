@@ -1,16 +1,19 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { NewsLogoIcon } from '../components/TabIcons';
-import { COLORS, APP_NAME, APP_TAGLINE } from '../config/constants';
+import { COLORS, GRADIENTS, APP_NAME, APP_TAGLINE } from '../config/constants';
 
 export default function AppHeader({ connected, loading, onRefresh }) {
   const friendlyStatus = connected ? 'Trực tuyến' : 'Ngoại tuyến';
 
   return (
-    <View style={styles.header}>
+    <LinearGradient colors={GRADIENTS.header} style={styles.header}>
       <View style={styles.brand}>
-        <View style={styles.logo}>
-          <NewsLogoIcon size={34} color={COLORS.amber} strokeWidth={2.6} />
+        <View style={styles.logoBox}>
+          <LinearGradient colors={GRADIENTS.brand} style={styles.logo}>
+            <NewsLogoIcon size={22} color="#fff" strokeWidth={2.8} />
+          </LinearGradient>
         </View>
         <View>
           <Text style={styles.name}>{APP_NAME}</Text>
@@ -32,7 +35,7 @@ export default function AppHeader({ connected, loading, onRefresh }) {
           <Text style={styles.refreshIcon}>↻</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </LinearGradient>
   );
 }
 
@@ -42,7 +45,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.borderSoft,
   },
@@ -50,12 +53,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
+  logoBox: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    padding: 2,
+    marginRight: 10,
+  },
   logo: {
-    width: 36,
-    height: 36,
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 10,
+    borderRadius: 10,
   },
   name: {
     color: COLORS.text,

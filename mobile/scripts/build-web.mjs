@@ -186,7 +186,7 @@ function drawGlyph(px, size, glyph, { sx, sy, cell, color, glowColor, glow }) {
   }
 }
 
-function drawIcon(size, maskable) {
+export function drawIcon(size, maskable) {
   const px = new Uint8Array(size * size * 4);
   const radius = size * (maskable ? 0.08 : 0.22);
   const inset = maskable ? size * 0.02 : 0;
@@ -369,7 +369,7 @@ const HEAD_INJECT = [
   `<link rel="apple-touch-icon" href="/icons/icon-180.png" />`,
 ].join('\n    ');
 
-function main() {
+export function main() {
   mkdirSync(ICONS, { recursive: true });
 
   writeFileSync(join(ICONS, 'icon-192.png'), drawIcon(192, false));
@@ -393,4 +393,12 @@ function main() {
   console.log('[build-web] PWA assets written:', ['icon-192.png', 'icon-180.png', 'icon-512.png', 'icon-maskable-512.png', 'manifest.webmanifest', 'sw.js'].join(', '));
 }
 
-main();
+const isDirectRun =
+  typeof process !== 'undefined' &&
+  process.argv[1] &&
+  import.meta.url.replace(/\\/g, '/') ===
+    'file:///' + process.argv[1].replace(/\\/g, '/');
+
+if (isDirectRun) {
+  main();
+}

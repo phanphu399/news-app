@@ -85,11 +85,21 @@ export function RadioIcon({ size = 20, color = '#94a3b8', strokeWidth = 1.6, ...
   );
 }
 
-/** 5. Logo thương hiệu — chữ N nét mảnh, tinh tế. */
-export function NewsLogoIcon({ size = 40, color = '#f59e0b', strokeWidth = 2.4, ...rest }) {
+/** 5. Logo thương hiệu — chữ N nét mạnh, hiện đại, kèm chấm vàng như signal. */
+export function NewsLogoIcon({ size = 24, color = '#ffffff', strokeWidth = 2.6, ...rest }) {
   return (
-    <Shell size={size} color={color} strokeWidth={strokeWidth} {...rest}>
-      <Path d="M6.5 4 L6.5 20 M6.5 4 L18 20 M18 4 L18 20" />
-    </Shell>
+    <Svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke={color}
+      strokeWidth={strokeWidth}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <Path d="M4.5 5.5 V18.5 L15.5 5.5 V18.5" />
+      <Circle cx="19.5" cy="5.5" r="1.6" fill="#f5c542" stroke="none" />
+    </Svg>
   );
 }

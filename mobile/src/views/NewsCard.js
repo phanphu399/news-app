@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { formatRelativeTime } from '../utils/time_format';
-import { categoryStyle, COLORS } from '../config/constants';
+import { categoryStyle, COLORS, GRADIENTS } from '../config/constants';
 import { faviconUrl } from '../utils/domain';
 import TranslatedText from '../components/TranslatedText';
 
@@ -24,7 +25,16 @@ export default function NewsCard({ item, onPress, dimmed }) {
       onPress={() => onPress?.(item)}
       style={[styles.card, dimmed && styles.cardDimmed]}
     >
-      <View style={[styles.accent, { backgroundColor: accentColor }]} />
+      {isImportant ? (
+        <LinearGradient
+          colors={GRADIENTS.importantRibbon}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.accent}
+        />
+      ) : (
+        <View style={[styles.accent, { backgroundColor: accentColor }]} />
+      )}
 
       {isImportant && (
         <View style={styles.hotBadge}>
@@ -32,6 +42,14 @@ export default function NewsCard({ item, onPress, dimmed }) {
           <Text style={styles.hotText}>Nóng</Text>
         </View>
       )}
+
+      {isImportant ? (
+        <LinearGradient
+          colors={GRADIENTS.cardTop}
+          style={styles.topGlow}
+          pointerEvents="none"
+        />
+      ) : null}
 
       <View style={styles.body}>
         <TranslatedText style={[styles.title, isImportant && styles.titleImportant]} numberOfLines={3} text={item.title} />
@@ -64,7 +82,7 @@ const styles = StyleSheet.create({
     marginVertical: 5,
     borderWidth: 1,
     borderColor: '#1e293b',
-    overflow: 'visible',
+    overflow: 'hidden',
     shadowColor: '#000',
     shadowOpacity: 0.2,
     shadowRadius: 6,
@@ -77,8 +95,13 @@ const styles = StyleSheet.create({
   accent: {
     width: 3,
     alignSelf: 'stretch',
-    borderTopLeftRadius: 14,
-    borderBottomLeftRadius: 14,
+  },
+  topGlow: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 42,
   },
   hotBadge: {
     position: 'absolute',
