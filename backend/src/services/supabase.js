@@ -60,9 +60,9 @@ export async function cleanupOldNews({ force = false } = {}) {
   }
   if (!force) lastCleanupAt = now;
 
-  const { data: keepIds, error } = await client
+  const { data: keepRows, error } = await client
     .from('market_news')
-    .select('id')
+    .select('id,published_at')
     .order('published_at', { ascending: false })
     .limit(RETENTION_MAX_ROWS);
 
@@ -70,14 +70,14 @@ export async function cleanupOldNews({ force = false } = {}) {
     throw new Error(`Supabase cleanup failed: ${error.message}`);
   }
 
-  const keepSet = new Set((keepIds ?? []).map((row) => row.id));
-  if (keepSet.size === 0) return { deleted: 0 };
+  if (Array.isArray(keepRows) && keepRows.length === 0) return { deleted: 0 };
+  const lastKept = keepRows[keepRows.length - 1];
+  const threshold = lastKept?.published_at;
 
   const { data: deletedRows, error: deleteError } = await client
     .from('market_news')
     .delete()
-    .not('id', 'in', Array.from(keepSet))
-    .select('id');
+    .lt('published_at', threshold);
 
   if (deleteError) {
     throw new Error(`Supabase cleanup delete failed: ${deleteError.message}`);
