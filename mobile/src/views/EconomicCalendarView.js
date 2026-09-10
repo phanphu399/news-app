@@ -1,38 +1,45 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Platform } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { COLORS } from '../config/constants';
 
 const importanceFilter = '-1,1';
 
-const CALENDAR_HTML = `
+function buildCalendarHtml(width, height) {
+  const w = Math.max(320, Math.floor(width));
+  const h = Math.max(400, Math.floor(height));
+  return `
 <!DOCTYPE html>
 <html>
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <style>
-  html, body { margin:0; padding:0; width:100%; height:100%; background:#0b0e14; }
-  .tradingview-widget-container { height:100%; width:100%; }
-  .tradingview-widget-container__widget { height:100%; width:100%; }
+  html, body { margin:0; padding:0; width:100%; height:100%; background:#0b0e14; overflow:hidden; }
+  .wrap { width:${w}px; height:${h}px; overflow-x:auto; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+  .tradingview-widget-container { width:${w}px; height:${h}px; }
+  .tradingview-widget-container__widget { width:${w}px; height:${h}px; }
 </style>
 </head>
 <body>
-  <div class="tradingview-widget-container">
-    <div class="tradingview-widget-container__widget"></div>
-    <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-events.js" async>
-    {
-      "colorTheme": "dark",
-      "isTransparent": true,
-      "width": "100%",
-      "height": "100%",
-      "locale": "vi_VN",
-      "importanceFilter": "${importanceFilter}",
-      "ime_tz": "Asia/Ho_Chi_Minh"
-    }
-    <\/script>
+  <div class="wrap">
+    <div class="tradingview-widget-container">
+      <div class="tradingview-widget-container__widget"></div>
+      <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-events.js" async>
+      {
+        "colorTheme": "dark",
+        "isTransparent": true,
+        "width": ${w},
+        "height": ${h},
+        "locale": "vi_VN",
+        "importanceFilter": "${importanceFilter}",
+        "ime_tz": "Asia/Ho_Chi_Minh"
+      }
+      <\/script>
+    </div>
   </div>
 </body>
 </html>`;
+}
 
 function todayLabel() {
   try {
@@ -57,12 +64,35 @@ function Legend({ color, label }) {
 }
 
 export default function EconomicCalendarView() {
+  const boxRef = useRef(null);
+  const [size, setSize] = useState(null);
+
+  useEffect(() => {
+    const measure = () => {
+      if (boxRef.current && Platform.OS === 'web') {
+        const rect = boxRef.current.getBoundingClientRect();
+        setSize({ width: rect.width, height: rect.height });
+      }
+    };
+    measure();
+    if (Platform.OS === 'web') {
+      const observer = new ResizeObserver(measure);
+      if (boxRef.current) observer.observe(boxRef.current);
+      return () => observer.disconnect();
+    }
+    return undefined;
+  }, []);
+
+  const html = size ? buildCalendarHtml(size.width, size.height) : null;
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <View>
           <Text style={styles.headerTitle}>LỊCH KINH TẾ</Text>
-          <Text style={styles.headerDate}>{todayLabel().charAt(0).toUpperCase() + todayLabel().slice(1)}</Text>
+          <Text style={styles.headerDate}>
+            {todayLabel().charAt(0).toUpperCase() + todayLabel().slice(1)}
+          </Text>
         </View>
         <View style={styles.legend}>
           <Legend color={COLORS.important} label="Quan trọng" />
@@ -71,22 +101,22 @@ export default function EconomicCalendarView() {
         </View>
       </View>
 
-      <View style={styles.chartBox}>
-        {Platform.OS === 'web' ? (
+      <View ref={boxRef} style={styles.chartBox}>
+        {size && Platform.OS === 'web' ? (
           <iframe
             title="TradingView Economic Calendar"
-            srcDoc={CALENDAR_HTML}
-            style={{ flex: 1, width: '100%', height: '100%', border: 0, background: COLORS.background }}
+            srcDoc={html}
+            style={{ width: '100%', height: '100%', border: 0, background: COLORS.background }}
           />
-        ) : (
+        ) : size ? (
           <WebView
             originWhitelist={['*']}
-            source={{ html: CALENDAR_HTML }}
+            source={{ html }}
             startInLoadingState
             javaScriptEnabled
             style={styles.webview}
           />
-        )}
+        ) : null}
       </View>
     </View>
   );
@@ -97,8 +127,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background,
     width: '100%',
-    maxWidth: 820,
-    alignSelf: 'center',
   },
   header: {
     flexDirection: 'row',
