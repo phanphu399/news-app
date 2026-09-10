@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, StatusBar, Modal, Platform } from 'react-native';
 import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Flame, TrendingUp, CalendarDays, Bookmark, Radio } from 'lucide-react-native';
+import { FlameIcon, MarketIcon, CalendarDotIcon, BookmarkIcon, RadioIcon } from './src/components/TabIcons';
 import NewsViewModel from './src/viewmodels/NewsViewModel';
 import NewsListView from './src/views/NewsListView';
 import NewsArticleView from './src/views/NewsArticleView';
@@ -29,11 +29,11 @@ const MAX_TOASTS = 3;
 
 function TabBar({ active, onChange, insets, badge }) {
   const tabs = [
-    { key: TABS.NEWS, label: 'Tin nóng', icon: Flame },
-    { key: TABS.GOLD, label: 'Vàng XAU', icon: TrendingUp },
-    { key: TABS.CALENDAR, label: 'Lịch KT', icon: CalendarDays },
-    { key: TABS.FOLLOW, label: 'Quan tâm', icon: Bookmark },
-    { key: TABS.FEEDS, label: 'Nguồn tin', icon: Radio },
+    { key: TABS.NEWS, label: 'Tin nóng', icon: FlameIcon },
+    { key: TABS.GOLD, label: 'Vàng XAU', icon: MarketIcon },
+    { key: TABS.CALENDAR, label: 'Lịch KT', icon: CalendarDotIcon },
+    { key: TABS.FOLLOW, label: 'Quan tâm', icon: BookmarkIcon },
+    { key: TABS.FEEDS, label: 'Nguồn tin', icon: RadioIcon },
   ];
 
   return (

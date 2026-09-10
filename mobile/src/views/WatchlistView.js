@@ -7,7 +7,8 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
-import { Bookmark, Search, Sparkles } from 'lucide-react-native';
+import { Search, Sparkles } from 'lucide-react-native';
+import { BookmarkIcon } from '../components/TabIcons';
 import NewsCard from './NewsCard';
 import { COLORS } from '../config/constants';
 
@@ -137,7 +138,7 @@ export default function WatchlistView({
                 ĐÃ LƯU {bookmarks.length > 0 ? `(${bookmarks.length})` : ''}
               </Text>
               {bookmarks.length === 0 ? (
-                <EmptyState icon={Bookmark} title="Chưa có tin lưu trữ" />
+                <EmptyState icon={BookmarkIcon} title="Chưa có tin lưu trữ" />
               ) : (
                 bookmarks.map((item) => (
                   <View key={item.id}>
