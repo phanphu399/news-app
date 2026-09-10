@@ -90,15 +90,34 @@ async function fetchFeedOnce(feed) {
 
   const xml = await response.text();
   const parsed = xmlParser.parse(xml);
-  const channel = parsed?.rss?.channel;
-  if (!channel || !Array.isArray(channel.item)) {
-    return [];
-  }
 
-  return channel.item.slice(0, MAX_ITEMS_PER_FEED).map((item) => {
-    const rawUrl = item.link || item.guid?.['#text'] || item.guid || '';
+  const text = (value) => {
+    if (value == null) return '';
+    if (typeof value === 'string') return value;
+    if (typeof value === 'object') {
+      return value['#text'] ?? value['@_href'] ?? '';
+    }
+    return '';
+  };
+
+  const channel = parsed?.rss?.channel;
+  const rdfChannel = parsed?.['rdf:RDF']?.channel;
+  const atomFeed = parsed?.feed;
+
+  const rssItems = channel && Array.isArray(channel.item) ? channel.item : [];
+  const rdfItems = rdfChannel && Array.isArray(rdfChannel.item) ? rdfChannel.item : [];
+  const atomItems = atomFeed && Array.isArray(atomFeed.entry) ? atomFeed.entry : [];
+
+  const entries = [...rssItems, ...rdfItems, ...atomItems].slice(0, MAX_ITEMS_PER_FEED);
+
+  return entries.map((entry) => {
+    const rawUrl =
+      text(entry.link) ||
+      text(entry.guid) ||
+      (typeof entry.link === 'object' ? text(entry.link['@_href']) : '') ||
+      (Array.isArray(entry.link) ? text(entry.link[0]?.['@_href']) : '');
     const url = normalizeUrl(rawUrl);
-    const title = sanitizeTitle(String(item.title || ''));
+    const title = sanitizeTitle(text(entry.title));
 
     return {
       id: hashUrl(`google|${url}`),
@@ -107,7 +126,9 @@ async function fetchFeedOnce(feed) {
       url,
       category: feed.category || 'Macro',
       is_important: isRedAlert(title),
-      published_at: parseIsoDate(item.pubDate || item.published),
+      published_at: parseIsoDate(
+        text(entry.pubDate) || text(entry.published) || text(entry.updated) || text(entry.date)
+      ),
     };
   });
 }
