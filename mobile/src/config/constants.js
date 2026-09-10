@@ -64,3 +64,6 @@ export function categoryStyle(category) {
 export const REFRESH_INTERVAL_MS = 60000;
 export const APP_NAME = 'NEWS';
 export const APP_TAGLINE = 'Tin thị trường · Forex · Macro';
+
+export const TAB_INACTIVE = '#94a3b8';
+export const TAB_ACTIVE = '#f59e0b';

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, StatusBar, Modal, Platform } from 'react-native';
 import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Flame, TrendingUp, CalendarDays, Bookmark, Radio } from 'lucide-react-native';
 import NewsViewModel from './src/viewmodels/NewsViewModel';
 import NewsListView from './src/views/NewsListView';
 import NewsArticleView from './src/views/NewsArticleView';
@@ -13,7 +14,7 @@ import TradingViewScreen from './src/views/TradingViewScreen';
 import AppHeader from './src/views/AppHeader';
 import { LocalStorageService } from './src/services/LocalStorageService';
 import { normalizeUrl } from './src/utils/url';
-import { COLORS } from './src/config/constants';
+import { COLORS, TAB_INACTIVE, TAB_ACTIVE } from './src/config/constants';
 
 const TABS = {
   NEWS: 'news',
@@ -28,25 +29,27 @@ const MAX_TOASTS = 3;
 
 function TabBar({ active, onChange, insets, badge }) {
   const tabs = [
-    { key: TABS.NEWS, label: 'Tin nóng', icon: '🔥' },
-    { key: TABS.GOLD, label: 'Vàng XAU', icon: '🪙' },
-    { key: TABS.CALENDAR, label: 'Lịch KT', icon: '📅' },
-    { key: TABS.FOLLOW, label: 'Quan tâm', icon: '⭐' },
-    { key: TABS.FEEDS, label: 'Nguồn tin', icon: '📡' },
+    { key: TABS.NEWS, label: 'Tin nóng', icon: Flame },
+    { key: TABS.GOLD, label: 'Vàng XAU', icon: TrendingUp },
+    { key: TABS.CALENDAR, label: 'Lịch KT', icon: CalendarDays },
+    { key: TABS.FOLLOW, label: 'Quan tâm', icon: Bookmark },
+    { key: TABS.FEEDS, label: 'Nguồn tin', icon: Radio },
   ];
 
   return (
     <View style={[styles.tabBar, { paddingBottom: Math.max(insets.bottom, 8) }]}>
       {tabs.map((tab) => {
         const isActive = active === tab.key;
+        const Icon = tab.icon;
+        const iconColor = isActive ? TAB_ACTIVE : TAB_INACTIVE;
         return (
           <TouchableOpacity
             key={tab.key}
-            style={[styles.tabItem, isActive && styles.tabItemActive]}
+            style={styles.tabItem}
             onPress={() => onChange(tab.key)}
             activeOpacity={0.7}
           >
-            <Text style={[styles.tabIcon, isActive && styles.tabIconActive]}>{tab.icon}</Text>
+            <Icon size={20} strokeWidth={2} color={iconColor} />
             <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>{tab.label}</Text>
             <View style={[styles.tabIndicator, isActive && styles.tabIndicatorActive]} />
             {badge > 0 && tab.key === TABS.NEWS && (
@@ -345,38 +348,31 @@ const styles = StyleSheet.create({
   tabItem: {
     flex: 1,
     alignItems: 'center',
-    paddingTop: 4,
+    paddingTop: 8,
     paddingBottom: 2,
   },
   tabItemActive: {
-    backgroundColor: 'rgba(56,189,248,0.06)',
-  },
-  tabIcon: {
-    fontSize: 18,
-    marginBottom: 2,
-    opacity: 0.75,
-  },
-  tabIconActive: {
-    opacity: 1,
+    backgroundColor: 'rgba(245,158,11,0.05)',
   },
   tabLabel: {
-    color: COLORS.textMuted,
+    color: TAB_INACTIVE,
     fontSize: 11,
     fontWeight: '600',
+    marginTop: 3,
   },
   tabLabelActive: {
-    color: COLORS.primary,
-    fontWeight: '800',
+    color: TAB_ACTIVE,
+    fontWeight: '700',
   },
   tabIndicator: {
     marginTop: 5,
-    width: 20,
-    height: 2.5,
+    width: 22,
+    height: 2,
     borderRadius: 2,
     backgroundColor: 'transparent',
   },
   tabIndicatorActive: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: TAB_ACTIVE,
   },
   badgeDot: {
     position: 'absolute',

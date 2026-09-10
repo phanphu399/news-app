@@ -11,28 +11,25 @@ const CALENDAR_HTML = `
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <style>
-  html, body, #tv_frame { margin:0; padding:0; width:100%; height:100%; background:#0b0e14; }
+  html, body { margin:0; padding:0; width:100%; height:100%; background:#0b0e14; }
+  .tradingview-widget-container { height:100%; width:100%; }
+  .tradingview-widget-container__widget { height:100%; width:100%; }
 </style>
 </head>
 <body>
-  <div id="tv_frame">
-    <div class="tradingview-widget-container" style="height:100%">
-      <div class="tradingview-widget-container__widget" style="height:100%"></div>
-      <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-events.js" async>
-      {
-        "ec_calendar": {
-          "priceScaleLabelColor": "#F3F5F7",
-          "width": "100%",
-          "height": "100%",
-          "colorTheme": "dark",
-          "isTransparent": true,
-          "locale": "vi_VN",
-          "importanceFilter": "${importanceFilter}",
-          "ime_tz": "Asia/Ho_Chi_Minh"
-        }
-      }
-      <\/script>
-    </div>
+  <div class="tradingview-widget-container">
+    <div class="tradingview-widget-container__widget"></div>
+    <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-events.js" async>
+    {
+      "colorTheme": "dark",
+      "isTransparent": true,
+      "width": "100%",
+      "height": "100%",
+      "locale": "vi_VN",
+      "importanceFilter": "${importanceFilter}",
+      "ime_tz": "Asia/Ho_Chi_Minh"
+    }
+    <\/script>
   </div>
 </body>
 </html>`;

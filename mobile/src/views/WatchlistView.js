@@ -7,12 +7,24 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
+import { Bookmark, Search, Sparkles } from 'lucide-react-native';
 import NewsCard from './NewsCard';
 import { COLORS } from '../config/constants';
+
+const SUGGESTIONS = ['FED', 'Lãi suất', 'XAUUSD', 'Dầu thô'];
 
 function matchKeyword(item, keyword) {
   const text = `${item.title || ''} ${item.titleVi || ''} ${item.source || ''}`.toLowerCase();
   return text.includes(keyword.toLowerCase());
+}
+
+function EmptyState({ icon: Icon, title }) {
+  return (
+    <View style={styles.emptyWrap}>
+      <Icon size={30} strokeWidth={1.5} color={COLORS.textMuted} />
+      <Text style={styles.emptyText}>{title}</Text>
+    </View>
+  );
 }
 
 export default function WatchlistView({
@@ -46,6 +58,8 @@ export default function WatchlistView({
     setDraft('');
   };
 
+  const missingSuggestions = SUGGESTIONS.filter((suggestion) => !keywords.includes(suggestion));
+
   return (
     <View style={styles.flex}>
       <FlatList
@@ -53,26 +67,36 @@ export default function WatchlistView({
         ListHeaderComponent={
           <>
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>THEO DÕI TỪ KHÓA</Text>
-              <Text style={styles.sectionHint}>
-                Nhập từ khóa như "fed", "opec", "vàng" — tin trùng sẽ hiện ngay dưới đây và khoanh
-                sáng trên danh sách tin.
-              </Text>
               <View style={styles.inputRow}>
                 <TextInput
                   style={styles.input}
                   value={draft}
                   onChangeText={setDraft}
                   onSubmitEditing={submitKeyword}
-                  placeholder="Từ khóa..."
+                  placeholder="Thêm từ khóa..."
                   placeholderTextColor={COLORS.textMuted}
                   returnKeyType="done"
                   autoCapitalize="none"
                 />
                 <TouchableOpacity style={styles.addBtn} onPress={submitKeyword}>
+                  <Sparkles size={16} strokeWidth={2} color="#fff" />
                   <Text style={styles.addBtnText}>Thêm</Text>
                 </TouchableOpacity>
               </View>
+              {missingSuggestions.length > 0 && (
+                <View style={styles.suggestionWrap}>
+                  {missingSuggestions.map((suggestion) => (
+                    <TouchableOpacity
+                      key={suggestion}
+                      style={styles.suggestionChip}
+                      onPress={() => onAddKeyword(suggestion)}
+                    >
+                      <Text style={styles.suggestionPlus}>+</Text>
+                      <Text style={styles.suggestionText}>{suggestion}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
               {keywords.length > 0 && (
                 <View style={styles.chips}>
                   {keywords.map((keyword) => (
@@ -89,14 +113,16 @@ export default function WatchlistView({
               )}
             </View>
 
+            <View style={styles.sectionDivider} />
+
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>
                 TIN KHỚP TỪ KHÓA {matched.length > 0 ? `(${matched.length})` : ''}
               </Text>
               {keywords.length === 0 ? (
-                <Text style={styles.emptyHint}>Chưa có từ khóa nào — thêm vào để lọc tin.</Text>
+                <EmptyState icon={Search} title="Thêm từ khóa để lọc tin" />
               ) : matched.length === 0 ? (
-                <Text style={styles.emptyHint}>Chưa có tin nào khớp từ khóa của bạn.</Text>
+                <EmptyState icon={Search} title="Chưa có tin khớp từ khóa" />
               ) : (
                 matched.map((item) => (
                   <NewsCard key={item.id} item={item} onPress={onOpenArticle} />
@@ -104,14 +130,14 @@ export default function WatchlistView({
               )}
             </View>
 
+            <View style={styles.sectionDivider} />
+
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>
                 ĐÃ LƯU {bookmarks.length > 0 ? `(${bookmarks.length})` : ''}
               </Text>
               {bookmarks.length === 0 ? (
-                <Text style={styles.emptyHint}>
-                  Bấm "☆ Lưu bài" khi đang đọc một tin để đọc lại ở đây.
-                </Text>
+                <EmptyState icon={Bookmark} title="Chưa có tin lưu trữ" />
               ) : (
                 bookmarks.map((item) => (
                   <View key={item.id}>
@@ -140,24 +166,21 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   section: {
     paddingHorizontal: 14,
-    paddingTop: 16,
+    paddingTop: 14,
+  },
+  sectionDivider: {
+    height: 10,
   },
   sectionTitle: {
     color: COLORS.textSecondary,
     fontSize: 13,
     fontWeight: '800',
     letterSpacing: 1,
-    marginBottom: 6,
-  },
-  sectionHint: {
-    color: COLORS.textMuted,
-    fontSize: 12,
-    lineHeight: 18,
-    marginBottom: 12,
+    marginBottom: 8,
   },
   inputRow: {
     flexDirection: 'row',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   input: {
     flex: 1,
@@ -174,20 +197,51 @@ const styles = StyleSheet.create({
     marginLeft: 10,
     backgroundColor: COLORS.primary,
     borderRadius: 12,
-    paddingHorizontal: 18,
+    paddingHorizontal: 14,
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
   },
   addBtnText: {
-    color: COLORS.primaryText,
+    color: '#fff',
     fontWeight: '800',
     fontSize: 13,
+    marginLeft: 6,
+  },
+  suggestionWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 4,
+  },
+  suggestionChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(56,189,248,0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(56,189,248,0.35)',
+    borderStyle: 'dashed',
+    borderRadius: 999,
+    paddingLeft: 9,
+    paddingRight: 11,
+    paddingVertical: 6,
+  },
+  suggestionPlus: {
+    color: COLORS.primary,
+    fontSize: 13,
+    fontWeight: '800',
+    marginRight: 4,
+  },
+  suggestionText: {
+    color: COLORS.primary,
+    fontSize: 13,
+    fontWeight: '600',
   },
   chips: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
     marginBottom: 4,
+    marginTop: 10,
   },
   chip: {
     flexDirection: 'row',
@@ -210,10 +264,14 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     fontSize: 12,
   },
-  emptyHint: {
+  emptyWrap: {
+    alignItems: 'center',
+    paddingVertical: 22,
+  },
+  emptyText: {
     color: COLORS.textMuted,
     fontSize: 13,
-    paddingVertical: 8,
+    marginTop: 8,
   },
   removeBookmark: {
     alignSelf: 'flex-end',

@@ -1,44 +1,35 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { formatRelativeTime } from '../utils/time_format';
-import {
-  categoryStyle,
-  COLORS,
-  GRADIENTS,
-  IMPORTANT_BORDER_COLOR,
-  IMPORTANT_DOT_COLOR,
-} from '../config/constants';
+import { categoryStyle, COLORS } from '../config/constants';
+import { faviconUrl } from '../utils/domain';
 
 function timeTone(publishedAt) {
   const ageMinutes = (Date.now() - new Date(publishedAt).getTime()) / (1000 * 60);
   if (ageMinutes <= 60) return COLORS.success;
   if (ageMinutes <= 180) return COLORS.amber;
-  return COLORS.textMuted;
+  return COLORS.textSecondary;
 }
 
 export default function NewsCard({ item, onPress, dimmed }) {
   const isImportant = Boolean(item.isImportant);
   const cat = categoryStyle(item.category);
+  const accentColor = isImportant ? COLORS.important : cat.color;
+  const favicon = faviconUrl(item.source, item.url);
 
   return (
     <TouchableOpacity
       activeOpacity={0.75}
       onPress={() => onPress?.(item)}
-      style={[styles.card, isImportant && styles.cardImportant, dimmed && styles.cardDimmed]}
+      style={[styles.card, dimmed && styles.cardDimmed]}
     >
-      <View style={[styles.accent, { backgroundColor: cat.color }]} />
+      <View style={[styles.accent, { backgroundColor: accentColor }]} />
 
       {isImportant && (
-        <LinearGradient
-          colors={GRADIENTS.importantRibbon}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={styles.ribbon}
-        >
-          <View style={styles.importantDot} />
-          <Text style={styles.importantText}>QUAN TRỌNG</Text>
-        </LinearGradient>
+        <View style={styles.hotBadge}>
+          <View style={styles.hotDot} />
+          <Text style={styles.hotText}>Nóng</Text>
+        </View>
       )}
 
       <View style={styles.body}>
@@ -47,22 +38,18 @@ export default function NewsCard({ item, onPress, dimmed }) {
         </Text>
 
         <View style={styles.metaRow}>
-          <View style={[styles.categoryChip, { borderColor: cat.color, backgroundColor: cat.bg }]}>
-            <Text style={[styles.categoryText, { color: cat.color }]}>{cat.label}</Text>
-          </View>
+          {favicon ? <Image source={{ uri: favicon }} style={styles.favicon} /> : null}
+          <Text style={styles.source} numberOfLines={1}>
+            {item.source || 'Unknown'}
+          </Text>
+          <Text style={styles.dot}>·</Text>
           <Text style={[styles.time, { color: timeTone(item.publishedAt) }]}>
             {formatRelativeTime(item.publishedAt)}
           </Text>
-        </View>
-
-        <View style={styles.sourceRow}>
-          <View style={[styles.sourceDot, { borderColor: cat.color }]}>
-            <Text style={styles.sourceInitial}>{(item.source || '?').charAt(0).toUpperCase()}</Text>
-          </View>
-          <Text style={styles.sourceName} numberOfLines={1}>
-            {item.source || 'Unknown'}
+          <Text style={styles.dot}>·</Text>
+          <Text style={[styles.category, { color: cat.color }]} numberOfLines={1}>
+            #{cat.label.split(' ')[0]}
           </Text>
-          <Text style={styles.arrow}>↗</Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -77,16 +64,13 @@ const styles = StyleSheet.create({
     marginHorizontal: 12,
     marginVertical: 5,
     borderWidth: 1,
-    borderColor: COLORS.borderSoft,
-    overflow: 'hidden',
+    borderColor: '#1e293b',
+    overflow: 'visible',
     shadowColor: '#000',
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 3,
-  },
-  cardImportant: {
-    borderColor: IMPORTANT_BORDER_COLOR,
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
   },
   cardDimmed: {
     opacity: 0.55,
@@ -94,30 +78,33 @@ const styles = StyleSheet.create({
   accent: {
     width: 3,
     alignSelf: 'stretch',
+    borderTopLeftRadius: 14,
+    borderBottomLeftRadius: 14,
   },
-  ribbon: {
+  hotBadge: {
     position: 'absolute',
     top: 10,
     right: 10,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 999,
+    backgroundColor: 'rgba(244,63,94,0.14)',
+    borderWidth: 1,
+    borderColor: 'rgba(244,63,94,0.4)',
   },
-  importantDot: {
-    width: 6,
-    height: 6,
+  hotDot: {
+    width: 5,
+    height: 5,
     borderRadius: 3,
-    backgroundColor: '#fff',
-    marginRight: 5,
-    opacity: 0.9,
+    backgroundColor: COLORS.important,
+    marginRight: 4,
   },
-  importantText: {
-    color: '#fff',
-    fontSize: 9,
+  hotText: {
+    color: COLORS.important,
+    fontSize: 10,
     fontWeight: '800',
-    letterSpacing: 0.8,
   },
   body: {
     flex: 1,
@@ -132,60 +119,40 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   titleImportant: {
-    color: '#ffffff',
     fontWeight: '700',
-    paddingRight: 92,
+    paddingRight: 54,
   },
   metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: 10,
-    minHeight: 20,
+    minHeight: 16,
   },
-  categoryChip: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 999,
-    borderWidth: 1,
+  favicon: {
+    width: 15,
+    height: 15,
+    borderRadius: 4,
+    marginRight: 6,
+    backgroundColor: COLORS.surfaceAlt,
   },
-  categoryText: {
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 0.5,
+  source: {
+    color: COLORS.textSecondary,
+    fontSize: 12,
+    fontWeight: '600',
+    flexShrink: 1,
+  },
+  dot: {
+    color: COLORS.textMuted,
+    fontSize: 12,
+    marginHorizontal: 5,
   },
   time: {
-    fontSize: 11,
-    marginLeft: 'auto',
+    fontSize: 12,
     fontVariant: ['tabular-nums'],
   },
-  sourceRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 9,
-  },
-  sourceDot: {
-    width: 20,
-    height: 20,
-    borderRadius: 6,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sourceInitial: {
-    color: COLORS.textSecondary,
-    fontSize: 10,
-    fontWeight: '800',
-  },
-  sourceName: {
-    flex: 1,
-    color: COLORS.textMuted,
-    fontSize: 11,
-    marginLeft: 7,
-    fontWeight: '500',
-  },
-  arrow: {
-    color: COLORS.textMuted,
-    fontSize: 13,
-    fontWeight: '700',
+  category: {
+    fontSize: 12,
+    fontWeight: '600',
+    flexShrink: 1,
   },
 });

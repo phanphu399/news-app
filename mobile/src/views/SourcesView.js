@@ -7,16 +7,22 @@ import {
   ActivityIndicator,
   Modal,
   TextInput,
+  Image,
   StyleSheet,
 } from 'react-native';
 import NewsCard from './NewsCard';
 import { fetchSources, sourcesFromItems, addUserFeed, removeUserFeed } from '../services/SourceService';
 import { COLORS, categoryStyle } from '../config/constants';
+import { faviconUrl } from '../utils/domain';
 
-function SourceAvatar({ source }) {
-  const initial = (source || '?').charAt(0).toUpperCase();
+function SourceAvatar({ sourceItem }) {
+  const favicon = faviconUrl(sourceItem.source, sourceItem.url);
+  if (favicon) {
+    return <Image source={{ uri: favicon }} style={styles.avatar} />;
+  }
+  const initial = (sourceItem.source || '?').charAt(0).toUpperCase();
   return (
-    <View style={styles.avatar}>
+    <View style={[styles.avatar, styles.avatarFallback]}>
       <Text style={styles.avatarText}>{initial}</Text>
     </View>
   );
@@ -26,12 +32,15 @@ function SourceCard({ sourceItem, onPress, onRemove, removing }) {
   const healthy = sourceItem.healthy;
   return (
     <TouchableOpacity style={styles.sourceCard} activeOpacity={0.8} onPress={onPress}>
-      <SourceAvatar source={sourceItem.source} />
+      <SourceAvatar sourceItem={sourceItem} />
       <View style={styles.sourceBody}>
         <View style={styles.sourceTop}>
           <Text style={styles.sourceName} numberOfLines={1}>
             {sourceItem.source}
           </Text>
+          {sourceItem.userFeedId ? (
+            <Text style={styles.userTag}>BẠN</Text>
+          ) : null}
           {healthy !== null ? (
             <View style={[styles.badge, healthy ? styles.badgeOk : styles.badgeErr]}>
               <View style={[styles.badgeDot, { backgroundColor: healthy ? COLORS.success : COLORS.danger }]} />
@@ -62,13 +71,6 @@ function SourceCard({ sourceItem, onPress, onRemove, removing }) {
             );
           })}
           <Text style={styles.count}>{sourceItem.count24h} bài / 24h</Text>
-        </View>
-
-        <View style={styles.urlRow}>
-          {sourceItem.userFeedId ? <Text style={styles.userTag}>NGUỒN CỦA BẠN · </Text> : null}
-          <Text style={styles.url} numberOfLines={1}>
-            {sourceItem.url || 'Đang tổng hợp...'}
-          </Text>
           <Text style={styles.chevron}>›</Text>
         </View>
       </View>
@@ -158,6 +160,12 @@ export default function SourcesView({ items, onOpenArticle }) {
     }
   };
 
+  const copyUrl = (url) => {
+    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(url || '').catch(() => {});
+    }
+  };
+
   if (selected) {
     return (
       <View style={styles.flex}>
@@ -172,6 +180,16 @@ export default function SourcesView({ items, onOpenArticle }) {
             <Text style={styles.detailSub}>{selectedPosts.length} bài trong 24h qua</Text>
           </View>
         </View>
+        {selected.url ? (
+          <View style={styles.detailUrlRow}>
+            <Text style={styles.detailUrl} numberOfLines={1}>
+              {selected.url}
+            </Text>
+            <TouchableOpacity style={styles.copyBtn} onPress={() => copyUrl(selected.url)} hitSlop={8}>
+              <Text style={styles.copyBtnText}>Sao chép</Text>
+            </TouchableOpacity>
+          </View>
+        ) : null}
         <FlatList
           data={selectedPosts}
           keyExtractor={(item) => item.id}
@@ -387,18 +405,21 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   avatar: {
-    width: 42,
-    height: 42,
-    borderRadius: 12,
-    backgroundColor: COLORS.primary,
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    marginRight: 12,
+    backgroundColor: COLORS.surfaceAlt,
+  },
+  avatarFallback: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12,
+    backgroundColor: COLORS.surfaceAlt,
   },
   avatarText: {
-    color: COLORS.primaryText,
-    fontSize: 18,
-    fontWeight: '900',
+    color: COLORS.textSecondary,
+    fontSize: 16,
+    fontWeight: '800',
   },
   sourceBody: { flex: 1 },
   sourceTop: {
@@ -447,8 +468,38 @@ const styles = StyleSheet.create({
   },
   userTag: {
     color: COLORS.primary,
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: '800',
+    letterSpacing: 0.5,
+    marginRight: 6,
+  },
+  detailUrlRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.borderSoft,
+    backgroundColor: COLORS.surface,
+  },
+  detailUrl: {
+    flex: 1,
+    color: COLORS.textMuted,
+    fontSize: 11,
+  },
+  copyBtn: {
+    marginLeft: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    backgroundColor: COLORS.surfaceAlt,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  copyBtnText: {
+    color: COLORS.primary,
+    fontSize: 11,
+    fontWeight: '700',
   },
   modalOverlay: {
     flex: 1,

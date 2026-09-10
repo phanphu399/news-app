@@ -10,7 +10,7 @@ export function buildTradingViewUrl({ symbol = 'OANDA:XAUUSD', interval = 60 } =
     frameElementId: 'tradingview_lite',
     symbol,
     interval: String(interval),
-    hide_side_toolbar: '0',
+    hide_side_toolbar: '1',
     hide_top_toolbar: '1',
     theme: 'dark',
     style: '1',
