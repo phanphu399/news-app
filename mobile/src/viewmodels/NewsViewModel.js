@@ -4,6 +4,16 @@ import { LocalStorageService } from '../services/LocalStorageService';
 import NewsModel from '../models/NewsModel';
 import { REFRESH_INTERVAL_MS, BACKEND_URL } from '../config/constants';
 
+function sortByTime(items) {
+  return items
+    .slice()
+    .sort((a, b) => {
+      const byPublish = new Date(b.publishedAt) - new Date(a.publishedAt);
+      if (byPublish !== 0) return byPublish;
+      return new Date(a.createdAt) - new Date(b.createdAt);
+    });
+}
+
 export default class NewsViewModel {
   constructor() {
     this.items = [];
@@ -67,7 +77,7 @@ export default class NewsViewModel {
   async initialLoad() {
     const cached = await LocalStorageService.getNewsCache();
     if (cached && cached.items.length) {
-      this.items = cached.items.map((row) => NewsModel.fromSupabase(row));
+      this.items = sortByTime(cached.items.map((row) => NewsModel.fromSupabase(row)));
       this.importantIds = new Set(
         this.items.filter((item) => item.isImportant).map((item) => item.id)
       );
@@ -81,7 +91,7 @@ export default class NewsViewModel {
     }
 
     try {
-      this.items = await fetchLatestNews();
+      this.items = sortByTime(await fetchLatestNews());
       this.importantIds = new Set(
         this.items.filter((item) => item.isImportant).map((item) => item.id)
       );
@@ -97,7 +107,7 @@ export default class NewsViewModel {
 
   async refresh() {
     try {
-      this.items = await fetchLatestNews();
+      this.items = sortByTime(await fetchLatestNews());
       this.error = null;
       await LocalStorageService.setNewsCache(this.items);
     } catch (error) {

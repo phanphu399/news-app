@@ -10,7 +10,7 @@ export default class NewsModel {
     this.category = category ?? 'Macro';
     this.isImportant = Boolean(is_important);
     this.publishedAt = published_at ? new Date(published_at) : new Date();
-    this.createdAt = created_at ? new Date(created_at) : new Date();
+    this.createdAt = created_at ? new Date(created_at) : this.publishedAt;
   }
 
   static fromSupabase(row) {
