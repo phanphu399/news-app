@@ -1,8 +1,9 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Animated, Easing } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Animated, Easing, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { NewsLogoIcon } from '../components/TabIcons';
 import { COLORS, GRADIENTS, APP_NAME, APP_TAGLINE, FONT_FAMILY } from '../config/constants';
+
+const LOGO_SOURCE = require('../../assets/breaking-news-logo-design.png');
 
 export default function AppHeader({ connected, loading, onRefresh }) {
   const friendlyStatus = connected ? 'Trực tuyến' : 'Ngoại tuyến';
@@ -34,9 +35,7 @@ export default function AppHeader({ connected, loading, onRefresh }) {
     <LinearGradient colors={GRADIENTS.header} style={styles.header}>
       <View style={styles.brand}>
         <View style={styles.logoBox}>
-          <LinearGradient colors={GRADIENTS.brand} style={styles.logo}>
-            <NewsLogoIcon size={22} color="#fff" strokeWidth={2.8} />
-          </LinearGradient>
+          <Image source={LOGO_SOURCE} style={styles.logo} resizeMode="contain" />
         </View>
         <View>
           <Text style={styles.name}>{APP_NAME}</Text>
@@ -80,17 +79,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logoBox: {
-    width: 38,
-    height: 38,
+    width: 58,
+    height: 40,
     borderRadius: 12,
-    padding: 2,
     marginRight: 10,
-  },
-  logo: {
-    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 10,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  logo: {
+    width: '100%',
+    height: '100%',
   },
   name: {
     color: COLORS.text,
