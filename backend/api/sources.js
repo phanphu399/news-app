@@ -9,6 +9,8 @@ import {
 
 const HEALTH_TTL_MS = 5 * 60 * 1000;
 const healthCache = new Map();
+const COUNTS_TTL_MS = 60 * 1000;
+let countsCache = null;
 
 const supabaseUrl = process.env.SUPABASE_URL || '';
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
@@ -111,6 +113,10 @@ export default async function handler(request, response) {
     }
   }
 
+  async function loadCounts() {
+  if (countsCache && Date.now() - countsCache.at < COUNTS_TTL_MS) {
+    return countsCache.map;
+  }
   const counts = new Map();
   if (client) {
     try {
@@ -130,6 +136,11 @@ export default async function handler(request, response) {
       /* counts best-effort */
     }
   }
+  countsCache = { at: Date.now(), map: counts };
+  return counts;
+}
+
+  const counts = await loadCounts();
 
   const results = await Promise.all(
     sourceList.map(async (source) => {
