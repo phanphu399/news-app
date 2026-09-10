@@ -5,6 +5,10 @@ const CUSTOM_FEEDS_KEY = '@aster/custom_feeds';
 const LAST_READ_KEY = '@aster/last_read_at';
 const WATCH_KEYWORDS_KEY = '@aster/watch_keywords';
 const BOOKMARKS_KEY = '@aster/bookmarks';
+const NEWS_CACHE_KEY = '@aster/news_cache';
+
+const NEWS_CACHE_TTL_MS = 3 * 60 * 60 * 1000;
+const NEWS_CACHE_MAX_ITEMS = 120;
 
 const isWeb = Platform.OS === 'web';
 
@@ -143,5 +147,41 @@ export const LocalStorageService = {
     const next = bookmarks.filter((bookmark) => bookmark.id !== id);
     await writeItem(BOOKMARKS_KEY, JSON.stringify(next));
     return next;
+  },
+
+  async getNewsCache() {
+    const raw = await readItem(NEWS_CACHE_KEY);
+    if (!raw) return null;
+    try {
+      const parsed = JSON.parse(raw);
+      if (!parsed || !Array.isArray(parsed.items) || !parsed.items.length) return null;
+      if (!parsed.savedAt) return null;
+      const ageMs = Date.now() - new Date(parsed.savedAt).getTime();
+      if (Number.isNaN(ageMs) || ageMs > NEWS_CACHE_TTL_MS) return null;
+      return { savedAt: parsed.savedAt, items: parsed.items };
+    } catch {
+      return null;
+    }
+  },
+
+  async setNewsCache(items) {
+    const rows = (items || []).slice(0, NEWS_CACHE_MAX_ITEMS).map((item) => ({
+      id: item.id,
+      title: item.title,
+      title_vi: item.titleVi || null,
+      source: item.source ?? 'Unknown',
+      url: item.url,
+      category: item.category ?? 'Macro',
+      is_important: Boolean(item.isImportant),
+      published_at:
+        item.publishedAt && item.publishedAt instanceof Date
+          ? item.publishedAt.toISOString()
+          : item.publishedAt,
+    }));
+    await writeItem(NEWS_CACHE_KEY, JSON.stringify({ savedAt: new Date().toISOString(), items: rows }));
+  },
+
+  async clearNewsCache() {
+    await removeItem(NEWS_CACHE_KEY);
   },
 };

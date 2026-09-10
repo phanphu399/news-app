@@ -1,5 +1,7 @@
 import { fetchLatestNews, subscribeRealtime } from '../services/SupabaseService';
 import { NewsWarningService } from '../services/NewsWarningService';
+import { LocalStorageService } from '../services/LocalStorageService';
+import NewsModel from '../models/NewsModel';
 import { REFRESH_INTERVAL_MS } from '../config/constants';
 
 export default class NewsViewModel {
@@ -63,16 +65,30 @@ export default class NewsViewModel {
   }
 
   async initialLoad() {
-    this.loading = true;
-    this.error = null;
-    this.emit();
+    const cached = await LocalStorageService.getNewsCache();
+    if (cached && cached.items.length) {
+      this.items = cached.items.map((row) => NewsModel.fromSupabase(row));
+      this.importantIds = new Set(
+        this.items.filter((item) => item.isImportant).map((item) => item.id)
+      );
+      this.loading = false;
+      this.error = null;
+      this.emit();
+    } else {
+      this.loading = true;
+      this.error = null;
+      this.emit();
+    }
+
     try {
       this.items = await fetchLatestNews();
       this.importantIds = new Set(
         this.items.filter((item) => item.isImportant).map((item) => item.id)
       );
+      this.error = null;
+      await LocalStorageService.setNewsCache(this.items);
     } catch (error) {
-      this.error = error.message;
+      if (!this.items.length) this.error = error.message;
     } finally {
       this.loading = false;
       this.emit();
@@ -83,6 +99,7 @@ export default class NewsViewModel {
     try {
       this.items = await fetchLatestNews();
       this.error = null;
+      await LocalStorageService.setNewsCache(this.items);
     } catch (error) {
       this.error = error.message;
     }
