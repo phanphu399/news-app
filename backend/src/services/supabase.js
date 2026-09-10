@@ -1,5 +1,4 @@
 import { createClient } from '@supabase/supabase-js';
-import { DATA_RETENTION_DAYS } from '../config/constants.js';
 
 const supabaseUrl = process.env.SUPABASE_URL || '';
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
@@ -63,6 +62,8 @@ export async function findExistingIds(ids) {
 let lastCleanupAt = 0;
 const CLEANUP_MIN_INTERVAL_MS = 6 * 60 * 60 * 1000;
 
+const RETENTION_MAX_ROWS = 100;
+
 export async function cleanupOldNews() {
   if (!isReady()) return { deleted: 0 };
 
@@ -72,12 +73,26 @@ export async function cleanupOldNews() {
   }
   lastCleanupAt = now;
 
-  const cutoff = new Date(Date.now() - DATA_RETENTION_DAYS * 24 * 60 * 60 * 1000).toISOString();
-
-  const { error } = await client.from('market_news').delete().lt('published_at', cutoff);
+  const { data: keepIds, error } = await client
+    .from('market_news')
+    .select('id')
+    .order('published_at', { ascending: false })
+    .limit(RETENTION_MAX_ROWS);
 
   if (error) {
     throw new Error(`Supabase cleanup failed: ${error.message}`);
+  }
+
+  const keepSet = new Set((keepIds ?? []).map((row) => row.id));
+  if (keepSet.size === 0) return { deleted: 0 };
+
+  const { error: deleteError } = await client
+    .from('market_news')
+    .delete()
+    .not('id', 'in', Array.from(keepSet));
+
+  if (deleteError) {
+    throw new Error(`Supabase cleanup delete failed: ${deleteError.message}`);
   }
 
   return { deleted: 0 };

@@ -8,7 +8,7 @@ const BOOKMARKS_KEY = '@aster/bookmarks';
 const NEWS_CACHE_KEY = '@aster/news_cache';
 
 const NEWS_CACHE_TTL_MS = 3 * 60 * 60 * 1000;
-const NEWS_CACHE_MAX_ITEMS = 120;
+const NEWS_CACHE_MAX_ITEMS = 100;
 
 const isWeb = Platform.OS === 'web';
 

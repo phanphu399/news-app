@@ -75,4 +75,3 @@ export const EXTRA_FEEDS = [
 
 export const CACHE_TTL_HOURS = 1;
 export const MAX_ITEMS_PER_FEED = 20;
-export const DATA_RETENTION_DAYS = 3;
