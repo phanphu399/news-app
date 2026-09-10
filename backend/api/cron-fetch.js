@@ -3,7 +3,6 @@ import {
   upsertNews,
   cleanupOldNews,
   reclassifyPaywallToMacro,
-  findExistingIds,
   listUserFeeds,
   updateUserFeedStatus,
   cronAcquireLock,
@@ -27,25 +26,37 @@ async function withRetry(run, label, attempts = 2) {
 async function fetchUserFeedItems() {
   const feeds = await listUserFeeds();
   const items = [];
-  for (const feed of feeds) {
+
+  const handleFeed = async (feed) => {
     try {
       const got = await fetchFeed({
         url: feed.rss_url,
         source: feed.name || feed.rss_url,
         category: feed.category || 'Custom',
       });
-      for (const item of got) {
-        if (!item.title || !item.title.trim()) continue;
-        items.push(item);
-      }
-      await updateUserFeedStatus(feed.id, { ok: true });
+      const valid = (got || []).filter((item) => item.title && item.title.trim());
+      return { feed, items: valid, error: null };
     } catch (error) {
-      await updateUserFeedStatus(feed.id, {
-        ok: false,
-        error: String(error.message || error).slice(0, 240),
-      });
+      return { feed, items: [], error: String(error.message || error).slice(0, 240) };
     }
-  }
+  };
+
+  const CONCURRENCY = 4;
+  let index = 0;
+  const worker = async () => {
+    while (index < feeds.length) {
+      const current = feeds[index];
+      index += 1;
+      const result = await handleFeed(current);
+      items.push(...result.items);
+      await updateUserFeedStatus(current.id, result.error ? { ok: false, error: result.error } : { ok: true });
+    }
+  };
+
+  await Promise.all(
+    Array.from({ length: Math.min(CONCURRENCY, Math.max(feeds.length, 1)) }, () => worker())
+  );
+
   return items;
 }
 
@@ -76,7 +87,7 @@ export default async function handler(request, response) {
   }
 
   try {
-    const acquired = await cronAcquireLock(90);
+    const acquired = await cronAcquireLock(60);
     if (!acquired) {
       payload.status = 'skipped';
       payload.message = 'Có một lượt chạy khác đang diễn ra (lock).';
@@ -89,16 +100,16 @@ export default async function handler(request, response) {
     payload.user_feeds = userItems.length;
     const items = [...systemItems, ...userItems];
 
-    const existingIds = await findExistingIds(items.map((item) => item.id));
-    const brandNew = items.filter((item) => !existingIds.has(item.id));
-    const brandNewImportant = brandNew.filter((item) => item.isImportant);
-
-    const { data: insertedRows } = await withRetry(
-      () => upsertNews(brandNew),
+    const { inserted, data: insertedRows } = await withRetry(
+      () => upsertNews(items),
       'upsertNews'
     );
-    const insertedRowsArray = Array.isArray(insertedRows) ? insertedRows : [];
-    payload.upserted = insertedRowsArray.length;
+    payload.upserted = inserted ?? 0;
+
+    const insertedIds = new Set((insertedRows ?? []).map((row) => row.id));
+    const brandNewImportant = items.filter(
+      (item) => item.is_important && insertedIds.has(item.id)
+    );
 
     const notified = await notifyImportantNews(brandNewImportant);
     payload.notified = notified.length;

@@ -31,32 +31,19 @@ export async function upsertNews(items) {
     return row;
   });
 
-  const { data, error } = await client.from('market_news').upsert(payload, {
-    onConflict: 'id',
-  }).select('id');
+  const { data, error } = await client
+    .from('market_news')
+    .upsert(payload, {
+      onConflict: 'id',
+      ignoreDuplicates: true,
+    })
+    .select('id');
 
   if (error) {
     throw new Error(`Supabase upsert failed: ${error.message}`);
   }
 
   return { inserted: data?.length ?? 0, data: data ?? [] };
-}
-
-export async function findExistingIds(ids) {
-  if (!isReady() || ids.length === 0) {
-    return new Set();
-  }
-
-  const { data, error } = await client
-    .from('market_news')
-    .select('id')
-    .in('id', [...new Set(ids)].slice(0, 1000));
-
-  if (error) {
-    throw new Error(`Supabase select failed: ${error.message}`);
-  }
-
-  return new Set((data ?? []).map((row) => row.id));
 }
 
 let lastCleanupAt = 0;
@@ -103,7 +90,7 @@ export async function listUserFeeds() {
   try {
     const { data, error } = await client
       .from('user_feeds')
-      .select('id,name,rss_url,category,enabled')
+      .select('id,name,rss_url,category,enabled,last_error')
       .eq('enabled', true)
       .limit(60);
     if (error) throw error;
@@ -114,8 +101,17 @@ export async function listUserFeeds() {
   }
 }
 
+let lastUserFeedStatusWrite = 0;
+
 export async function updateUserFeedStatus(id, { ok, error: errorText }) {
   if (!isReady() || !id) return;
+
+  const now = Date.now();
+  if (ok && now - lastUserFeedStatusWrite < 5 * 60 * 1000) {
+    return;
+  }
+  lastUserFeedStatusWrite = now;
+
   const patch = ok
     ? { last_fetched_at: new Date().toISOString(), last_error: null }
     : { last_error: String(errorText || '').slice(0, 240) };
@@ -139,8 +135,24 @@ export async function cronAcquireLock(lockSeconds = 90) {
   }
 }
 
+let lastReclassifyAt = 0;
+const RECLASSIFY_MIN_INTERVAL_MS = 10 * 60 * 1000;
+
 export async function reclassifyPaywallToMacro(limit = 100) {
   if (!isReady()) return 0;
+
+  const now = Date.now();
+  if (now - lastReclassifyAt < RECLASSIFY_MIN_INTERVAL_MS) {
+    return 0;
+  }
+  lastReclassifyAt = now;
+
+  const { count } = await client
+    .from('market_news')
+    .select('*', { count: 'exact', head: true })
+    .eq('category', 'Paywall')
+    .limit(1);
+  if (!count) return 0;
 
   const { error } = await client
     .from('market_news')
