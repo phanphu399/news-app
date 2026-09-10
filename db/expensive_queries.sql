@@ -8,12 +8,12 @@ create extension if not exists pg_stat_statements;
 
 -- 2) TOP 20 query tốn tổng thời gian nhất (xem sau vài phút chạy cron):
 select queryid,
-       round(total_exec_time / 1000, 1)          as total_sec,
+       round((total_exec_time / 1000)::numeric, 1)  as total_sec,
        calls,
-       round(mean_exec_time::numeric, 1)         as mean_ms,
-       round(blk_read_time::numeric, 1)          as read_ms,
-       round(blk_write_time::numeric, 1)         as write_ms,
-       left(query, 120)                          as query
+       round(mean_exec_time::numeric, 1)            as mean_ms,
+       round(blk_read_time::numeric, 1)             as read_ms,
+       round(blk_write_time::numeric, 1)            as write_ms,
+       left(query, 120)                             as query
 from pg_stat_statements
 order by total_exec_time desc
 limit 20;
