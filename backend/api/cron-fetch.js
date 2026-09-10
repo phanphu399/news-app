@@ -35,6 +35,9 @@ async function fetchUserFeedItems() {
         category: feed.category || 'Custom',
       });
       const valid = (got || []).filter((item) => item.title && item.title.trim());
+      if (valid.length === 0) {
+        return { feed, items: [], error: 'Feed tải được nhưng không có bài phân tích được (có thể không phải RSS/Atom hợp lệ)' };
+      }
       return { feed, items: valid, error: null };
     } catch (error) {
       return { feed, items: [], error: String(error.message || error).slice(0, 240) };

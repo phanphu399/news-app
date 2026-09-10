@@ -92,8 +92,8 @@ export async function listUserFeeds() {
   try {
     const { data, error } = await client
       .from('user_feeds')
-      .select('id,name,rss_url,category,enabled,last_error')
-      .eq('enabled', true)
+      .select('id,name,rss_url,category,enabled,last_error,last_fetched_at')
+      .or('enabled.is.true,enabled.is.null')
       .limit(60);
     if (error) throw error;
     return data ?? [];
@@ -103,20 +103,24 @@ export async function listUserFeeds() {
   }
 }
 
-let lastUserFeedStatusWrite = 0;
+const lastUserFeedStatusWrites = new Map();
+const USER_FEED_STATUS_INTERVAL_MS = 5 * 60 * 1000;
 
 export async function updateUserFeedStatus(id, { ok, error: errorText }) {
   if (!isReady() || !id) return;
 
   const now = Date.now();
-  if (ok && now - lastUserFeedStatusWrite < 5 * 60 * 1000) {
-    return;
-  }
-  lastUserFeedStatusWrite = now;
+  const lastWrite = lastUserFeedStatusWrites.get(id) || 0;
+  const sinceLast = now - lastWrite;
 
   const patch = ok
     ? { last_fetched_at: new Date().toISOString(), last_error: null }
     : { last_error: String(errorText || '').slice(0, 240) };
+
+  if (ok && sinceLast < USER_FEED_STATUS_INTERVAL_MS) {
+    return;
+  }
+  lastUserFeedStatusWrites.set(id, now);
   await client.from('user_feeds').update(patch).eq('id', id);
 }
 
