@@ -107,6 +107,72 @@ export const EXTRA_FEEDS = [
     source: KNOWN_SOURCES.WHITE_HOUSE,
     category: 'Macro',
   },
+  {
+    url: 'https://www.federalreserve.gov/feeds/press_all.xml',
+    source: 'Federal Reserve',
+    category: 'Macro',
+    maxAgeHours: 24 * 7,
+  },
+  {
+    url: 'https://www.federalreserve.gov/feeds/press_monetary.xml',
+    source: 'Federal Reserve',
+    category: 'Macro',
+    maxAgeHours: 24 * 7,
+  },
+  {
+    url: 'https://www.federalreserve.gov/feeds/speeches_and_testimony.xml',
+    source: 'Federal Reserve',
+    category: 'Macro',
+    maxAgeHours: 24 * 7,
+  },
+  {
+    url: 'https://www.federalreserve.gov/feeds/s_t_powell.xml',
+    source: 'Fed Powell',
+    category: 'Macro',
+    maxAgeHours: 24 * 7,
+  },
+  {
+    url: 'https://www.federalreserve.gov/feeds/boardmeetings.xml',
+    source: 'Federal Reserve',
+    category: 'Macro',
+    maxAgeHours: 24 * 7,
+  },
+  {
+    url: 'https://www.federalreserve.gov/feeds/prates.xml',
+    source: 'Fed Policy Rates',
+    category: 'Macro',
+    maxAgeHours: 24 * 7,
+  },
+  {
+    url: 'https://www.federalreserve.gov/feeds/h15.xml',
+    source: 'Fed Interest Rates',
+    category: 'Macro',
+    maxAgeHours: 24 * 7,
+  },
+  {
+    url: 'https://www.federalreserve.gov/feeds/h10.xml',
+    source: 'Fed FX Rates',
+    category: 'Forex',
+    maxAgeHours: 24 * 7,
+  },
+  {
+    url: 'https://www.federalreserve.gov/feeds/h41.xml',
+    source: 'Fed Balance Sheet',
+    category: 'Macro',
+    maxAgeHours: 24 * 7,
+  },
+  {
+    url: 'https://www.federalreserve.gov/feeds/g17.xml',
+    source: 'Fed Industrial Production',
+    category: 'Macro',
+    maxAgeHours: 24 * 7,
+  },
+  {
+    url: 'https://www.federalreserve.gov/feeds/z1.xml',
+    source: 'Fed Financial Accounts',
+    category: 'Macro',
+    maxAgeHours: 24 * 7,
+  },
 ];
 
 export const CACHE_TTL_HOURS = 1;

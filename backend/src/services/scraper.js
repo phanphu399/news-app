@@ -68,6 +68,7 @@ function buildFeedSets() {
     url: feed.url,
     category: feed.category || 'Macro',
     source: feed.source || detectSource(feed.url),
+    maxAgeHours: feed.maxAgeHours,
   }));
   return [...googleFeeds, ...directFeeds, ...extraFeeds];
 }
@@ -104,7 +105,9 @@ async function fetchFeedOnce(feed) {
   const atomFeed = parsed?.feed;
 
   const rssItems = channel && Array.isArray(channel.item) ? channel.item : [];
-  const rdfItems = rdfChannel && Array.isArray(rdfChannel.item) ? rdfChannel.item : [];
+  const rdfItemList = parsed?.['rdf:RDF']?.item;
+  const rdfItems =
+    rdfItemList == null ? [] : Array.isArray(rdfItemList) ? rdfItemList : [rdfItemList];
   const atomItems = atomFeed && Array.isArray(atomFeed.entry) ? atomFeed.entry : [];
 
   const entries = [...rssItems, ...rdfItems, ...atomItems].slice(0, MAX_ITEMS_PER_FEED);
@@ -126,7 +129,11 @@ async function fetchFeedOnce(feed) {
       category: feed.category || 'Macro',
       is_important: isRedAlert(title),
       published_at: parseIsoDate(
-        text(entry.pubDate) || text(entry.published) || text(entry.updated) || text(entry.date)
+        text(entry.pubDate) ||
+          text(entry.published) ||
+          text(entry.updated) ||
+          text(entry.date) ||
+          text(entry['dc:date'])
       ),
     };
   });
@@ -155,20 +162,22 @@ function dedupe(items) {
   return unique;
 }
 
-function filterFresh(items) {
+function filterFresh(items, maxAgeHours = 24) {
   const now = Date.now();
   return items.filter((item) => {
     const published = new Date(item.published_at).getTime();
     const ageHours = (now - published) / (1000 * 60 * 60);
-    return ageHours >= 0 && ageHours <= 24;
+    return ageHours >= 0 && ageHours <= maxAgeHours;
   });
 }
 
 export async function scrapeAll() {
   const feeds = buildFeedSets();
-  const tasks = feeds.map((feed) => fetchFeed(feed).catch(() => []));
+  const tasks = feeds.map((feed) =>
+    fetchFeed(feed).then((items) => filterFresh(items, feed.maxAgeHours ?? 24)).catch(() => [])
+  );
   const results = await Promise.all(tasks);
   const flattened = results.flat();
   const unique = dedupe(flattened);
-  return filterFresh(unique);
+  return unique;
 }
