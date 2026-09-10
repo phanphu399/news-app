@@ -24,12 +24,27 @@
 --    from pg_stat_user_tables where relname = 'market_news';
 
 -- 2) XỬ LÝ KHẨN CẤP: giết query chạy > 5 phút (đang ôm connection)
+--    Dùng DO block: tiến trình nào không đủ quyền để giết thì bỏ qua, không abort cả script.
 -----------------------------------------------------------
-select pg_terminate_backend(pid)
-from pg_stat_activity
-where state = 'active'
-  and pid <> pg_backend_pid()
-  and query_start < now() - interval '5 minutes';
+do $$
+declare
+  r record;
+begin
+  for r in
+    select pid, usename, state
+    from pg_stat_activity
+    where state = 'active'
+      and pid <> pg_backend_pid()
+      and query_start < now() - interval '5 minutes'
+  loop
+    begin
+      perform pg_terminate_backend(r.pid);
+      raise notice '[cleanup] killed pid % (% state %)', r.pid, r.usename, r.state;
+    exception when others then
+      raise notice '[cleanup] skip pid % (%), %', r.pid, r.usename, sqlerrm;
+    end;
+  end loop;
+end $$;
 
 -- 3) INDEX: chữa tận gốc các truy vấn đang quét cả bảng mỗi phút
 -----------------------------------------------------------
