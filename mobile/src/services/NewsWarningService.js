@@ -2,6 +2,10 @@ import { Platform } from 'react-native';
 
 let Notifications = null;
 
+const CHANNEL_ID = 'market_alerts';
+const CHANNEL_SOUND = 'chime-soft.wav';
+const VIBRATION = [0, 250, 100, 250];
+
 async function getNotifications() {
   if (Notifications) return Notifications;
   if (Platform.OS === 'web') return null;
@@ -15,6 +19,19 @@ async function getNotifications() {
         shouldSetBadge: true,
       }),
     });
+    if (Platform.OS === 'android') {
+      await mod.setNotificationChannelAsync(CHANNEL_ID, {
+        name: 'Market Alerts',
+        importance: mod.AndroidImportance.MAX,
+        sound: CHANNEL_SOUND,
+        vibrationPattern: VIBRATION,
+      });
+      await mod.setDefaultNotificationChannelAsync({
+        importance: mod.AndroidImportance.MAX,
+        sound: CHANNEL_SOUND,
+        vibrationPattern: VIBRATION,
+      });
+    }
     Notifications = mod;
     return mod;
   } catch {
@@ -71,12 +88,6 @@ export const NewsWarningService = {
     try {
       const Notif = await getNotifications();
       if (!Notif) return;
-      Notif.setNotificationChannelAsync('market_alerts', {
-        name: 'Market Alerts',
-        importance: Notif.AndroidImportance.MAX,
-        sound: 'chime-soft.wav',
-        vibrationPattern: [0, 250, 100, 250],
-      });
     } catch {
       /* sound config failure is non-fatal */
     }
@@ -93,15 +104,23 @@ export const NewsWarningService = {
         : (await Notif.requestPermissionsAsync()).granted;
       if (!granted) return;
 
-      await Notif.scheduleNotificationAsync({
-        content: {
-          title: `\u26A0 ${newsItem.title}`,
-          body: newsItem.source ? `Source: ${newsItem.source}` : 'Market alert',
-          sound: 'chime-soft.wav',
-          data: { url: newsItem.url },
-        },
-        trigger: null,
-      });
+      const content = {
+        title: `\u26A0 ${newsItem.title}`,
+        body: newsItem.source ? `Source: ${newsItem.source}` : 'Market alert',
+        sound: CHANNEL_SOUND,
+        data: { url: newsItem.url },
+      };
+      const trigger =
+        Platform.OS === 'android'
+          ? {
+              type: Notif.SchedulableTriggerInputTypes.TIME_INTERVAL,
+              seconds: 1,
+              channelId: CHANNEL_ID,
+              repeats: false,
+            }
+          : null;
+
+      await Notif.scheduleNotificationAsync({ content, trigger });
     } catch {
       /* fallback: skip local notification */
     }

@@ -143,21 +143,41 @@ function CalendarRow({ event }) {
       </View>
 
       <View style={styles.statsCol}>
-        <Text
-          style={[
-            styles.actualValue,
-            actualCol ? { color: actualCol } : actual ? styles.actualNeutral : styles.actualEmpty,
-          ]}
-          numberOfLines={1}
-          ellipsizeMode="tail"
-        >
-          {actual || '—'}
-        </Text>
-        <Text style={styles.subRow} numberOfLines={1} ellipsizeMode="tail">
-          Dự báo: <Text style={styles.subStrong}>{forecast}</Text>
-          <Text style={styles.subSep}> · </Text>
-          Cũ: <Text style={styles.subStrong}>{previous}</Text>
-        </Text>
+        <View style={styles.statsRow}>
+          <View style={styles.statCell}>
+            <Text style={styles.statLabel} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>
+              Hiện tại
+            </Text>
+            <Text
+              style={[
+                styles.statValue,
+                actualCol ? { color: actualCol } : actual ? styles.actualNeutral : styles.actualEmpty,
+              ]}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+              adjustsFontSizeToFit
+              minimumFontScale={0.6}
+            >
+              {actual || '—'}
+            </Text>
+          </View>
+          <View style={styles.statCell}>
+            <Text style={styles.statLabel} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>
+              Dự báo
+            </Text>
+            <Text style={styles.statValue} numberOfLines={1} ellipsizeMode="tail" adjustsFontSizeToFit minimumFontScale={0.6}>
+              {forecast}
+            </Text>
+          </View>
+          <View style={styles.statCell}>
+            <Text style={styles.statLabel} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>
+              Cũ
+            </Text>
+            <Text style={styles.statValue} numberOfLines={1} ellipsizeMode="tail" adjustsFontSizeToFit minimumFontScale={0.6}>
+              {previous}
+            </Text>
+          </View>
+        </View>
       </View>
     </View>
   );
@@ -644,28 +664,47 @@ const styles = StyleSheet.create({
   },
   titleText: {
     color: Z.zinc100,
-    fontSize: 13.5,
-    fontWeight: '600',
-    lineHeight: 18,
+    fontSize: 12,
+    fontWeight: '500',
+    lineHeight: 16,
     flexShrink: 1,
     fontFamily: FONT_FAMILY,
   },
   countryText: {
     color: Z.zinc500,
-    fontSize: 11,
-    marginTop: 3,
+    fontSize: 10.5,
+    marginTop: 2,
     marginLeft: 18,
     fontFamily: FONT_FAMILY,
   },
   statsCol: {
     width: '30%',
     flexShrink: 0,
-    alignItems: 'flex-end',
-    minWidth: 96,
+    minWidth: 0,
+    alignItems: 'stretch',
   },
-  actualValue: {
-    fontSize: 14,
+  statsRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 6,
+  },
+  statCell: {
+    flex: 1,
+    alignItems: 'flex-end',
+    minWidth: 0,
+  },
+  statLabel: {
+    color: Z.zinc600,
+    fontSize: 9,
+    lineHeight: 10,
+    fontWeight: '500',
+    fontFamily: FONT_FAMILY,
+  },
+  statValue: {
+    fontSize: 12,
     fontWeight: '700',
+    marginTop: 3,
+    color: Z.zinc300,
     fontFamily: FONT_FAMILY,
     fontVariant: TABULAR_NUMS,
   },
@@ -675,19 +714,6 @@ const styles = StyleSheet.create({
   actualEmpty: {
     color: Z.zinc600,
     fontWeight: '500',
-  },
-  subRow: {
-    color: Z.zinc600,
-    fontSize: 10,
-    marginTop: 4,
-    fontFamily: FONT_FAMILY,
-    fontVariant: TABULAR_NUMS,
-  },
-  subStrong: {
-    color: Z.zinc400,
-  },
-  subSep: {
-    color: Z.zinc700,
   },
   center: {
     flex: 1,
