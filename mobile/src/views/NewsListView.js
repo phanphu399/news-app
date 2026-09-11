@@ -4,6 +4,7 @@ import {
   Text,
   FlatList,
   Animated,
+  TextInput,
   TouchableOpacity,
   RefreshControl,
   ScrollView,
@@ -46,6 +47,7 @@ function SkeletonCard() {
 
 export default function NewsListView({ items, loading, error, onItemPress, onRefresh }) {
   const [filter, setFilter] = useState(ALL);
+  const [query, setQuery] = useState('');
 
   const chips = useMemo(() => {
     const counts = new Map();
@@ -62,9 +64,15 @@ export default function NewsListView({ items, loading, error, onItemPress, onRef
   }, [items]);
 
   const flatList = useMemo(() => {
-    if (filter === ALL) return items;
-    return items.filter((item) => (item.category || 'Macro') === filter);
-  }, [items, filter]);
+    const byCat = filter === ALL ? items : items.filter((item) => (item.category || 'Macro') === filter);
+    const q = query.trim().toLowerCase();
+    if (!q) return byCat;
+    return byCat.filter((item) => {
+      const title = String(item.title || '').toLowerCase();
+      const source = String(item.source || '').toLowerCase();
+      return title.includes(q) || source.includes(q);
+    });
+  }, [items, filter, query]);
 
   if (loading && items.length === 0) {
     return (
@@ -124,6 +132,25 @@ export default function NewsListView({ items, loading, error, onItemPress, onRef
         })}
       </View>
 
+      <View style={styles.searchWrap}>
+        <Text style={styles.searchIcon}>⌕</Text>
+        <TextInput
+          style={styles.searchInput}
+          value={query}
+          onChangeText={setQuery}
+          placeholder="Tìm tin theo từ khóa hoặc nguồn…"
+          placeholderTextColor={COLORS.textMuted}
+          autoCorrect={false}
+          autoCapitalize="none"
+          returnKeyType="search"
+        />
+        {query.length > 0 && (
+          <TouchableOpacity onPress={() => setQuery('')} hitSlop={8}>
+            <Text style={styles.searchClear}>✕</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+
       <FlatList
         data={flatList}
         keyExtractor={(item) => item.id}
@@ -167,9 +194,9 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   chipActive: {
-    backgroundColor: 'rgba(240,168,92,0.10)',
+    backgroundColor: 'rgba(245,158,11,0.10)',
     borderWidth: 1,
-    borderColor: 'rgba(240,168,92,0.30)',
+    borderColor: 'rgba(245,158,11,0.30)',
   },
   chipText: {
     color: COLORS.textSecondary,
@@ -191,6 +218,37 @@ const styles = StyleSheet.create({
   },
   chipCountActive: {
     color: COLORS.primary,
+  },
+  searchWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 10,
+    marginTop: 8,
+    marginBottom: 2,
+    backgroundColor: COLORS.surface,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    paddingHorizontal: 10,
+    height: 36,
+  },
+  searchIcon: {
+    color: COLORS.textMuted,
+    fontSize: 15,
+    marginRight: 7,
+    fontWeight: '600',
+  },
+  searchInput: {
+    flex: 1,
+    color: COLORS.text,
+    fontSize: 13,
+    fontFamily: FONT_FAMILY,
+    paddingVertical: 0,
+  },
+  searchClear: {
+    color: COLORS.textMuted,
+    fontSize: 13,
+    paddingHorizontal: 4,
   },
   content: {
     paddingVertical: 10,

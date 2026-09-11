@@ -8,7 +8,7 @@
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
     />
     <title>NEWS - Realtime Market News</title>
-    <meta name="theme-color" content="#10151C" />
+    <meta name="theme-color" content="#0A0D14" />
     <meta name="description" content="NEWS - Tin tức Forex & Macro theo thời gian thực" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -21,8 +21,26 @@
       html,
       body,
       #root {
-        background: #10151C;
+        background: #0A0D14;
         color-scheme: dark;
+      }
+      ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.14);
+        border-radius: 6px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.22);
+      }
+      * {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(255, 255, 255, 0.14) transparent;
       }
     </style>
     <script>

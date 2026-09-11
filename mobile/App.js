@@ -397,19 +397,19 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     width: '100%',
-    maxWidth: 820,
+    maxWidth: 896,
     alignSelf: 'center',
     position: 'relative',
   },
   tabBar: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(16,21,28,0.92)',
+    backgroundColor: 'rgba(10,13,20,0.85)',
     backdropFilter: 'blur(14px)',
     borderTopWidth: 1,
     borderTopColor: 'rgba(255,255,255,0.08)',
     paddingTop: 6,
     width: '100%',
-    maxWidth: 820,
+    maxWidth: 896,
     alignSelf: 'center',
   },
   tabItem: {
@@ -419,7 +419,7 @@ const styles = StyleSheet.create({
     paddingBottom: 2,
   },
   tabItemActive: {
-    backgroundColor: 'rgba(240,168,92,0.06)',
+    backgroundColor: 'rgba(245,158,11,0.06)',
   },
   tabLabel: {
     color: TAB_INACTIVE,

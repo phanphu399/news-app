@@ -169,7 +169,7 @@ const styles = StyleSheet.create({
   primaryBtn: {
     borderWidth: 1,
     borderColor: COLORS.primary,
-    backgroundColor: 'rgba(240,168,92,0.1)',
+    backgroundColor: 'rgba(245,158,11,0.10)',
     paddingHorizontal: 26,
     paddingVertical: 11,
     borderRadius: 12,

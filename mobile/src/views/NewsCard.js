@@ -22,14 +22,15 @@ export const NewsCard = memo(function NewsCard({ item, onPress, dimmed }) {
       onPress={() => onPress?.(item)}
       style={[styles.card, dimmed && styles.cardDimmed]}
     >
-      <View style={[styles.accent, { backgroundColor: cat.color }]} />
       <View style={styles.body}>
         <View style={styles.topRow}>
-          <Text style={[styles.catText, { color: cat.color }]} numberOfLines={1}>
-            {cat.short}
-          </Text>
+          <View style={[styles.catPill, { backgroundColor: cat.bg }]}>
+            <Text style={[styles.catText, { color: cat.color }]} numberOfLines={1}>
+              {cat.short}
+            </Text>
+          </View>
           {isImportant && (
-            <View style={[styles.hotBadge, { borderColor: COLORS.importantSoft }]}>
+            <View style={styles.hotBadge}>
               <Text style={styles.hotText}>NÓNG</Text>
             </View>
           )}
@@ -69,8 +70,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   accent: {
-    height: 2,
-    width: '100%',
+    display: 'none',
   },
   cardDimmed: {
     opacity: 0.55,
@@ -82,12 +82,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 7,
+    marginBottom: 8,
+  },
+  catPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 999,
   },
   catText: {
     fontSize: 10,
     fontWeight: '800',
-    letterSpacing: 1,
+    letterSpacing: 0.8,
     fontFamily: FONT_FAMILY,
   },
   hotBadge: {
@@ -98,7 +105,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     backgroundColor: COLORS.importantSoft,
     borderWidth: 1,
-    borderColor: COLORS.importantSoft,
+    borderColor: 'rgba(242,85,90,0.28)',
   },
   hotText: {
     color: COLORS.important,

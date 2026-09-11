@@ -3,10 +3,9 @@ import {
   View,
   Text,
   StyleSheet,
-  FlatList,
+  ScrollView,
   TouchableOpacity,
   ActivityIndicator,
-  RefreshControl,
 } from 'react-native';
 import { COLORS, FONT_FAMILY, TABULAR_NUMS } from '../config/constants';
 import { BACKEND_URL } from '../config/constants';
@@ -203,10 +202,6 @@ export default function EconomicCalendarView() {
     [sections]
   );
 
-  const renderItem = useCallback(({ item }) => {
-    return <DayCard date={item.date} events={item.events} />;
-  }, []);
-
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -214,6 +209,18 @@ export default function EconomicCalendarView() {
           <Text style={styles.headerTitle}>LỊCH KINH TẾ</Text>
           <Text style={styles.headerSub}>Châu Á · Châu Âu · Mỹ</Text>
         </View>
+        <TouchableOpacity
+          style={styles.updateBtn}
+          onPress={() => load('refresh')}
+          activeOpacity={0.7}
+          disabled={refreshing}
+        >
+          {refreshing ? (
+            <ActivityIndicator color={COLORS.primary} size="small" />
+          ) : (
+            <Text style={styles.updateBtnText}>↻ Cập nhật</Text>
+          )}
+        </TouchableOpacity>
       </View>
 
       <View style={styles.filtersBar}>
@@ -271,36 +278,16 @@ export default function EconomicCalendarView() {
           </TouchableOpacity>
         </View>
       ) : error ? null : (
-        <FlatList
-          data={listData}
-          keyExtractor={(item) => item.key}
-          renderItem={renderItem}
-          initialNumToRender={25}
-          style={styles.list}
-          contentContainerStyle={styles.listContent}
-          ListFooterComponent={
-            <View style={styles.footer}>
-              <Text style={styles.footerText}>Nguồn: Trading Economics · Cập nhật tự động</Text>
-            </View>
-          }
-          refreshControl={
-            <RefreshControlStyled refreshing={refreshing} onRefresh={() => load('refresh')} />
-          }
-        />
+        <ScrollView contentContainerStyle={styles.listContent}>
+          {listData.map((item) => (
+            <DayCard key={item.key} date={item.date} events={item.events} />
+          ))}
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>Nguồn: Trading Economics · Cập nhật tự động</Text>
+          </View>
+        </ScrollView>
       )}
     </View>
-  );
-}
-
-function RefreshControlStyled({ refreshing, onRefresh }) {
-  return (
-    <RefreshControl
-      refreshing={refreshing}
-      onRefresh={onRefresh}
-      tintColor={COLORS.primary}
-      colors={[COLORS.primary]}
-      progressBackgroundColor={COLORS.surface}
-    />
   );
 }
 
@@ -331,6 +318,22 @@ const styles = StyleSheet.create({
     fontSize: 11,
     marginTop: 3,
   },
+  updateBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderWidth: 1,
+    borderColor: COLORS.borderSoft,
+    minWidth: 76,
+    alignItems: 'center',
+  },
+  updateBtnText: {
+    color: COLORS.textSecondary,
+    fontSize: 12,
+    fontWeight: '600',
+    fontFamily: FONT_FAMILY,
+  },
   filtersBar: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -349,9 +352,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.03)',
   },
   filterChipActive: {
-    backgroundColor: 'rgba(240,168,92,0.10)',
+    backgroundColor: 'rgba(245,158,11,0.10)',
     borderWidth: 1,
-    borderColor: 'rgba(240,168,92,0.30)',
+    borderColor: 'rgba(245,158,11,0.30)',
   },
   filterDot: {
     width: 7,
@@ -387,7 +390,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 10,
-    backgroundColor: 'rgba(229,99,110,0.08)',
+    backgroundColor: 'rgba(242,85,90,0.08)',
   },
   errorText: {
     color: COLORS.danger,
@@ -537,12 +540,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 18,
   },
-  list: {
-    flex: 1,
-    width: '100%',
-  },
   listContent: {
-    flexGrow: 1,
     paddingBottom: 8,
   },
   footerText: {

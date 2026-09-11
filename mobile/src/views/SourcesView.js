@@ -521,9 +521,9 @@ const styles = StyleSheet.create({
     fontFamily: FONT_FAMILY,
   },
   offlineBar: {
-    backgroundColor: 'rgba(229,99,110,0.12)',
+    backgroundColor: 'rgba(242,85,90,0.12)',
     borderWidth: 1,
-    borderColor: 'rgba(229,99,110,0.4)',
+    borderColor: 'rgba(242,85,90,0.30)',
     borderRadius: 10,
     padding: 10,
     marginBottom: 10,
@@ -623,7 +623,7 @@ const styles = StyleSheet.create({
     marginLeft: 6,
   },
   miniBtnDanger: {
-    backgroundColor: 'rgba(229,99,110,0.10)',
+    backgroundColor: 'rgba(242,85,90,0.10)',
   },
   miniBtnText: {
     color: COLORS.textSecondary,
@@ -772,9 +772,9 @@ const styles = StyleSheet.create({
     marginTop: 3,
   },
   testErr: {
-    backgroundColor: 'rgba(229,99,110,0.1)',
+    backgroundColor: 'rgba(242,85,90,0.10)',
     borderWidth: 1,
-    borderColor: 'rgba(229,99,110,0.4)',
+    borderColor: 'rgba(242,85,90,0.30)',
     borderRadius: 10,
     padding: 10,
     marginTop: 10,
@@ -799,8 +799,8 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   catBtnActive: {
-    borderColor: 'rgba(240,168,92,0.30)',
-    backgroundColor: 'rgba(240,168,92,0.10)',
+    borderColor: 'rgba(245,158,11,0.30)',
+    backgroundColor: 'rgba(245,158,11,0.10)',
   },
   catBtnText: {
     color: COLORS.textMuted,

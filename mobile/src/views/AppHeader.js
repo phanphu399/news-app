@@ -103,6 +103,9 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.borderSoft,
+    width: '100%',
+    maxWidth: 896,
+    alignSelf: 'center',
   },
   brand: {
     flexDirection: 'row',
@@ -117,9 +120,9 @@ const styles = StyleSheet.create({
     marginRight: 9,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(240,168,92,0.12)',
+    backgroundColor: 'rgba(245,158,11,0.12)',
     borderWidth: 1,
-    borderColor: 'rgba(240,168,92,0.28)',
+    borderColor: 'rgba(245,158,11,0.30)',
     overflow: 'hidden',
   },
   logoBoxWide: {
@@ -154,9 +157,9 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   versionChip: {
-    backgroundColor: 'rgba(240,168,92,0.10)',
+    backgroundColor: 'rgba(245,158,11,0.10)',
     borderWidth: 1,
-    borderColor: 'rgba(240,168,92,0.25)',
+    borderColor: 'rgba(245,158,11,0.28)',
     paddingHorizontal: 7,
     paddingVertical: 3,
     borderRadius: 6,
@@ -180,7 +183,7 @@ const styles = StyleSheet.create({
     borderColor: COLORS.border,
   },
   statusOffline: {
-    borderColor: 'rgba(229,99,110,0.35)',
+    borderColor: 'rgba(242,85,90,0.35)',
   },
   statusDot: {
     width: 7,

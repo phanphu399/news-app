@@ -87,8 +87,8 @@ const manifest = {
   display: 'standalone',
   display_override: ['standalone', 'minimal-ui'],
   orientation: 'portrait',
-  background_color: '#10151C',
-  theme_color: '#10151C',
+  background_color: '#0A0D14',
+  theme_color: '#0A0D14',
   lang: 'vi',
   categories: ['news', 'finance'],
   icons: [
@@ -180,8 +180,8 @@ const PRELOAD_SCRIPT = `<script>
 </script>`;
 
 const HEAD_INJECT = [
-  `<meta name="theme-color" content="#10151C" />`,
-  `<style>html,body,#root{background:#10151C;color-scheme:dark}</style>`,
+  `<meta name="theme-color" content="#0A0D14" />`,
+  `<style>html,body,#root{background:#0A0D14;color-scheme:dark}::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.14);border-radius:6px}::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,0.22)}*{scrollbar-width:thin;scrollbar-color:rgba(255,255,255,0.14) transparent}</style>`,
   `<meta name="description" content="NEWS - Tin tức Forex & Macro theo thời gian thực" />`,
   `<meta name="mobile-web-app-capable" content="yes" />`,
   `<meta name="apple-mobile-web-app-capable" content="yes" />`,
