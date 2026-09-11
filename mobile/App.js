@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, StatusBar, Modal, Platform, Animated, Easing } from 'react-native';
 import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FlameIcon, MarketIcon, CalendarDotIcon, BookmarkIcon, RadioIcon } from './src/components/TabIcons';
+import { DownloadIcon } from './src/components/UIIcons';
 import NewsViewModel from './src/viewmodels/NewsViewModel';
 import NewsListView from './src/views/NewsListView';
 import NewsArticleView from './src/views/NewsArticleView';
@@ -386,7 +387,9 @@ function MainScreen() {
 
       {canInstall && (
         <TouchableOpacity style={styles.installButton} onPress={install} activeOpacity={0.85}>
-          <Text style={styles.installIcon}>⬇</Text>
+          <View style={styles.installIconWrap}>
+            <DownloadIcon size={19} color={COLORS.primary} strokeWidth={2} />
+          </View>
           <View>
             <Text style={styles.installTitle}>Cài đặt MacroPulse</Text>
             <Text style={styles.installSub}>Dùng như ứng dụng riêng</Text>
@@ -611,11 +614,8 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     elevation: 8,
   },
-  installIcon: {
-    color: COLORS.primary,
-    fontSize: 20,
+  installIconWrap: {
     marginRight: 10,
-    fontWeight: '800',
   },
   installTitle: {
     color: COLORS.text,

@@ -1,15 +1,16 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Text, TouchableOpacity, View, StyleSheet } from 'react-native';
 import { subscribeToasts } from '../services/ToastService';
+import { CheckIcon, CloseIcon, AlertCircleIcon, InfoIcon } from './UIIcons';
 import { COLORS, FONT_FAMILY } from '../config/constants';
 import useSwipeDismiss from '../hooks/useSwipeDismiss';
 
 const MAX_TOASTS = 3;
 const TOAST_TYPES = {
-  success: { color: COLORS.success, icon: '✓', label: 'THÀNH CÔNG', badge: 'ĐÃ XONG' },
-  error: { color: COLORS.danger, icon: '✕', label: 'LỖI', badge: 'THẤT BẠI' },
-  warning: { color: COLORS.primary, icon: '!', label: 'CẢNH BÁO', badge: 'CHÚ Ý' },
-  info: { color: COLORS.textSecondary, icon: 'i', label: 'THÔNG BÁO', badge: 'CẬP NHẬT' },
+  success: { color: COLORS.success, Icon: CheckIcon, label: 'THÀNH CÔNG', badge: 'ĐÃ XONG' },
+  error: { color: COLORS.danger, Icon: CloseIcon, label: 'LỖI', badge: 'THẤT BẠI' },
+  warning: { color: COLORS.primary, Icon: AlertCircleIcon, label: 'CẢNH BÁO', badge: 'CHÚ Ý' },
+  info: { color: COLORS.textSecondary, Icon: InfoIcon, label: 'THÔNG BÁO', badge: 'CẬP NHẬT' },
 };
 
 function ToastRow({ toast, offset, onDismiss }) {
@@ -17,6 +18,7 @@ function ToastRow({ toast, offset, onDismiss }) {
   const { panHandlers, drag } = useSwipeDismiss({ onDismiss });
   const style = TOAST_TYPES[toast.type] || TOAST_TYPES.info;
   const bullets = (toast.message || '\u00a0').split('\n').filter((line) => line.length);
+  const ToastIcon = style.Icon;
 
   useEffect(() => {
     Animated.spring(slide, {
@@ -42,7 +44,7 @@ function ToastRow({ toast, offset, onDismiss }) {
       <View style={[styles.toast, { borderColor: `${style.color}33` }]} {...panHandlers}>
         <View style={styles.headerRow}>
           <View style={[styles.iconSquircle, { backgroundColor: `${style.color}14` }]}>
-            <Text style={[styles.iconText, { color: style.color }]}>{style.icon}</Text>
+            <ToastIcon size={18} color={style.color} strokeWidth={2.2} />
           </View>
           <View style={styles.headerText}>
             <Text style={[styles.label, { color: style.color }]}>{style.label}</Text>
@@ -151,10 +153,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
-  },
-  iconText: {
-    fontSize: 17,
-    fontWeight: '900',
   },
   headerText: {
     flex: 1,

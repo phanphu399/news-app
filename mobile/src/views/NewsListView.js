@@ -12,6 +12,7 @@ import {
   Easing,
 } from 'react-native';
 import NewsCard from './NewsCard';
+import { SearchIcon, CloseIcon } from '../components/UIIcons';
 import { COLORS, categoryStyle, FONT_FAMILY, TABULAR_NUMS } from '../config/constants';
 
 const ALL = '__all__';
@@ -171,7 +172,9 @@ export default function NewsListView({ items, loading, error, onItemPress, onRef
       </View>
 
       <View style={styles.searchWrap}>
-        <Text style={styles.searchIcon}>⌕</Text>
+        <View style={styles.searchIconWrap}>
+          <SearchIcon size={15} color={COLORS.textMuted} strokeWidth={2} />
+        </View>
         <TextInput
           style={styles.searchInput}
           value={query}
@@ -184,7 +187,7 @@ export default function NewsListView({ items, loading, error, onItemPress, onRef
         />
         {query.length > 0 && (
           <TouchableOpacity onPress={() => setQuery('')} hitSlop={8}>
-            <Text style={styles.searchClear}>✕</Text>
+            <CloseIcon size={14} color={COLORS.textMuted} strokeWidth={2} />
           </TouchableOpacity>
         )}
       </View>
@@ -273,11 +276,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     height: 36,
   },
-  searchIcon: {
-    color: COLORS.textMuted,
-    fontSize: 15,
+  searchIconWrap: {
     marginRight: 7,
-    fontWeight: '600',
   },
   searchInput: {
     flex: 1,
@@ -285,11 +285,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontFamily: FONT_FAMILY,
     paddingVertical: 0,
-  },
-  searchClear: {
-    color: COLORS.textMuted,
-    fontSize: 13,
-    paddingHorizontal: 4,
   },
   content: {
     paddingVertical: 10,

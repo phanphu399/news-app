@@ -1,5 +1,6 @@
-﻿import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Animated, Text, TouchableOpacity, View, StyleSheet } from 'react-native';
+import { BoltMark } from '../components/TabIcons';
 import { COLORS, FONT_FAMILY } from '../config/constants';
 import TranslatedText from '../components/TranslatedText';
 import useSwipeDismiss from '../hooks/useSwipeDismiss';
@@ -27,10 +28,10 @@ export default function NotificationToast({ item, onPress, onClose, offset }) {
       <View style={styles.toast} {...panHandlers}>
         <View style={styles.headerRow}>
           <View style={styles.iconSquircle}>
-            <Text style={styles.iconText}>âš¡</Text>
+            <BoltMark size={20} color={COLORS.important} strokeWidth={1.8} />
           </View>
           <View style={styles.headerText}>
-            <Text style={styles.label}>TIN Má»šI</Text>
+            <Text style={styles.label}>TIN MỚI</Text>
             <TranslatedText style={styles.title} numberOfLines={2} text={item.title} />
           </View>
         </View>
@@ -41,10 +42,10 @@ export default function NotificationToast({ item, onPress, onClose, offset }) {
             onPress={onPress}
             activeOpacity={0.85}
           >
-            <Text style={[styles.pillText, styles.pillTextPrimary]}>Äá»c ngay</Text>
+            <Text style={[styles.pillText, styles.pillTextPrimary]}>Đọc ngay</Text>
           </TouchableOpacity>
           <TouchableOpacity style={[styles.pill, styles.pillGhost]} onPress={onClose} activeOpacity={0.85}>
-            <Text style={[styles.pillText, { color: COLORS.textMuted }]}>Äá»ƒ sau</Text>
+            <Text style={[styles.pillText, { color: COLORS.textMuted }]}>Để sau</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -87,9 +88,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: 12,
     backgroundColor: 'rgba(251,113,133,0.10)',
-  },
-  iconText: {
-    fontSize: 15,
   },
   headerText: {
     flex: 1,

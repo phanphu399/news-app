@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { Search, Sparkles } from 'lucide-react-native';
 import { BookmarkIcon } from '../components/TabIcons';
+import { XIcon } from '../components/UIIcons';
 import NewsCard from './NewsCard';
 import Card from '../components/Card';
 import { COLORS, FONT_FAMILY, TABULAR_NUMS } from '../config/constants';
@@ -108,7 +109,7 @@ ListHeaderComponent={
                       onPress={() => onRemoveKeyword(keyword)}
                     >
                       <Text style={styles.chipText}>{keyword}</Text>
-                      <Text style={styles.chipX}>✕</Text>
+                      <XIcon size={12} color={COLORS.textMuted} strokeWidth={2.2} />
                     </TouchableOpacity>
                   ))}
                 </View>
@@ -150,7 +151,8 @@ ListHeaderComponent={
                       style={styles.removeBookmark}
                       onPress={() => onToggleBookmark(item)}
                     >
-                      <Text style={styles.removeBookmarkText}>✕ Bỏ lưu</Text>
+                      <XIcon size={13} color={COLORS.textMuted} strokeWidth={2.2} />
+                      <Text style={styles.removeBookmarkText}>Bỏ lưu</Text>
                     </TouchableOpacity>
                   </View>
                 ))
@@ -274,11 +276,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     fontFamily: FONT_FAMILY,
-  },
-  chipX: {
-    color: COLORS.textMuted,
-    marginLeft: 8,
-    fontSize: 12,
+    marginRight: 6,
   },
   emptyWrap: {
     alignItems: 'center',
@@ -291,6 +289,8 @@ const styles = StyleSheet.create({
     fontFamily: FONT_FAMILY,
   },
   removeBookmark: {
+    flexDirection: 'row',
+    alignItems: 'center',
     alignSelf: 'flex-end',
     marginRight: 20,
     marginTop: -4,

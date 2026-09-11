@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated, Easing, Platform } from 'react-native';
 import { PulseLogo, LiveDot } from '../components/PulseLogo';
+import { RefreshIcon } from '../components/UIIcons';
 import { COLORS, FONT_FAMILY } from '../config/constants';
 
 function getBuildVersion() {
@@ -50,9 +51,9 @@ export default function AppHeader({ connected, loading, onRefresh }) {
           hitSlop={8}
           accessibilityLabel="Cập nhật tin mới"
         >
-          <Animated.Text style={[styles.refreshIcon, { transform: [{ rotate }] }]}>
-            ↻
-          </Animated.Text>
+          <Animated.View style={[styles.refreshIconWrap, { transform: [{ rotate }] }]}>
+            <RefreshIcon size={17} color={loading ? COLORS.primary : COLORS.textSecondary} strokeWidth={2} />
+          </Animated.View>
         </TouchableOpacity>
       </View>
     </View>
@@ -114,9 +115,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  refreshIcon: {
-    color: COLORS.textSecondary,
-    fontSize: 17,
-    fontWeight: '700',
+  refreshIconWrap: {
+    width: 17,
+    height: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

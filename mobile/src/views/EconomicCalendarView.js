@@ -1,4 +1,4 @@
-﻿import React, {
+import React, {
   useCallback,
   useEffect,
   useMemo,
@@ -17,6 +17,7 @@ import {
 } from 'react-native';
 import { COLORS, FONT_FAMILY, TABULAR_NUMS } from '../config/constants';
 import { BACKEND_URL } from '../config/constants';
+import { ChevronUpIcon, RefreshIcon } from '../components/UIIcons';
 import { showToast } from '../services/ToastService';
 import localizeTitle, {
   localizeCountry,
@@ -24,7 +25,7 @@ import localizeTitle, {
   formatTime,
 } from '../utils/calendarVi';
 
-// Tailwind zinc/slate/amber/rose/emerald â€” packed sáºµn Ä‘á»ƒ dÃ¹ng trong StyleSheet (RN khÃ´ng cÃ³ Tailwind).
+// Tailwind zinc/amber/rose/emerald — packed sẵn để dùng trong StyleSheet (RN không có Tailwind).
 const Z = {
   zinc100: '#F4F4F5',
   zinc200: '#E4E4E7',
@@ -41,13 +42,13 @@ const Z = {
 };
 
 const IMPACT_FILTERS = [
-  { key: 'All', label: 'Táº¥t cáº£' },
-  { key: 'High', label: 'Quan trá»ng' },
-  { key: 'Medium', label: 'Trung bÃ¬nh' },
-  { key: 'Low', label: 'Tháº¥p' },
+  { key: 'All', label: 'Tất cả' },
+  { key: 'High', label: 'Quan trọng' },
+  { key: 'Medium', label: 'Trung bình' },
+  { key: 'Low', label: 'Thấp' },
 ];
 
-// MÃ u active riÃªng tá»«ng nhÃ³m lá»c theo spec (bá» viá»n neon cÅ©).
+// Màu active riêng từng nhóm lọc theo spec (bỏ viền neon cũ).
 const FILTER_ACTIVE_STYLES = {
   All: {
     backgroundColor: Z.zinc800,
@@ -79,7 +80,7 @@ function TimeoutWatch({ onTimeout }) {
   return null;
 }
 
-// Cá» "Actual tá»‘t hÆ¡n Dá»± bÃ¡o" cÃ³ tháº­t khÃ´ng â€” heuristic cho loáº¡i chá»‰ sá»‘ nghá»‹ch Ä‘áº£o.
+// Cờ "Actual tốt hơn Dự báo" có thật không — heuristic cho loại chỉ số nghịch đảo.
 function isDownsideGood(title) {
   return /unemploy|jobless|claims/i.test(String(title || ''));
 }
@@ -92,7 +93,7 @@ function actualColor(actual, forecast, title) {
   return better ? Z.emerald400 : Z.rose400;
 }
 
-// Thanh váº¡ch impact 1/2/3 (TradingView-style) thay cho badge chá»¯.
+// Thanh vạch impact 1/2/3 (TradingView-style) thay cho badge chữ.
 function ImpactIndicator({ impact }) {
   const level = impact === 'High' ? 3 : impact === 'Medium' ? 2 : 1;
   const color = level === 3 ? Z.rose500 : level === 2 ? Z.amber400 : Z.zinc600;
@@ -117,8 +118,8 @@ function ImpactIndicator({ impact }) {
 function CalendarRow({ event }) {
   const time = formatTime(event.date);
   const currency = event.country || '?';
-  const forecast = event.forecast ?? 'â€”';
-  const previous = event.previous ?? 'â€”';
+  const forecast = event.forecast ?? '—';
+  const previous = event.previous ?? '—';
   const actual = event.actual ?? '';
   const actualCol = actual ? actualColor(actual, event.forecast, event.title) : null;
 
@@ -150,12 +151,12 @@ function CalendarRow({ event }) {
           numberOfLines={1}
           ellipsizeMode="tail"
         >
-          {actual || 'â€”'}
+          {actual || '—'}
         </Text>
         <Text style={styles.subRow} numberOfLines={1} ellipsizeMode="tail">
-          Dá»± bÃ¡o: <Text style={styles.subStrong}>{forecast}</Text>
-          <Text style={styles.subSep}> Â· </Text>
-          CÅ©: <Text style={styles.subStrong}>{previous}</Text>
+          Dự báo: <Text style={styles.subStrong}>{forecast}</Text>
+          <Text style={styles.subSep}> · </Text>
+          Cũ: <Text style={styles.subStrong}>{previous}</Text>
         </Text>
       </View>
     </View>
@@ -170,11 +171,11 @@ const DayGroup = forwardRef(function DayGroup({ date, events, isToday, compact }
           <Text style={styles.dateHeaderText}>{formatDateHeader(date)}</Text>
           {isToday && (
             <View style={styles.todayBadge}>
-              <Text style={styles.todayBadgeText}>HÃ´m nay</Text>
+              <Text style={styles.todayBadgeText}>Hôm nay</Text>
             </View>
           )}
         </View>
-        <Text style={styles.dateCount}>{events.length} sá»± kiá»‡n</Text>
+        <Text style={styles.dateCount}>{events.length} sự kiện</Text>
       </View>
       {events.map((event, index) => (
         <CalendarRow
@@ -204,11 +205,11 @@ export default function EconomicCalendarView() {
 
   const rescueFromHang = useCallback(() => {
     setLoading(false);
-    setError('QuÃ¡ lÃ¢u khÃ´ng pháº£n há»“i (15s), hÃ£y thá»­ láº¡i.');
+    setError('Quá lâu không phản hồi (15s), hãy thử lại.');
     showToast({
       type: 'error',
-      title: 'Lá»‹ch kinh táº¿ quÃ¡ cháº­m',
-      message: 'Káº¿t ná»‘i tá»›i server bá»‹ treo, hÃ£y thá»­ láº¡i.',
+      title: 'Lịch kinh tế quá chậm',
+      message: 'Kết nối tới server bị treo, hãy thử lại.',
     });
   }, []);
 
@@ -229,12 +230,12 @@ export default function EconomicCalendarView() {
       setEvents(json.events || []);
     } catch (err) {
       if (err.name === 'AbortError') {
-        setError('QuÃ¡ thá»i gian chá» (12s), thá»­ láº¡i.');
-        showToast({ type: 'error', title: 'Lá»‹ch kinh táº¿ quÃ¡ cháº­m', message: 'Káº¿t ná»‘i tá»›i server bá»‹ treo, hÃ£y thá»­ láº¡i.' });
+        setError('Quá thời gian chờ (12s), thử lại.');
+        showToast({ type: 'error', title: 'Lịch kinh tế quá chậm', message: 'Kết nối tới server bị treo, hãy thử lại.' });
         return;
       }
       setError(err.message);
-      showToast({ type: 'error', title: 'Lá»—i lá»‹ch kinh táº¿', message: err.message });
+      showToast({ type: 'error', title: 'Lỗi lịch kinh tế', message: err.message });
     } finally {
       clearTimeout(timeout);
       if (mode === 'initial') setLoading(false);
@@ -290,8 +291,8 @@ export default function EconomicCalendarView() {
     [sections]
   );
 
-  // AUTO-SCROLL Vá»€ HÃ”M NAY khi danh sÃ¡ch render xong.
-  // Fallback: nhÃ³m tÆ°Æ¡ng lai gáº§n nháº¥t, cÃ²n khÃ´ng thÃ¬ nhÃ³m cuá»‘i (gáº§n hÃ´m nay nháº¥t).
+  // AUTO-SCROLL VỀ HÔM NAY khi danh sách render xong.
+  // Fallback: nhóm tương lai gần nhất, còn không thì nhóm cuối (gần hôm nay nhất).
   const listReady = !loading && !error && listData.length > 0;
   useEffect(() => {
     if (!listReady || typeof document === 'undefined') return;
@@ -310,7 +311,7 @@ export default function EconomicCalendarView() {
     return () => clearTimeout(timer);
   }, [listReady, todayKey, listData]);
 
-  // Hiá»‡n nÃºt "Vá» hÃ´m nay" khi cuá»™n xa khá»i nhÃ³m hÃ´m nay (> 240px).
+  // Hiện nút "Về hôm nay" khi cuộn xa khỏi nhóm hôm nay (> 240px).
   const handleScroll = useCallback(() => {
     const scroller = scrollRef.current;
     const todayEl = todayRef.current;
@@ -338,8 +339,8 @@ export default function EconomicCalendarView() {
     <View style={styles.container}>
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <Text style={styles.headerTitle}>Lá»ŠCH KINH Táº¾</Text>
-          <Text style={styles.headerSub}>ChÃ¢u Ã Â· ChÃ¢u Ã‚u Â· Má»¹</Text>
+          <Text style={styles.headerTitle}>LỊCH KINH TẾ</Text>
+          <Text style={styles.headerSub}>Châu Á · Châu Âu · Mỹ</Text>
         </View>
         <TouchableOpacity
           style={styles.updateBtn}
@@ -350,7 +351,10 @@ export default function EconomicCalendarView() {
           {refreshing ? (
             <ActivityIndicator color={COLORS.primary} size="small" />
           ) : (
-            <Text style={styles.updateBtnText}>â†» Cáº­p nháº­t</Text>
+            <View style={styles.updateBtnContent}>
+              <RefreshIcon size={13} color={Z.zinc300} strokeWidth={2.2} />
+              <Text style={styles.updateBtnText}>Cập nhật</Text>
+            </View>
           )}
         </TouchableOpacity>
       </View>
@@ -382,13 +386,13 @@ export default function EconomicCalendarView() {
 
       {error && !loading && (
         <View style={styles.errorBox}>
-          <Text style={styles.errorText}>KhÃ´ng táº£i Ä‘Æ°á»£c lá»‹ch kinh táº¿ â€” {error}</Text>
+          <Text style={styles.errorText}>Không tải được lịch kinh tế — {error}</Text>
           <TouchableOpacity
             style={[styles.retryBtn, styles.errorRetry]}
             onPress={() => load('refresh')}
             activeOpacity={0.8}
           >
-            <Text style={styles.retryBtnText}>Thá»­ láº¡i</Text>
+            <Text style={styles.retryBtnText}>Thử lại</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -397,17 +401,17 @@ export default function EconomicCalendarView() {
         <View style={styles.center}>
           <TimeoutWatch onTimeout={rescueFromHang} />
           <ActivityIndicator color={COLORS.primary} />
-          <Text style={styles.centerText}>Äang táº£i lá»‹ch kinh táº¿â€¦</Text>
+          <Text style={styles.centerText}>Đang tải lịch kinh tế…</Text>
         </View>
       ) : !error && listData.length === 0 ? (
         <View style={styles.center}>
-          <Text style={styles.centerText}>ChÆ°a cÃ³ sá»± kiá»‡n cho ká»³ nÃ y.</Text>
+          <Text style={styles.centerText}>Chưa có sự kiện cho kỳ này.</Text>
           <TouchableOpacity
             style={styles.retryBtn}
             onPress={() => load('refresh')}
             activeOpacity={0.8}
           >
-            <Text style={styles.retryBtnText}>LÃ m má»›i</Text>
+            <Text style={styles.retryBtnText}>Làm mới</Text>
           </TouchableOpacity>
         </View>
       ) : error ? null : (
@@ -430,7 +434,7 @@ export default function EconomicCalendarView() {
           ))}
           <View style={styles.safeBottom} />
           <View style={styles.footer}>
-            <Text style={styles.footerText}>Nguá»“n: Trading Economics Â· MÃºi giá» Viá»‡t Nam</Text>
+            <Text style={styles.footerText}>Nguồn: Trading Economics · Múi giờ Việt Nam</Text>
           </View>
         </ScrollView>
       )}
@@ -440,9 +444,12 @@ export default function EconomicCalendarView() {
           style={styles.todayFab}
           onPress={scrollToToday}
           activeOpacity={0.85}
-          accessibilityLabel="Cuá»™n vá» hÃ´m nay"
+          accessibilityLabel="Cuộn về hôm nay"
         >
-          <Text style={styles.todayFabText}>â–´ HÃ´m nay</Text>
+          <View style={styles.todayFabIconWrap}>
+            <ChevronUpIcon size={14} color={Z.amber400} strokeWidth={2.5} />
+          </View>
+          <Text style={styles.todayFabText}>Hôm nay</Text>
         </TouchableOpacity>
       )}
     </View>
@@ -492,10 +499,15 @@ const styles = StyleSheet.create({
     minWidth: 76,
     alignItems: 'center',
   },
+  updateBtnContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   updateBtnText: {
     color: Z.zinc300,
     fontSize: 12,
     fontWeight: '600',
+    marginLeft: 5,
     fontFamily: FONT_FAMILY,
   },
   filtersBar: {
@@ -753,6 +765,9 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 3 },
     elevation: 6,
+  },
+  todayFabIconWrap: {
+    marginRight: 5,
   },
   todayFabText: {
     color: Z.amber400,
