@@ -11,44 +11,45 @@ export const BACKEND_URL =
   process.env.EXPO_PUBLIC_BACKEND_URL ||
   'https://news-app-realtime-seven.vercel.app';
 
-// "Aster Blue Black" — Modern Minimalist Fintech (Linear/TradingView/Raycast) 2026.
-// Nền xanh-đen sâu, bề mặt phân tầng theo mức, viền trắng 7%→14%, accent duy nhất
-// Amber-500 #F59E0B chỉ cho CTA/trạng thái active. Typo off-white #E7E9EE.
+// "MacroPulse" — Midnight Blue/Charcoal Fintech (Linear/TradingView 2026).
+// Nền xanh than siêu tối #0B1426, bề mặt phân tầng slate, viền slate 8%→16%,
+// accent duy nhất Vàng trầm #F5A623 (Gold/Amber) chỉ cho CTA/trạng thái active.
+// Typo: trắng slate #F1F5F9; phụ đề Gray-400 #9CA3AF, mờ Gray-500 #64748B.
 export const COLORS = {
-  background: '#0A0D14',
-  surface: '#121721',
-  surfaceAlt: '#181F2E',
-  surfaceElevated: '#1E2636',
-  border: 'rgba(255,255,255,0.07)',
-  borderSoft: 'rgba(255,255,255,0.05)',
-  borderHover: 'rgba(255,255,255,0.14)',
-  primary: '#F59E0B',
-  primaryDeep: '#D97706',
-  primarySoft: 'rgba(245,158,11,0.12)',
-  primaryText: '#1A1205',
-  important: '#F2555A',
-  importantDeep: '#D13C43',
-  importantSoft: 'rgba(242,85,90,0.12)',
-  text: '#E7E9EE',
-  textSecondary: '#9AA4B2',
-  textMuted: '#707B8A',
-  gold: '#F2C14E',
-  green: '#3DD68C',
-  success: '#3DD68C',
-  danger: '#F2555A',
-  amber: '#F59E0B',
-  up: '#3DD68C',
-  down: '#F2555A',
-  cyan: '#58A6DC',
+  background: '#0B1426',
+  surface: '#121826',
+  surfaceAlt: '#182033',
+  surfaceElevated: '#202B44',
+  border: 'rgba(148,163,184,0.16)',
+  borderSoft: 'rgba(148,163,184,0.08)',
+  borderHover: 'rgba(148,163,184,0.30)',
+  primary: '#F5A623',
+  primaryDeep: '#D98E04',
+  primarySoft: 'rgba(245,166,35,0.12)',
+  primaryText: '#1A1405',
+  important: '#FB7185',
+  importantDeep: '#E11D48',
+  importantSoft: 'rgba(251,113,133,0.12)',
+  text: '#F1F5F9',
+  textSecondary: '#9CA3AF',
+  textMuted: '#64748B',
+  gold: '#F5C144',
+  green: '#34D399',
+  success: '#34D399',
+  danger: '#FB7185',
+  amber: '#F5A623',
+  up: '#34D399',
+  down: '#FB7185',
+  cyan: '#38BDF8',
   violet: '#A78BFA',
 };
 
 export const GRADIENTS = {
-  header: ['#121721', '#0A0D14'],
-  brand: ['#F59E0B', '#D97706'],
-  gold: ['#F59E0B', '#DFA13A'],
-  importantRibbon: ['#F2555A', '#4A1D26'],
-  cardTop: ['rgba(245,158,11,0.06)', 'rgba(10,13,20,0)'],
+  header: ['#121826', '#0B1426'],
+  brand: ['#F5A623', '#D98E04'],
+  gold: ['#F5A623', '#DFA13A'],
+  importantRibbon: ['#FB7185', '#4A1D26'],
+  cardTop: ['rgba(245,166,35,0.06)', 'rgba(11,20,38,0)'],
 };
 
 export const IMPORTANT_BORDER_COLOR = COLORS.importantDeep;
@@ -60,13 +61,13 @@ export const TEXT_SECONDARY = COLORS.textSecondary;
 export const ACCENT_COLOR = COLORS.primary;
 
 export const CATEGORY_STYLES = {
-  Macro: { label: 'KINH TẾ VĨ MÔ', short: 'Vĩ mô', color: '#F59E0B', bg: 'rgba(245,158,11,0.10)' },
-  XAUUSD: { label: 'VÀNG & DẦU', short: 'Vàng', color: '#F2C14E', bg: 'rgba(242,193,78,0.10)' },
-  Forex: { label: 'NGOẠI TỆ', short: 'FX', color: '#58A6DC', bg: 'rgba(88,166,220,0.12)' },
+  Macro: { label: 'KINH TẾ VĨ MÔ', short: 'Vĩ mô', color: '#F5A623', bg: 'rgba(245,166,35,0.10)' },
+  XAUUSD: { label: 'VÀNG & DẦU', short: 'Vàng', color: '#F5C144', bg: 'rgba(245,193,68,0.10)' },
+  Forex: { label: 'NGOẠI TỆ', short: 'FX', color: '#38BDF8', bg: 'rgba(56,189,248,0.12)' },
   Crypto: { label: 'TIỀN SỐ', short: 'Crypto', color: '#A78BFA', bg: 'rgba(167,139,250,0.10)' },
-  Geopolitics: { label: 'ĐỊA CHÍNH TRỊ', short: 'Chiến sự', color: '#F2555A', bg: 'rgba(242,85,90,0.10)' },
-  Paywall: { label: 'BÀI TRẢ PHÍ', short: 'Trả phí', color: '#9AA4B2', bg: 'rgba(154,164,178,0.08)' },
-  Custom: { label: 'FEED CỦA BẠN', short: 'Bạn', color: '#3DD68C', bg: 'rgba(61,214,140,0.10)' },
+  Geopolitics: { label: 'ĐỊA CHÍNH TRỊ', short: 'Chiến sự', color: '#FB7185', bg: 'rgba(251,113,133,0.10)' },
+  Paywall: { label: 'BÀI TRẢ PHÍ', short: 'Trả phí', color: '#9CA3AF', bg: 'rgba(154,164,178,0.08)' },
+  Custom: { label: 'FEED CỦA BẠN', short: 'Bạn', color: '#34D399', bg: 'rgba(52,211,153,0.10)' },
 };
 
 export function categoryStyle(category) {
@@ -74,11 +75,11 @@ export function categoryStyle(category) {
 }
 
 export const REFRESH_INTERVAL_MS = 5 * 60 * 1000;
-export const APP_NAME = 'NEWS';
+export const APP_NAME = 'MacroPulse';
 export const APP_TAGLINE = 'Tin thị trường · Forex · Macro';
 
-export const TAB_INACTIVE = '#8B95A3';
-export const TAB_ACTIVE = '#F59E0B';
+export const TAB_INACTIVE = '#94A3B8';
+export const TAB_ACTIVE = '#F5A623';
 
 // Font sans-serif chuyên nghiệp (Inter/Roboto/SF Pro trên web)
 export const FONT_FAMILY = Platform.select({

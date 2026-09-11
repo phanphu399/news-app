@@ -9,6 +9,7 @@ import {
   RefreshControl,
   ScrollView,
   StyleSheet,
+  Easing,
 } from 'react-native';
 import NewsCard from './NewsCard';
 import { COLORS, categoryStyle, FONT_FAMILY, TABULAR_NUMS } from '../config/constants';
@@ -16,31 +17,68 @@ import { COLORS, categoryStyle, FONT_FAMILY, TABULAR_NUMS } from '../config/cons
 const ALL = '__all__';
 
 function useShimmer() {
-  const opacity = useRef(new Animated.Value(0.35)).current;
+  const translate = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(opacity, { toValue: 0.9, duration: 700, useNativeDriver: true }),
-        Animated.timing(opacity, { toValue: 0.35, duration: 700, useNativeDriver: true }),
-      ])
+      Animated.timing(translate, {
+        toValue: 1,
+        duration: 1400,
+        easing: Easing.inOut(Easing.sin),
+        useNativeDriver: true,
+      })
     );
     loop.start();
     return () => loop.stop();
-  }, [opacity]);
-  return opacity;
+  }, [translate]);
+  return translate;
 }
 
 function SkeletonCard() {
   const shimmer = useShimmer();
+  const sweepX = shimmer.interpolate({ inputRange: [0, 1], outputRange: [-180, 320] });
   return (
-    <Animated.View style={[styles.skeletonCard, { opacity: shimmer }]}>
-      <View style={styles.skeletonAvatar} />
-      <View style={styles.body}>
+    <View style={styles.skeletonCard}>
+      <View style={styles.skeletonColumn}>
         <View style={[styles.skeletonLine, { width: '35%' }]} />
         <View style={[styles.skeletonLine, { width: '96%', marginTop: 9 }]} />
         <View style={[styles.skeletonLine, { width: '78%', marginTop: 6 }]} />
         <View style={styles.skeletonMeta} />
       </View>
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          styles.shimmerSweep,
+          { transform: [{ translateX: sweepX }, { rotate: '-8deg' }] },
+        ]}
+      />
+    </View>
+  );
+}
+
+function NewsItem({ index, item, onPress }) {
+  const anim = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.timing(anim, {
+      toValue: 1,
+      duration: 300,
+      delay: Math.min(index * 50, 600),
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  }, [anim, index]);
+
+  return (
+    <Animated.View
+      style={{
+        opacity: anim,
+        transform: [
+          {
+            translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }),
+          },
+        ],
+      }}
+    >
+      <NewsCard item={item} onPress={onPress} />
     </Animated.View>
   );
 }
@@ -164,7 +202,9 @@ export default function NewsListView({ items, loading, error, onItemPress, onRef
             progressBackgroundColor={COLORS.surface}
           />
         }
-        renderItem={({ item }) => <NewsCard item={item} onPress={onItemPress} />}
+        renderItem={({ item, index }) => (
+          <NewsItem index={index} item={item} onPress={onItemPress} />
+        )}
       />
     </View>
   );
@@ -188,15 +228,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: 8,
-    backgroundColor: 'rgba(255,255,255,0.03)',
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.borderSoft,
     paddingLeft: 12,
     paddingRight: 9,
     paddingVertical: 6,
   },
   chipActive: {
-    backgroundColor: 'rgba(245,158,11,0.10)',
     borderWidth: 1,
-    borderColor: 'rgba(245,158,11,0.30)',
+    borderColor: 'rgba(245,166,35,0.30)',
   },
   chipText: {
     color: COLORS.textSecondary,
@@ -267,7 +308,6 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   skeletonCard: {
-    flexDirection: 'row',
     backgroundColor: COLORS.surface,
     borderRadius: 14,
     padding: 14,
@@ -275,16 +315,19 @@ const styles = StyleSheet.create({
     marginVertical: 5,
     borderWidth: 1,
     borderColor: COLORS.borderSoft,
+    overflow: 'hidden',
   },
-  skeletonAvatar: {
-    width: 20,
-    height: 20,
-    borderRadius: 6,
-    backgroundColor: COLORS.surfaceAlt,
-    marginRight: 8,
-    marginTop: 4,
+  skeletonColumn: {
+    flex: 1,
   },
-  body: { flex: 1 },
+  shimmerSweep: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    width: 110,
+    backgroundColor: 'rgba(148,163,184,0.08)',
+    borderRadius: 8,
+  },
   skeletonLine: {
     height: 11,
     borderRadius: 6,

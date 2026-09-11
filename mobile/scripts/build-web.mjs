@@ -75,11 +75,11 @@ function vercelJsonContents() {
 // ---------- manifest / service worker / html injection ----------
 // Phiên bản hiển thị trên UI (AppHeader). Tăng mỗi lần đổi SW để người dùng
 // tự xác minh bản đang chạy trên máy là mới nhất.
-const BUILD_VERSION = 'v9';
+const BUILD_VERSION = 'v10';
 
 const manifest = {
-  name: 'NEWS - Realtime Market News',
-  short_name: 'NEWS',
+  name: 'MacroPulse - Realtime Market News',
+  short_name: 'MacroPulse',
   description: 'Tin tức Forex & Macro theo thời gian thực',
   id: '/',
   start_url: `/?__v=${BUILD_VERSION}`,
@@ -87,8 +87,8 @@ const manifest = {
   display: 'standalone',
   display_override: ['standalone', 'minimal-ui'],
   orientation: 'portrait',
-  background_color: '#0A0D14',
-  theme_color: '#0A0D14',
+  background_color: '#0B1426',
+  theme_color: '#0B1426',
   lang: 'vi',
   categories: ['news', 'finance'],
   icons: [
@@ -103,7 +103,7 @@ const manifest = {
 // - Asset same-origin (bundle băm ngầm định immutable) network-first, lưu lại bản mới.
 // - KHÔNG cache cross-origin (supabase/backend/translate) — tránh interceptor làm hỏng data.
 // => Bất kỳ deploy mới nào cũng được tải ngay, kể cả machines có SW cũ đang kiểm soát.
-const SW = `const CACHE='aster-v9';
+const SW = `const CACHE='aster-v10';
 self.addEventListener('install',()=>{self.skipWaiting();});
 self.addEventListener('activate',(e)=>{
   e.waitUntil((async()=>{
@@ -180,13 +180,13 @@ const PRELOAD_SCRIPT = `<script>
 </script>`;
 
 const HEAD_INJECT = [
-  `<meta name="theme-color" content="#0A0D14" />`,
-  `<style>html,body,#root{background:#0A0D14;color-scheme:dark}::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.14);border-radius:6px}::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,0.22)}*{scrollbar-width:thin;scrollbar-color:rgba(255,255,255,0.14) transparent}</style>`,
-  `<meta name="description" content="NEWS - Tin tức Forex & Macro theo thời gian thực" />`,
+  `<meta name="theme-color" content="#0B1426" />`,
+  `<style>html,body,#root{background:#0B1426;color-scheme:dark}::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(148,163,184,0.25);border-radius:6px}::-webkit-scrollbar-thumb:hover{background:rgba(148,163,184,0.40)}*{scrollbar-width:thin;scrollbar-color:rgba(148,163,184,0.25) transparent}</style>`,
+  `<meta name="description" content="MacroPulse - Tin tức Forex & Macro theo thời gian thực" />`,
   `<meta name="mobile-web-app-capable" content="yes" />`,
   `<meta name="apple-mobile-web-app-capable" content="yes" />`,
   `<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />`,
-  `<meta name="apple-mobile-web-app-title" content="NEWS" />`,
+  `<meta name="apple-mobile-web-app-title" content="MacroPulse" />`,
   `<link rel="manifest" href="/manifest.webmanifest" />`,
   `<link rel="icon" type="image/png" href="/icons/icon-192.png" />`,
   `<link rel="apple-touch-icon" href="/icons/icon-180.png" />`,

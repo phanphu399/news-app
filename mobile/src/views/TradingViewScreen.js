@@ -1,8 +1,8 @@
-import React from 'react';
-import { View, Text, StyleSheet, Platform } from 'react-native';
-import { WebView } from 'react-native-webview';
-import Card from '../components/Card';
+import React, { useRef, useState, useCallback } from 'react';
+import { View, Text, StyleSheet, Platform, TouchableOpacity, Animated, Easing } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS, FONT_FAMILY } from '../config/constants';
+import { BoltMark } from '../components/TabIcons';
 
 const WIDGET_BASE = 'https://s.tradingview.com/widgetembed/';
 
@@ -28,42 +28,60 @@ export function buildTradingViewUrl({ symbol = 'OANDA:XAUUSD', interval = 60 } =
   return `${WIDGET_BASE}?${params.toString()}`;
 }
 
-export default function TradingViewScreen() {
+export default function TradingViewScreen({ onRequestChartTouch }) {
+  const insets = useSafeAreaInsets();
+  const [loaded, setLoaded] = useState(false);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const urlKey = useRef(0);
+  const [iframeKey, setIframeKey] = useState(0);
+
+  const onLoad = useCallback(() => {
+    Animated.timing(fadeAnim, { toValue: 1, duration: 400, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
+    setLoaded(true);
+  }, [fadeAnim]);
+
+  const handleReload = useCallback(() => {
+    fadeAnim.setValue(0);
+    setLoaded(false);
+    setIframeKey((k) => k + 1);
+  }, [fadeAnim]);
+
   return (
-    <View style={styles.container}>
-      <Card style={styles.chartCard}>
-        <View style={styles.chartHeader}>
-          <View>
-            <Text style={styles.chartTitle}>BIỂU ĐỒ XAUUSD</Text>
-            <Text style={styles.chartSub}>OANDA · Vàng giao ngay · múi giờ Hồ Chí Minh</Text>
-          </View>
-          <View style={styles.liveBadge}>
-            <View style={styles.liveDot} />
-            <Text style={styles.liveText}>TRỰC TIẾP</Text>
-          </View>
+    <View
+      style={[styles.container, { paddingTop: insets.top }]}
+      onStartShouldSetResponder={() => true}
+      onResponderGrant={() => onRequestChartTouch?.()}
+      pointerEvents="box-none"
+    >
+      {!loaded && (
+        <View style={styles.placeholder}>
+          <BoltMark size={40} color={COLORS.primary} strokeWidth={1.2} />
+          <Text style={styles.placeholderText}>Đang tải biểu đồ…</Text>
         </View>
-        <View style={styles.chartBox}>
-          {Platform.OS === 'web' ? (
-            <iframe
-              title="NEWS XAUUSD Chart"
-              src={buildTradingViewUrl()}
-              style={{ flex: 1, width: '100%', height: '100%', border: 0 }}
-            />
-          ) : (
-            <WebView
-              source={{ uri: buildTradingViewUrl() }}
-              style={styles.webview}
-              originWhitelist={['*']}
-              javaScriptEnabled
-              domStorageEnabled
-              startInLoadingState
-            />
-          )}
-        </View>
-        <View style={styles.chartFooter}>
-          <Text style={styles.chartFooterText}>Nguồn: TradingView · Kéo chuột để thu phóng, vẽ chỉ báo tự do</Text>
-        </View>
-      </Card>
+      )}
+
+      <Animated.View style={[styles.chartBox, { opacity: fadeAnim }]}>
+        {Platform.OS === 'web' ? (
+          <iframe
+            key={iframeKey}
+            title="MacroPulse XAUUSD Chart"
+            src={buildTradingViewUrl()}
+            style={styles.iframe}
+            onLoad={onLoad}
+          />
+        ) : null}
+      </Animated.View>
+
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={handleReload}
+        activeOpacity={0.8}
+        hitSlop={10}
+        accessibilityLabel="Tải lại biểu đồ trực tiếp"
+      >
+        <BoltMark size={14} color={COLORS.primary} strokeWidth={2} />
+        <Text style={styles.fabText}>Trực tiếp</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -73,76 +91,61 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background,
     width: '100%',
-    padding: 12,
+    position: 'relative',
   },
-  chartCard: {
-    flex: 1,
-    overflow: 'hidden',
-  },
-  chartHeader: {
-    flexDirection: 'row',
+  placeholder: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 14,
-    paddingVertical: 11,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.borderSoft,
-    backgroundColor: COLORS.surfaceAlt,
+    justifyContent: 'center',
+    backgroundColor: COLORS.background,
+    zIndex: 10,
   },
-  chartTitle: {
-    color: COLORS.text,
-    fontSize: 14,
-    fontWeight: '900',
-    letterSpacing: 1,
-    fontFamily: FONT_FAMILY,
-  },
-  chartSub: {
+  placeholderText: {
     color: COLORS.textMuted,
-    fontSize: 11,
-    marginTop: 2,
-    fontFamily: FONT_FAMILY,
-  },
-  liveBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 9,
-    paddingVertical: 4,
-    borderRadius: 999,
-    backgroundColor: 'rgba(16,185,129,0.12)',
-    borderWidth: 1,
-    borderColor: 'rgba(16,185,129,0.4)',
-  },
-  liveDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: COLORS.success,
-    marginRight: 5,
-  },
-  liveText: {
-    color: COLORS.success,
-    fontSize: 9,
-    fontWeight: '900',
-    letterSpacing: 1,
+    fontSize: 12,
+    marginTop: 12,
     fontFamily: FONT_FAMILY,
   },
   chartBox: {
     flex: 1,
     backgroundColor: COLORS.background,
   },
-  webview: {
+  iframe: {
     flex: 1,
+    width: '100%',
+    height: '100%',
+    border: 0,
     backgroundColor: COLORS.background,
   },
-  chartFooter: {
+  fab: {
+    position: 'absolute',
+    right: 14,
+    bottom: 14,
+    zIndex: 100,
+    flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: 'rgba(32,43,68,0.88)',
+    backdropFilter: 'blur(12px)',
+    borderWidth: 1,
+    borderColor: 'rgba(148,163,184,0.18)',
+    borderRadius: 999,
+    paddingHorizontal: 12,
     paddingVertical: 8,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.borderSoft,
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 5,
   },
-  chartFooterText: {
-    color: COLORS.textMuted,
-    fontSize: 10,
+  fabText: {
+    color: COLORS.textSecondary,
+    fontSize: 11,
+    fontWeight: '600',
+    marginLeft: 6,
     fontFamily: FONT_FAMILY,
   },
 });

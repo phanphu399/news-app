@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -43,7 +43,7 @@ export default function NewsArticleView({ item, onOpenOriginal, onToggleBookmark
     return (
       <View style={styles.center}>
         <ActivityIndicator color={COLORS.primary} />
-        <Text style={styles.loadingText}>Đang đọc nội dung...</Text>
+        <Text style={styles.loadingText}>Äang Ä‘á»c ná»™i dung...</Text>
       </View>
     );
   }
@@ -51,21 +51,21 @@ export default function NewsArticleView({ item, onOpenOriginal, onToggleBookmark
   if (isGoogleNews && (status === 'error' || (article && article.paragraphs.length === 0))) {
     return (
       <View style={styles.center}>
-        <Text style={styles.errorIcon}>📰</Text>
-        <Text style={styles.errorTitle}>Tin tổng hợp từ Google News</Text>
+        <Text style={styles.errorIcon}>ðŸ“°</Text>
+        <Text style={styles.errorTitle}>Tin tá»•ng há»£p tá»« Google News</Text>
         <Text style={styles.errorBody}>
-          Google chặn hiển thị nội dung bài này trong ứng dụng. Bấm mở tab bên dưới — trình duyệt
-          sẽ tự chuyển tới trang nguồn gốc để bạn đọc bình thường.
+          Google cháº·n hiá»ƒn thá»‹ ná»™i dung bÃ i nÃ y trong á»©ng dá»¥ng. Báº¥m má»Ÿ tab bÃªn dÆ°á»›i â€” trÃ¬nh duyá»‡t
+          sáº½ tá»± chuyá»ƒn tá»›i trang nguá»“n gá»‘c Ä‘á»ƒ báº¡n Ä‘á»c bÃ¬nh thÆ°á»ng.
         </Text>
         <TouchableOpacity style={styles.primaryBtn} onPress={onOpenOriginal}>
-          <Text style={styles.primaryBtnText}>↗ Mở bài trên Google News</Text>
+          <Text style={styles.primaryBtnText}>â†— Má»Ÿ bÃ i trÃªn Google News</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.ghostBtn, isBookmarked && styles.ghostBtnActive]}
           onPress={onToggleBookmark}
         >
           <Text style={styles.ghostBtnText}>
-            {isBookmarked ? '★ Đã lưu' : '☆ Lưu lại để đọc sau'}
+            {isBookmarked ? 'â˜… ÄÃ£ lÆ°u' : 'â˜† LÆ°u láº¡i Ä‘á»ƒ Ä‘á»c sau'}
           </Text>
         </TouchableOpacity>
       </View>
@@ -75,21 +75,21 @@ export default function NewsArticleView({ item, onOpenOriginal, onToggleBookmark
   if (status === 'error' || !article || article.paragraphs.length === 0) {
     return (
       <View style={styles.center}>
-        <Text style={styles.errorIcon}>🔒</Text>
-        <Text style={styles.errorTitle}>Trang không cho đọc nhúng</Text>
+        <Text style={styles.errorIcon}>ðŸ”’</Text>
+        <Text style={styles.errorTitle}>Trang khÃ´ng cho Ä‘á»c nhÃºng</Text>
         <Text style={styles.errorBody}>
-          {item.source || 'Trang nguồn'} chặn hiển thị nội dung trong ứng dụng (refused to connect).
-          Bấm nút bên dưới để mở bài viết gốc ở tab riêng.
+          {item.source || 'Trang nguá»“n'} cháº·n hiá»ƒn thá»‹ ná»™i dung trong á»©ng dá»¥ng (refused to connect).
+          Báº¥m nÃºt bÃªn dÆ°á»›i Ä‘á»ƒ má»Ÿ bÃ i viáº¿t gá»‘c á»Ÿ tab riÃªng.
         </Text>
         <TouchableOpacity style={styles.primaryBtn} onPress={onOpenOriginal}>
-          <Text style={styles.primaryBtnText}>↗ Mở bài viết gốc</Text>
+          <Text style={styles.primaryBtnText}>â†— Má»Ÿ bÃ i viáº¿t gá»‘c</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.ghostBtn, isBookmarked && styles.ghostBtnActive]}
           onPress={onToggleBookmark}
         >
           <Text style={styles.ghostBtnText}>
-            {isBookmarked ? '★ Đã lưu' : '☆ Lưu lại để đọc sau'}
+            {isBookmarked ? 'â˜… ÄÃ£ lÆ°u' : 'â˜† LÆ°u láº¡i Ä‘á»ƒ Ä‘á»c sau'}
           </Text>
         </TouchableOpacity>
       </View>
@@ -103,7 +103,8 @@ export default function NewsArticleView({ item, onOpenOriginal, onToggleBookmark
       ) : null}
 
       <View style={styles.metaRow}>
-        <View style={[styles.categoryChip, { borderColor: cat.color, backgroundColor: cat.bg }]}>
+        <View style={styles.categoryChip}>
+          <View style={[styles.catDot, { backgroundColor: cat.color }]} />
           <Text style={[styles.categoryText, { color: cat.color }]}>{cat.label}</Text>
         </View>
         <Text style={styles.source}>{article.source || item.source}</Text>
@@ -121,14 +122,14 @@ export default function NewsArticleView({ item, onOpenOriginal, onToggleBookmark
         </Text>
       ))}
 
-      <Text style={styles.skeletonTrail}>────────────────────────────</Text>
+      <Text style={styles.skeletonTrail}>â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€</Text>
 
       <View style={styles.footerRow}>
         <TouchableOpacity style={styles.footerLink} onPress={onOpenOriginal}>
-          <Text style={styles.footerLinkText}>↗ Mở trang gốc</Text>
+          <Text style={styles.footerLinkText}>â†— Má»Ÿ trang gá»‘c</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.footerLink} onPress={onToggleBookmark}>
-          <Text style={styles.footerLinkText}>{isBookmarked ? '★ Đã lưu' : '☆ Lưu bài'}</Text>
+          <Text style={styles.footerLinkText}>{isBookmarked ? 'â˜… ÄÃ£ lÆ°u' : 'â˜† LÆ°u bÃ i'}</Text>
         </TouchableOpacity>
       </View>
       <View style={{ height: 24 }} />
@@ -169,7 +170,7 @@ const styles = StyleSheet.create({
   primaryBtn: {
     borderWidth: 1,
     borderColor: COLORS.primary,
-    backgroundColor: 'rgba(245,158,11,0.10)',
+    backgroundColor: 'rgba(245,166,35,0.10)',
     paddingHorizontal: 26,
     paddingVertical: 11,
     borderRadius: 12,
@@ -216,13 +217,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
   },
   categoryChip: {
-    paddingHorizontal: 9,
-    paddingVertical: 3,
-    borderRadius: 999,
-    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  catDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+    marginRight: 6,
   },
   categoryText: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '800',
     letterSpacing: 0.5,
   },

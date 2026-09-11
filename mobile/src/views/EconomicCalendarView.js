@@ -1,4 +1,4 @@
-import React, {
+﻿import React, {
   useCallback,
   useEffect,
   useMemo,
@@ -24,7 +24,7 @@ import localizeTitle, {
   formatTime,
 } from '../utils/calendarVi';
 
-// Tailwind zinc/amber/rose/emerald — packed sẵn để dùng trong StyleSheet (RN không có Tailwind).
+// Tailwind zinc/slate/amber/rose/emerald â€” packed sáºµn Ä‘á»ƒ dÃ¹ng trong StyleSheet (RN khÃ´ng cÃ³ Tailwind).
 const Z = {
   zinc100: '#F4F4F5',
   zinc200: '#E4E4E7',
@@ -36,19 +36,18 @@ const Z = {
   zinc800: '#27272A',
   rose400: '#FB7185',
   rose500: '#F43F5E',
-  amber400: '#FBBF24',
-  amber500: '#F59E0B',
+  amber400: '#F5A623',
   emerald400: '#34D399',
 };
 
 const IMPACT_FILTERS = [
-  { key: 'All', label: 'Tất cả' },
-  { key: 'High', label: 'Quan trọng' },
-  { key: 'Medium', label: 'Trung bình' },
-  { key: 'Low', label: 'Thấp' },
+  { key: 'All', label: 'Táº¥t cáº£' },
+  { key: 'High', label: 'Quan trá»ng' },
+  { key: 'Medium', label: 'Trung bÃ¬nh' },
+  { key: 'Low', label: 'Tháº¥p' },
 ];
 
-// Màu active riêng từng nhóm lọc theo spec (bỏ viền neon cũ).
+// MÃ u active riÃªng tá»«ng nhÃ³m lá»c theo spec (bá» viá»n neon cÅ©).
 const FILTER_ACTIVE_STYLES = {
   All: {
     backgroundColor: Z.zinc800,
@@ -61,8 +60,8 @@ const FILTER_ACTIVE_STYLES = {
     textColor: Z.rose400,
   },
   Medium: {
-    backgroundColor: 'rgba(245,158,11,0.15)',
-    borderColor: 'rgba(245,158,11,0.30)',
+    backgroundColor: 'rgba(245,166,35,0.15)',
+    borderColor: 'rgba(245,166,35,0.30)',
     textColor: Z.amber400,
   },
   Low: {
@@ -80,7 +79,7 @@ function TimeoutWatch({ onTimeout }) {
   return null;
 }
 
-// Cờ "Actual tốt hơn Dự báo" có thật không — heuristic cho loại chỉ số nghịch đảo.
+// Cá» "Actual tá»‘t hÆ¡n Dá»± bÃ¡o" cÃ³ tháº­t khÃ´ng â€” heuristic cho loáº¡i chá»‰ sá»‘ nghá»‹ch Ä‘áº£o.
 function isDownsideGood(title) {
   return /unemploy|jobless|claims/i.test(String(title || ''));
 }
@@ -93,10 +92,10 @@ function actualColor(actual, forecast, title) {
   return better ? Z.emerald400 : Z.rose400;
 }
 
-// Thanh vạch impact 1/2/3 (TradingView-style) thay cho badge chữ.
+// Thanh váº¡ch impact 1/2/3 (TradingView-style) thay cho badge chá»¯.
 function ImpactIndicator({ impact }) {
   const level = impact === 'High' ? 3 : impact === 'Medium' ? 2 : 1;
-  const color = level === 3 ? Z.rose500 : level === 2 ? Z.amber500 : Z.zinc600;
+  const color = level === 3 ? Z.rose500 : level === 2 ? Z.amber400 : Z.zinc600;
   return (
     <View style={styles.impactCol} accessibilityLabel={`Impact ${impact}`}>
       {[0, 1, 2].map((index) => (
@@ -115,12 +114,12 @@ function ImpactIndicator({ impact }) {
   );
 }
 
-function CalendarRow({ event, compact }) {
+function CalendarRow({ event }) {
   const time = formatTime(event.date);
   const currency = event.country || '?';
-  const forecast = event.forecast || '—';
-  const previous = event.previous || '—';
-  const actual = event.actual || '';
+  const forecast = event.forecast ?? 'â€”';
+  const previous = event.previous ?? 'â€”';
+  const actual = event.actual ?? '';
   const actualCol = actual ? actualColor(actual, event.forecast, event.title) : null;
 
   return (
@@ -130,44 +129,35 @@ function CalendarRow({ event, compact }) {
         <Text style={styles.currencyText}>{currency}</Text>
       </View>
 
-      <ImpactIndicator impact={event.impact} />
-
       <View style={styles.infoCol}>
-        <Text style={styles.titleText} numberOfLines={1}>
-          {localizeTitle(event.title)}
-        </Text>
-        <Text style={styles.countryText} numberOfLines={1}>
+        <View style={styles.titleWrap}>
+          <ImpactIndicator impact={event.impact} />
+          <Text style={styles.titleText} numberOfLines={2}>
+            {localizeTitle(event.title)}
+          </Text>
+        </View>
+        <Text style={styles.countryText} numberOfLines={1} ellipsizeMode="tail">
           {localizeCountry(currency)}
         </Text>
       </View>
 
-      {compact ? (
-        <View style={styles.statsCompact}>
-          <Text style={styles.compactD} numberOfLines={1}>{`Dự báo: ${forecast}`}</Text>
-          <Text style={styles.compactP} numberOfLines={1}>{`Cũ: ${previous}`}</Text>
-        </View>
-      ) : (
-        <View style={styles.stats}>
-          <View style={styles.statCell}>
-            <Text style={styles.statKey}>Thực tế</Text>
-            <Text style={[styles.statValue, actual ? styles.statNeutral : null, actualCol ? { color: actualCol } : null]}>
-              {actual || '—'}
-            </Text>
-          </View>
-          <View style={styles.statCell}>
-            <Text style={styles.statKey}>Dự báo</Text>
-            <Text style={styles.statForecast} numberOfLines={1}>
-              {forecast}
-            </Text>
-          </View>
-          <View style={styles.statCell}>
-            <Text style={styles.statKey}>Trước đó</Text>
-            <Text style={styles.statPrevious} numberOfLines={1}>
-              {previous}
-            </Text>
-          </View>
-        </View>
-      )}
+      <View style={styles.statsCol}>
+        <Text
+          style={[
+            styles.actualValue,
+            actualCol ? { color: actualCol } : actual ? styles.actualNeutral : styles.actualEmpty,
+          ]}
+          numberOfLines={1}
+          ellipsizeMode="tail"
+        >
+          {actual || 'â€”'}
+        </Text>
+        <Text style={styles.subRow} numberOfLines={1} ellipsizeMode="tail">
+          Dá»± bÃ¡o: <Text style={styles.subStrong}>{forecast}</Text>
+          <Text style={styles.subSep}> Â· </Text>
+          CÅ©: <Text style={styles.subStrong}>{previous}</Text>
+        </Text>
+      </View>
     </View>
   );
 }
@@ -180,11 +170,11 @@ const DayGroup = forwardRef(function DayGroup({ date, events, isToday, compact }
           <Text style={styles.dateHeaderText}>{formatDateHeader(date)}</Text>
           {isToday && (
             <View style={styles.todayBadge}>
-              <Text style={styles.todayBadgeText}>Hôm nay</Text>
+              <Text style={styles.todayBadgeText}>HÃ´m nay</Text>
             </View>
           )}
         </View>
-        <Text style={styles.dateCount}>{events.length} sự kiện</Text>
+        <Text style={styles.dateCount}>{events.length} sá»± kiá»‡n</Text>
       </View>
       {events.map((event, index) => (
         <CalendarRow
@@ -214,11 +204,11 @@ export default function EconomicCalendarView() {
 
   const rescueFromHang = useCallback(() => {
     setLoading(false);
-    setError('Quá lâu không phản hồi (15s), hãy thử lại.');
+    setError('QuÃ¡ lÃ¢u khÃ´ng pháº£n há»“i (15s), hÃ£y thá»­ láº¡i.');
     showToast({
       type: 'error',
-      title: 'Lịch kinh tế quá chậm',
-      message: 'Kết nối tới server bị treo, hãy thử lại.',
+      title: 'Lá»‹ch kinh táº¿ quÃ¡ cháº­m',
+      message: 'Káº¿t ná»‘i tá»›i server bá»‹ treo, hÃ£y thá»­ láº¡i.',
     });
   }, []);
 
@@ -239,12 +229,12 @@ export default function EconomicCalendarView() {
       setEvents(json.events || []);
     } catch (err) {
       if (err.name === 'AbortError') {
-        setError('Quá thời gian chờ (12s), thử lại.');
-        showToast({ type: 'error', title: 'Lịch kinh tế quá chậm', message: 'Kết nối tới server bị treo, hãy thử lại.' });
+        setError('QuÃ¡ thá»i gian chá» (12s), thá»­ láº¡i.');
+        showToast({ type: 'error', title: 'Lá»‹ch kinh táº¿ quÃ¡ cháº­m', message: 'Káº¿t ná»‘i tá»›i server bá»‹ treo, hÃ£y thá»­ láº¡i.' });
         return;
       }
       setError(err.message);
-      showToast({ type: 'error', title: 'Lỗi lịch kinh tế', message: err.message });
+      showToast({ type: 'error', title: 'Lá»—i lá»‹ch kinh táº¿', message: err.message });
     } finally {
       clearTimeout(timeout);
       if (mode === 'initial') setLoading(false);
@@ -300,8 +290,8 @@ export default function EconomicCalendarView() {
     [sections]
   );
 
-  // AUTO-SCROLL VỀ HÔM NAY khi danh sách render xong.
-  // Fallback: nhóm tương lai gần nhất, còn không thì nhóm cuối (gần hôm nay nhất).
+  // AUTO-SCROLL Vá»€ HÃ”M NAY khi danh sÃ¡ch render xong.
+  // Fallback: nhÃ³m tÆ°Æ¡ng lai gáº§n nháº¥t, cÃ²n khÃ´ng thÃ¬ nhÃ³m cuá»‘i (gáº§n hÃ´m nay nháº¥t).
   const listReady = !loading && !error && listData.length > 0;
   useEffect(() => {
     if (!listReady || typeof document === 'undefined') return;
@@ -320,7 +310,7 @@ export default function EconomicCalendarView() {
     return () => clearTimeout(timer);
   }, [listReady, todayKey, listData]);
 
-  // Hiện nút "Về hôm nay" khi cuộn xa khỏi nhóm hôm nay (> 240px).
+  // Hiá»‡n nÃºt "Vá» hÃ´m nay" khi cuá»™n xa khá»i nhÃ³m hÃ´m nay (> 240px).
   const handleScroll = useCallback(() => {
     const scroller = scrollRef.current;
     const todayEl = todayRef.current;
@@ -348,8 +338,8 @@ export default function EconomicCalendarView() {
     <View style={styles.container}>
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <Text style={styles.headerTitle}>LỊCH KINH TẾ</Text>
-          <Text style={styles.headerSub}>Châu Á · Châu Âu · Mỹ</Text>
+          <Text style={styles.headerTitle}>Lá»ŠCH KINH Táº¾</Text>
+          <Text style={styles.headerSub}>ChÃ¢u Ã Â· ChÃ¢u Ã‚u Â· Má»¹</Text>
         </View>
         <TouchableOpacity
           style={styles.updateBtn}
@@ -360,7 +350,7 @@ export default function EconomicCalendarView() {
           {refreshing ? (
             <ActivityIndicator color={COLORS.primary} size="small" />
           ) : (
-            <Text style={styles.updateBtnText}>↻ Cập nhật</Text>
+            <Text style={styles.updateBtnText}>â†» Cáº­p nháº­t</Text>
           )}
         </TouchableOpacity>
       </View>
@@ -392,13 +382,13 @@ export default function EconomicCalendarView() {
 
       {error && !loading && (
         <View style={styles.errorBox}>
-          <Text style={styles.errorText}>Không tải được lịch kinh tế — {error}</Text>
+          <Text style={styles.errorText}>KhÃ´ng táº£i Ä‘Æ°á»£c lá»‹ch kinh táº¿ â€” {error}</Text>
           <TouchableOpacity
             style={[styles.retryBtn, styles.errorRetry]}
             onPress={() => load('refresh')}
             activeOpacity={0.8}
           >
-            <Text style={styles.retryBtnText}>Thử lại</Text>
+            <Text style={styles.retryBtnText}>Thá»­ láº¡i</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -407,17 +397,17 @@ export default function EconomicCalendarView() {
         <View style={styles.center}>
           <TimeoutWatch onTimeout={rescueFromHang} />
           <ActivityIndicator color={COLORS.primary} />
-          <Text style={styles.centerText}>Đang tải lịch kinh tế…</Text>
+          <Text style={styles.centerText}>Äang táº£i lá»‹ch kinh táº¿â€¦</Text>
         </View>
       ) : !error && listData.length === 0 ? (
         <View style={styles.center}>
-          <Text style={styles.centerText}>Chưa có sự kiện cho kỳ này.</Text>
+          <Text style={styles.centerText}>ChÆ°a cÃ³ sá»± kiá»‡n cho ká»³ nÃ y.</Text>
           <TouchableOpacity
             style={styles.retryBtn}
             onPress={() => load('refresh')}
             activeOpacity={0.8}
           >
-            <Text style={styles.retryBtnText}>Làm mới</Text>
+            <Text style={styles.retryBtnText}>LÃ m má»›i</Text>
           </TouchableOpacity>
         </View>
       ) : error ? null : (
@@ -440,7 +430,7 @@ export default function EconomicCalendarView() {
           ))}
           <View style={styles.safeBottom} />
           <View style={styles.footer}>
-            <Text style={styles.footerText}>Nguồn: Trading Economics · Múi giờ Việt Nam</Text>
+            <Text style={styles.footerText}>Nguá»“n: Trading Economics Â· MÃºi giá» Viá»‡t Nam</Text>
           </View>
         </ScrollView>
       )}
@@ -450,9 +440,9 @@ export default function EconomicCalendarView() {
           style={styles.todayFab}
           onPress={scrollToToday}
           activeOpacity={0.85}
-          accessibilityLabel="Cuộn về hôm nay"
+          accessibilityLabel="Cuá»™n vá» hÃ´m nay"
         >
-          <Text style={styles.todayFabText}>▴ Hôm nay</Text>
+          <Text style={styles.todayFabText}>â–´ HÃ´m nay</Text>
         </TouchableOpacity>
       )}
     </View>
@@ -552,7 +542,7 @@ const styles = StyleSheet.create({
     paddingVertical: 9,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255,255,255,0.06)',
-    backgroundColor: 'rgba(10,13,20,0.90)',
+    backgroundColor: 'rgba(11,20,38,0.90)',
     backdropFilter: 'blur(12px)',
     position: 'sticky',
     top: 0,
@@ -571,9 +561,9 @@ const styles = StyleSheet.create({
   },
   todayBadge: {
     marginLeft: 8,
-    backgroundColor: 'rgba(245,158,11,0.15)',
+    backgroundColor: 'rgba(245,166,35,0.15)',
     borderWidth: 1,
-    borderColor: 'rgba(245,158,11,0.30)',
+    borderColor: 'rgba(245,166,35,0.30)',
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 6,
@@ -602,8 +592,9 @@ const styles = StyleSheet.create({
     minHeight: 54,
   },
   timeCol: {
-    width: 56,
+    width: '15%',
     flexShrink: 0,
+    minWidth: 52,
   },
   timeText: {
     color: Z.zinc200,
@@ -620,10 +611,10 @@ const styles = StyleSheet.create({
     fontVariant: TABULAR_NUMS,
   },
   impactCol: {
-    width: 16,
+    width: 14,
     flexShrink: 0,
     alignItems: 'center',
-    justifyContent: 'flex-end',
+    justifyContent: 'center',
     gap: 2,
   },
   impactBar: {
@@ -634,78 +625,57 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
   },
+  titleWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    minWidth: 0,
+  },
   titleText: {
     color: Z.zinc100,
     fontSize: 13.5,
-    fontWeight: '500',
+    fontWeight: '600',
     lineHeight: 18,
+    flexShrink: 1,
     fontFamily: FONT_FAMILY,
   },
   countryText: {
     color: Z.zinc500,
-    fontSize: 12,
+    fontSize: 11,
     marginTop: 3,
+    marginLeft: 18,
     fontFamily: FONT_FAMILY,
   },
-  stats: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
+  statsCol: {
+    width: '30%',
     flexShrink: 0,
-    gap: 14,
-  },
-  statCell: {
     alignItems: 'flex-end',
-    minWidth: 64,
+    minWidth: 96,
   },
-  statKey: {
-    color: Z.zinc500,
-    fontSize: 10,
-    fontWeight: '500',
-    fontFamily: FONT_FAMILY,
-  },
-  statValue: {
-    color: Z.zinc500,
-    fontSize: 12,
+  actualValue: {
+    fontSize: 14,
     fontWeight: '700',
-    marginTop: 4,
     fontFamily: FONT_FAMILY,
     fontVariant: TABULAR_NUMS,
   },
-  statNeutral: {
-    color: Z.zinc500,
+  actualNeutral: {
+    color: Z.zinc200,
   },
-  statForecast: {
-    color: Z.zinc400,
-    fontSize: 12,
-    fontWeight: '500',
-    marginTop: 4,
-    fontFamily: FONT_FAMILY,
-    fontVariant: TABULAR_NUMS,
-  },
-  statPrevious: {
+  actualEmpty: {
     color: Z.zinc600,
-    fontSize: 12,
     fontWeight: '500',
+  },
+  subRow: {
+    color: Z.zinc600,
+    fontSize: 10,
     marginTop: 4,
     fontFamily: FONT_FAMILY,
     fontVariant: TABULAR_NUMS,
   },
-  statsCompact: {
-    alignItems: 'flex-end',
-    flexShrink: 0,
-    gap: 3,
-  },
-  compactD: {
+  subStrong: {
     color: Z.zinc400,
-    fontSize: 11,
-    fontFamily: FONT_FAMILY,
-    fontVariant: TABULAR_NUMS,
   },
-  compactP: {
-    color: Z.zinc600,
-    fontSize: 11,
-    fontFamily: FONT_FAMILY,
-    fontVariant: TABULAR_NUMS,
+  subSep: {
+    color: Z.zinc700,
   },
   center: {
     flex: 1,

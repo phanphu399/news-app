@@ -1,9 +1,9 @@
 {
-  "name": "NEWS - Realtime Market News",
-  "short_name": "NEWS",
+  "name": "MacroPulse - Realtime Market News",
+  "short_name": "MacroPulse",
   "description": "Tin tức Forex & Macro theo thời gian thực",
   "id": "/",
-  "start_url": "/?__v=v9",
+  "start_url": "/?__v=v10",
   "scope": "/",
   "display": "standalone",
   "display_override": [
@@ -11,8 +11,8 @@
     "minimal-ui"
   ],
   "orientation": "portrait",
-  "background_color": "#0A0D14",
-  "theme_color": "#0A0D14",
+  "background_color": "#0B1426",
+  "theme_color": "#0B1426",
   "lang": "vi",
   "categories": [
     "news",

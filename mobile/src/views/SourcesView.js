@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+﻿import React, { useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -55,19 +55,22 @@ function SourceCard({ sourceItem, onPress, onRemove, onEdit, onToggle, removing 
                   { backgroundColor: healthy ? COLORS.success : COLORS.danger },
                 ]}
               />
-              {!healthy ? <Text style={styles.healthErrText}>Lỗi</Text> : null}
+              {!healthy ? <Text style={styles.healthErrText}>Lá»—i</Text> : null}
             </View>
           )}
           {sourceItem.userFeedId ? (
             <>
-              <Text style={styles.userTag}>BẠN</Text>
+              <View style={styles.userTagRow}>
+                <View style={styles.userTagDot} />
+                <Text style={styles.userTag}>Báº N</Text>
+              </View>
               <TouchableOpacity
                 style={styles.miniBtn}
                 onPress={onEdit}
                 hitSlop={8}
-                accessibilityLabel="Chỉnh sửa nguồn"
+                accessibilityLabel="Chá»‰nh sá»­a nguá»“n"
               >
-                <Text style={styles.miniBtnText}>✎</Text>
+                <Text style={styles.miniBtnText}>âœŽ</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.miniBtn, styles.miniBtnDanger]}
@@ -75,7 +78,7 @@ function SourceCard({ sourceItem, onPress, onRemove, onEdit, onToggle, removing 
                 disabled={removing}
                 hitSlop={8}
               >
-                <Text style={styles.miniBtnTextDanger}>{removing ? '…' : '✕'}</Text>
+                <Text style={styles.miniBtnTextDanger}>{removing ? 'â€¦' : 'âœ•'}</Text>
               </TouchableOpacity>
             </>
           ) : null}
@@ -90,14 +93,14 @@ function SourceCard({ sourceItem, onPress, onRemove, onEdit, onToggle, removing 
               </View>
             );
           })}
-          <Text style={styles.count}>{sourceItem.count24h} bài/24h</Text>
-          <Text style={styles.chevron}>›</Text>
+          <Text style={styles.count}>{sourceItem.count24h} bÃ i/24h</Text>
+          <Text style={styles.chevron}>â€º</Text>
         </View>
 
         {sourceItem.userFeedId ? (
           <View style={styles.feedActions}>
             <Text style={styles.toggleLabel}>
-              {sourceItem.enabled ? 'Đang theo dõi' : 'Đã tạm dừng'}
+              {sourceItem.enabled ? 'Äang theo dÃµi' : 'ÄÃ£ táº¡m dá»«ng'}
             </Text>
             <Switch
               value={Boolean(sourceItem.enabled)}
@@ -113,12 +116,12 @@ function SourceCard({ sourceItem, onPress, onRemove, onEdit, onToggle, removing 
 }
 
 const CATEGORY_OPTIONS = [
-  { key: 'Custom', label: 'Tin của bạn' },
-  { key: 'Macro', label: 'Kinh tế vĩ mô' },
-  { key: 'XAUUSD', label: 'Vàng & Dầu' },
-  { key: 'Forex', label: 'Ngoại tệ' },
-  { key: 'Crypto', label: 'Tiền số' },
-  { key: 'Geopolitics', label: 'Địa chính trị' },
+  { key: 'Custom', label: 'Tin cá»§a báº¡n' },
+  { key: 'Macro', label: 'Kinh táº¿ vÄ© mÃ´' },
+  { key: 'XAUUSD', label: 'VÃ ng & Dáº§u' },
+  { key: 'Forex', label: 'Ngoáº¡i tá»‡' },
+  { key: 'Crypto', label: 'Tiá»n sá»‘' },
+  { key: 'Geopolitics', label: 'Äá»‹a chÃ­nh trá»‹' },
 ];
 
 export default function SourcesView({ items, onOpenArticle }) {
@@ -187,7 +190,7 @@ export default function SourcesView({ items, onOpenArticle }) {
   const testFeed = async () => {
     setFormError('');
     if (!feedUrl.trim()) {
-      setFormError('Vui lòng nhập link RSS để kiểm tra.');
+      setFormError('Vui lÃ²ng nháº­p link RSS Ä‘á»ƒ kiá»ƒm tra.');
       return;
     }
     setTesting(true);
@@ -196,13 +199,13 @@ export default function SourcesView({ items, onOpenArticle }) {
       const result = await testUserFeed(feedUrl.trim());
       setTestResult(result);
       if (result?.valid) {
-        showToast({ type: 'success', title: 'Cào thử thành công' });
+        showToast({ type: 'success', title: 'CÃ o thá»­ thÃ nh cÃ´ng' });
       } else {
-        showToast({ type: 'warning', title: result?.message || 'Không cào được bài nào' });
+        showToast({ type: 'warning', title: result?.message || 'KhÃ´ng cÃ o Ä‘Æ°á»£c bÃ i nÃ o' });
       }
     } catch (error) {
       setTestResult({ ok: true, valid: false, message: error.message, items: [] });
-      showToast({ type: 'error', title: 'Kiểm tra feed thất bại', message: error.message });
+      showToast({ type: 'error', title: 'Kiá»ƒm tra feed tháº¥t báº¡i', message: error.message });
     } finally {
       setTesting(false);
     }
@@ -211,11 +214,11 @@ export default function SourcesView({ items, onOpenArticle }) {
   const submitFeed = async () => {
     setFormError('');
     if (!feedName.trim()) {
-      setFormError('Vui lòng đặt tên cho nguồn.');
+      setFormError('Vui lÃ²ng Ä‘áº·t tÃªn cho nguá»“n.');
       return;
     }
     if (!feedUrl.trim()) {
-      setFormError('Vui lòng nhập link RSS.');
+      setFormError('Vui lÃ²ng nháº­p link RSS.');
       return;
     }
     setSubmitting(true);
@@ -226,16 +229,16 @@ export default function SourcesView({ items, onOpenArticle }) {
           rssUrl: feedUrl.trim(),
           category: feedCategory,
         });
-        showToast({ type: 'success', title: 'Đã cập nhật nguồn tin', message: feedName.trim() });
+        showToast({ type: 'success', title: 'ÄÃ£ cáº­p nháº­t nguá»“n tin', message: feedName.trim() });
       } else {
         await addUserFeed({ name: feedName.trim(), rssUrl: feedUrl.trim(), category: feedCategory });
-        showToast({ type: 'success', title: 'Đã thêm nguồn tin', message: feedName.trim() });
+        showToast({ type: 'success', title: 'ÄÃ£ thÃªm nguá»“n tin', message: feedName.trim() });
       }
       setShowAdd(false);
       refresh();
     } catch (error) {
       setFormError(error.message);
-      showToast({ type: 'error', title: 'Lưu nguồn tin thất bại', message: error.message });
+      showToast({ type: 'error', title: 'LÆ°u nguá»“n tin tháº¥t báº¡i', message: error.message });
     } finally {
       setSubmitting(false);
     }
@@ -245,10 +248,10 @@ export default function SourcesView({ items, onOpenArticle }) {
     setRemovingId(item.userFeedId);
     try {
       await removeUserFeed(item.userFeedId);
-      showToast({ type: 'info', title: 'Đã xóa nguồn tin', message: item.source });
+      showToast({ type: 'info', title: 'ÄÃ£ xÃ³a nguá»“n tin', message: item.source });
       refresh();
     } catch (error) {
-      showToast({ type: 'error', title: 'Xóa nguồn tin thất bại', message: error.message });
+      showToast({ type: 'error', title: 'XÃ³a nguá»“n tin tháº¥t báº¡i', message: error.message });
     } finally {
       setRemovingId(null);
     }
@@ -265,12 +268,12 @@ export default function SourcesView({ items, onOpenArticle }) {
       );
       showToast({
         type: value ? 'success' : 'warning',
-        title: value ? 'Đã bật theo dõi nguồn' : 'Đã tạm dừng nguồn',
+        title: value ? 'ÄÃ£ báº­t theo dÃµi nguá»“n' : 'ÄÃ£ táº¡m dá»«ng nguá»“n',
         message: item.source,
       });
       refresh();
     } catch (error) {
-      showToast({ type: 'error', title: 'Cập nhật trạng thái thất bại', message: error.message });
+      showToast({ type: 'error', title: 'Cáº­p nháº­t tráº¡ng thÃ¡i tháº¥t báº¡i', message: error.message });
     } finally {
       setPatchingId(null);
     }
@@ -287,13 +290,13 @@ export default function SourcesView({ items, onOpenArticle }) {
       <View style={styles.flex}>
         <View style={styles.detailHeader}>
           <TouchableOpacity style={styles.backBtn} onPress={() => setSelected(null)} hitSlop={8}>
-            <Text style={styles.backBtnText}>←</Text>
+            <Text style={styles.backBtnText}>â†</Text>
           </TouchableOpacity>
           <View style={styles.detailTitleWrap}>
             <Text style={styles.detailTitle} numberOfLines={1}>
               {selected.source}
             </Text>
-            <Text style={styles.detailSub}>{selectedPosts.length} bài trong 24h qua</Text>
+            <Text style={styles.detailSub}>{selectedPosts.length} bÃ i trong 24h qua</Text>
           </View>
         </View>
         {selected.url ? (
@@ -302,7 +305,7 @@ export default function SourcesView({ items, onOpenArticle }) {
               {selected.url}
             </Text>
             <TouchableOpacity style={styles.copyBtn} onPress={() => copyUrl(selected.url)} hitSlop={8}>
-              <Text style={styles.copyBtnText}>Sao chép</Text>
+              <Text style={styles.copyBtnText}>Sao chÃ©p</Text>
             </TouchableOpacity>
           </View>
         ) : null}
@@ -313,9 +316,9 @@ export default function SourcesView({ items, onOpenArticle }) {
           renderItem={({ item }) => <NewsCard item={item} onPress={onOpenArticle} />}
           ListEmptyComponent={
             <View style={styles.centerFull}>
-              <Text style={styles.emptyIcon}>🕳️</Text>
-              <Text style={styles.emptyTitle}>Chưa có bài của nguồn này</Text>
-              <Text style={styles.emptyHint}>Cron sẽ cập nhật khi có tin mới — kéo để thử lại.</Text>
+              <Text style={styles.emptyIcon}>ðŸ•³ï¸</Text>
+              <Text style={styles.emptyTitle}>ChÆ°a cÃ³ bÃ i cá»§a nguá»“n nÃ y</Text>
+              <Text style={styles.emptyHint}>Cron sáº½ cáº­p nháº­t khi cÃ³ tin má»›i â€” kÃ©o Ä‘á»ƒ thá»­ láº¡i.</Text>
             </View>
           }
         />
@@ -327,7 +330,7 @@ export default function SourcesView({ items, onOpenArticle }) {
     return (
       <View style={styles.centerFull}>
         <ActivityIndicator color={COLORS.primary} />
-        <Text style={styles.loadingText}>Đang kiểm tra các nguồn tin...</Text>
+        <Text style={styles.loadingText}>Äang kiá»ƒm tra cÃ¡c nguá»“n tin...</Text>
       </View>
     );
   }
@@ -342,18 +345,18 @@ export default function SourcesView({ items, onOpenArticle }) {
         contentContainerStyle={styles.mainList}
         ListHeaderComponent={
           <>
-            <Text style={styles.sectionTitle}>CÁC NGUỒN ĐANG THEO DÕI</Text>
+            <Text style={styles.sectionTitle}>CÃC NGUá»’N ÄANG THEO DÃ•I</Text>
             <Text style={styles.sectionHint}>
-              Bấm vào một nguồn để xem các bài của nguồn đó. Trạng thái "Lỗi" nghĩa là nguồn vừa
-              từ chối kết nối trong lần kiểm tra gần nhất.
+              Báº¥m vÃ o má»™t nguá»“n Ä‘á»ƒ xem cÃ¡c bÃ i cá»§a nguá»“n Ä‘Ã³. Tráº¡ng thÃ¡i "Lá»—i" nghÄ©a lÃ  nguá»“n vá»«a
+              tá»« chá»‘i káº¿t ná»‘i trong láº§n kiá»ƒm tra gáº§n nháº¥t.
             </Text>
             <TouchableOpacity style={styles.addBtn} onPress={openAddModal} activeOpacity={0.85}>
-              <Text style={styles.addBtnIcon}>＋</Text>
-              <Text style={styles.addBtnText}>Thêm nguồn tin của bạn</Text>
+              <Text style={styles.addBtnIcon}>ï¼‹</Text>
+              <Text style={styles.addBtnText}>ThÃªm nguá»“n tin cá»§a báº¡n</Text>
             </TouchableOpacity>
             {status === 'offline' && (
               <TouchableOpacity style={styles.offlineBar} onPress={refresh}>
-                <Text style={styles.offlineText}>↻ Không tải được backend — hiển thị dữ liệu cục bộ. Bấm thử lại.</Text>
+                <Text style={styles.offlineText}>â†» KhÃ´ng táº£i Ä‘Æ°á»£c backend â€” hiá»ƒn thá»‹ dá»¯ liá»‡u cá»¥c bá»™. Báº¥m thá»­ láº¡i.</Text>
               </TouchableOpacity>
             )}
           </>
@@ -378,19 +381,19 @@ export default function SourcesView({ items, onOpenArticle }) {
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             <Text style={styles.modalTitle}>
-              {editingId ? 'Chỉnh sửa nguồn tin' : 'Thêm nguồn tin mới'}
+              {editingId ? 'Chá»‰nh sá»­a nguá»“n tin' : 'ThÃªm nguá»“n tin má»›i'}
             </Text>
             <Text style={styles.modalHint}>
-              Dán link RSS/Atom của trang web bạn muốn theo dõi. Bấm "Cào thử" để kiểm tra feed lấy
-              được tin không, rồi mới lưu.
+              DÃ¡n link RSS/Atom cá»§a trang web báº¡n muá»‘n theo dÃµi. Báº¥m "CÃ o thá»­" Ä‘á»ƒ kiá»ƒm tra feed láº¥y
+              Ä‘Æ°á»£c tin khÃ´ng, rá»“i má»›i lÆ°u.
             </Text>
 
-            <Text style={styles.fieldLabel}>Tên nguồn *</Text>
+            <Text style={styles.fieldLabel}>TÃªn nguá»“n *</Text>
             <TextInput
               style={styles.input}
               value={feedName}
               onChangeText={setFeedName}
-              placeholder="VD: Bộ Tài chính Mỹ"
+              placeholder="VD: Bá»™ TÃ i chÃ­nh Má»¹"
               placeholderTextColor={COLORS.textMuted}
             />
 
@@ -417,7 +420,7 @@ export default function SourcesView({ items, onOpenArticle }) {
                 {testing ? (
                   <ActivityIndicator color="#fff" size="small" />
                 ) : (
-                  <Text style={styles.testBtnText}>Cào thử</Text>
+                  <Text style={styles.testBtnText}>CÃ o thá»­</Text>
                 )}
               </TouchableOpacity>
             </View>
@@ -426,11 +429,11 @@ export default function SourcesView({ items, onOpenArticle }) {
               testResult.valid ? (
                 <View style={styles.testOk}>
                   <Text style={styles.testOkTitle}>
-                    ✓ {testResult.items?.length || 0} bài mẫu:
+                    âœ“ {testResult.items?.length || 0} bÃ i máº«u:
                   </Text>
                   {(testResult.items || []).slice(0, 3).map((sample, index) => (
                     <Text key={`${index}-${sample.title}`} style={styles.testOkItem} numberOfLines={1}>
-                      • {sample.title}
+                      â€¢ {sample.title}
                     </Text>
                   ))}
                 </View>
@@ -441,7 +444,7 @@ export default function SourcesView({ items, onOpenArticle }) {
               )
             ) : null}
 
-            <Text style={styles.fieldLabel}>Chuyên mục</Text>
+            <Text style={styles.fieldLabel}>ChuyÃªn má»¥c</Text>
             <View style={styles.catRow}>
               {CATEGORY_OPTIONS.map((option) => {
                 const active = feedCategory === option.key;
@@ -463,7 +466,7 @@ export default function SourcesView({ items, onOpenArticle }) {
 
             <View style={styles.modalActions}>
               <TouchableOpacity style={styles.cancelBtn} onPress={() => setShowAdd(false)}>
-                <Text style={styles.cancelBtnText}>Hủy</Text>
+                <Text style={styles.cancelBtnText}>Há»§y</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.saveBtn, submitting && styles.saveBtnDisabled]}
@@ -472,10 +475,10 @@ export default function SourcesView({ items, onOpenArticle }) {
               >
                 <Text style={styles.saveBtnText}>
                   {submitting
-                    ? 'Đang lưu...'
+                    ? 'Äang lÆ°u...'
                     : editingId
-                    ? 'Lưu thay đổi'
-                    : 'Thêm nguồn'}
+                    ? 'LÆ°u thay Ä‘á»•i'
+                    : 'ThÃªm nguá»“n'}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -521,9 +524,9 @@ const styles = StyleSheet.create({
     fontFamily: FONT_FAMILY,
   },
   offlineBar: {
-    backgroundColor: 'rgba(242,85,90,0.12)',
+    backgroundColor: 'rgba(251,113,133,0.12)',
     borderWidth: 1,
-    borderColor: 'rgba(242,85,90,0.30)',
+    borderColor: 'rgba(251,113,133,0.30)',
     borderRadius: 10,
     padding: 10,
     marginBottom: 10,
@@ -623,7 +626,7 @@ const styles = StyleSheet.create({
     marginLeft: 6,
   },
   miniBtnDanger: {
-    backgroundColor: 'rgba(242,85,90,0.10)',
+    backgroundColor: 'rgba(251,113,133,0.10)',
   },
   miniBtnText: {
     color: COLORS.textSecondary,
@@ -635,13 +638,24 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '800',
   },
+  userTagRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: 8,
+    marginRight: 2,
+  },
+  userTagDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: COLORS.success,
+    marginRight: 5,
+  },
   userTag: {
-    color: COLORS.textMuted,
+    color: COLORS.success,
     fontSize: 9,
     fontWeight: '800',
     letterSpacing: 0.5,
-    marginLeft: 8,
-    marginRight: 2,
   },
   feedActions: {
     flexDirection: 'row',
@@ -772,9 +786,9 @@ const styles = StyleSheet.create({
     marginTop: 3,
   },
   testErr: {
-    backgroundColor: 'rgba(242,85,90,0.10)',
+    backgroundColor: 'rgba(251,113,133,0.10)',
     borderWidth: 1,
-    borderColor: 'rgba(242,85,90,0.30)',
+    borderColor: 'rgba(251,113,133,0.30)',
     borderRadius: 10,
     padding: 10,
     marginTop: 10,
@@ -799,8 +813,8 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   catBtnActive: {
-    borderColor: 'rgba(245,158,11,0.30)',
-    backgroundColor: 'rgba(245,158,11,0.10)',
+    borderColor: 'rgba(245,166,35,0.30)',
+    backgroundColor: 'rgba(245,166,35,0.10)',
   },
   catBtnText: {
     color: COLORS.textMuted,

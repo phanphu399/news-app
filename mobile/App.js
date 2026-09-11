@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, StatusBar, Modal, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, StatusBar, Modal, Platform, Animated, Easing } from 'react-native';
 import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FlameIcon, MarketIcon, CalendarDotIcon, BookmarkIcon, RadioIcon } from './src/components/TabIcons';
 import NewsViewModel from './src/viewmodels/NewsViewModel';
@@ -18,7 +18,7 @@ import { showToast } from './src/services/ToastService';
 import { triggerManualFetch } from './src/services/SourceService';
 import { LocalStorageService } from './src/services/LocalStorageService';
 import { normalizeUrl } from './src/utils/url';
-import { COLORS, TAB_INACTIVE, TAB_ACTIVE, FONT_FAMILY, TABULAR_NUMS } from './src/config/constants';
+import { COLORS, TAB_INACTIVE, FONT_FAMILY, TABULAR_NUMS } from './src/config/constants';
 
 const TABS = {
   NEWS: 'news',
@@ -31,7 +31,7 @@ const TABS = {
 const TOAST_DURATION_MS = 7000;
 const MAX_TOASTS = 3;
 
-function TabBar({ active, onChange, insets, badge }) {
+function TabBar({ active, onChange, insets, badge, hidden }) {
   const tabs = [
     { key: TABS.NEWS, label: 'Tin nóng', icon: FlameIcon },
     { key: TABS.GOLD, label: 'Vàng XAU', icon: MarketIcon },
@@ -40,12 +40,36 @@ function TabBar({ active, onChange, insets, badge }) {
     { key: TABS.FEEDS, label: 'Nguồn tin', icon: RadioIcon },
   ];
 
+  const hiding = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.timing(hiding, {
+      toValue: hidden ? 1 : 0,
+      duration: 260,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  }, [hidden, hiding]);
+
+  const navStyle = {
+    opacity: hiding.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }),
+    transform: [
+      {
+        translateY: hiding.interpolate({ inputRange: [0, 1], outputRange: [0, 160] }),
+      },
+    ],
+  };
+
   return (
-    <View style={[styles.tabBar, { paddingBottom: Math.max(insets.bottom, 8) }]}>
+    <Animated.View
+      style={[
+        styles.tabBar,
+        { paddingBottom: Math.max(insets.bottom, 8) },
+        navStyle,
+      ]}
+    >
       {tabs.map((tab) => {
         const isActive = active === tab.key;
         const Icon = tab.icon;
-        const iconColor = isActive ? TAB_ACTIVE : TAB_INACTIVE;
         return (
           <TouchableOpacity
             key={tab.key}
@@ -53,9 +77,14 @@ function TabBar({ active, onChange, insets, badge }) {
             onPress={() => onChange(tab.key)}
             activeOpacity={0.7}
           >
-            <Icon size={20} strokeWidth={2} color={iconColor} />
+            {isActive && <View style={styles.tabTopLine} />}
+            <Icon
+              size={20}
+              strokeWidth={isActive ? 2 : 1.6}
+              variant={isActive ? 'solid' : 'outline'}
+              color={isActive ? '#F1F5F9' : '#94A3B8'}
+            />
             <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>{tab.label}</Text>
-            <View style={[styles.tabIndicator, isActive && styles.tabIndicatorActive]} />
             {badge > 0 && tab.key === TABS.NEWS && (
               <View style={styles.badgeDot}>
                 <Text style={styles.badgeText}>{badge > 99 ? '99+' : badge}</Text>
@@ -64,7 +93,7 @@ function TabBar({ active, onChange, insets, badge }) {
           </TouchableOpacity>
         );
       })}
-    </View>
+    </Animated.View>
   );
 }
 
@@ -100,7 +129,18 @@ function MainScreen() {
   const insets = useSafeAreaInsets();
   const { canInstall, install } = useInstallPrompt();
   const [activeTab, setActiveTab] = useState(TABS.NEWS);
+  const [chartNavVisible, setChartNavVisible] = useState(true);
   const [openedArticle, setOpenedArticle] = useState(null);
+  const headerOpacity = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (activeTab === TABS.GOLD) return;
+    Animated.timing(headerOpacity, {
+      toValue: 1,
+      duration: 200,
+      useNativeDriver: true,
+    }).start();
+  }, [activeTab, headerOpacity]);
   const [toasts, setToasts] = useState([]);
   const [newCount, setNewCount] = useState(0);
   const [keywords, setKeywords] = useState([]);
@@ -248,16 +288,25 @@ function MainScreen() {
   const handleTabChange = (key) => {
     setActiveTab(key);
     if (key === TABS.NEWS) setNewCount(0);
+    if (key === TABS.GOLD) {
+      setChartNavVisible(true);
+    }
   };
+
+  const showChart = activeTab === TABS.GOLD;
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.background} />
-      <AppHeader
-        connected={connected}
-        loading={state.loading || manualRefreshing}
-        onRefresh={reloadAll}
-      />
+      {!showChart && (
+        <Animated.View style={{ opacity: headerOpacity }}>
+          <AppHeader
+            connected={connected}
+            loading={state.loading || manualRefreshing}
+            onRefresh={reloadAll}
+          />
+        </Animated.View>
+      )}
 
       <View style={styles.content}>
         {activeTab === TABS.NEWS && (
@@ -273,7 +322,7 @@ function MainScreen() {
         )}
         {activeTab === TABS.GOLD && (
           <ErrorBoundary>
-            <TradingViewScreen />
+            <TradingViewScreen onRequestChartTouch={() => setChartNavVisible(false)} />
           </ErrorBoundary>
         )}
         {activeTab === TABS.CALENDAR && (
@@ -321,13 +370,25 @@ function MainScreen() {
         onChange={handleTabChange}
         insets={insets}
         badge={activeTab !== TABS.NEWS ? newCount : 0}
+        hidden={showChart && !chartNavVisible}
       />
+
+      {showChart && !chartNavVisible && (
+        <TouchableOpacity
+          style={styles.navReveal}
+          onPress={() => setChartNavVisible(true)}
+          activeOpacity={0.8}
+          accessibilityLabel="Hiện thanh điều hướng"
+        >
+          <View style={styles.navRevealBar} />
+        </TouchableOpacity>
+      )}
 
       {canInstall && (
         <TouchableOpacity style={styles.installButton} onPress={install} activeOpacity={0.85}>
           <Text style={styles.installIcon}>⬇</Text>
           <View>
-            <Text style={styles.installTitle}>Cài đặt NEWS</Text>
+            <Text style={styles.installTitle}>Cài đặt MacroPulse</Text>
             <Text style={styles.installSub}>Dùng như ứng dụng riêng</Text>
           </View>
         </TouchableOpacity>
@@ -403,23 +464,47 @@ const styles = StyleSheet.create({
   },
   tabBar: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(10,13,20,0.85)',
-    backdropFilter: 'blur(14px)',
+    backgroundColor: COLORS.background,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.08)',
-    paddingTop: 6,
+    borderTopColor: '#334155',
+    paddingTop: 0,
     width: '100%',
     maxWidth: 896,
     alignSelf: 'center',
+    position: 'relative',
+  },
+  navReveal: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 8,
+    alignItems: 'center',
+    zIndex: 200,
+  },
+  navRevealBar: {
+    width: 48,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(148,163,184,0.35)',
   },
   tabItem: {
     flex: 1,
     alignItems: 'center',
-    paddingTop: 8,
-    paddingBottom: 2,
+    paddingTop: 9,
+    paddingBottom: 3,
+    position: 'relative',
+  },
+  tabTopLine: {
+    position: 'absolute',
+    top: 0,
+    alignSelf: 'stretch',
+    height: 2,
+    marginHorizontal: 22,
+    borderRadius: 2,
+    backgroundColor: COLORS.primary,
   },
   tabItemActive: {
-    backgroundColor: 'rgba(245,158,11,0.06)',
+    backgroundColor: 'rgba(245,166,35,0.06)',
   },
   tabLabel: {
     color: TAB_INACTIVE,
@@ -429,7 +514,7 @@ const styles = StyleSheet.create({
     fontFamily: FONT_FAMILY,
   },
   tabLabelActive: {
-    color: TAB_ACTIVE,
+    color: '#F1F5F9',
     fontWeight: '600',
   },
   tabIndicator: {
@@ -438,9 +523,6 @@ const styles = StyleSheet.create({
     height: 2,
     borderRadius: 2,
     backgroundColor: 'transparent',
-  },
-  tabIndicatorActive: {
-    backgroundColor: TAB_ACTIVE,
   },
   badgeDot: {
     position: 'absolute',
