@@ -3,7 +3,7 @@
 // do Expo luôn tự sinh index.html mà không dùng template).
 // public/ (manifest, sw.js, icons) luôn được expo export copy vào dist nên
 // chỉ cần nối wiring này là Chrome nhận app là cài được.
-export const WEB_BUILD_VERSION = 'v11';
+export const WEB_BUILD_VERSION = 'v12';
 
 // ---------- Phiên bản cập nhật (update UX) ----------
 // Không reload tự động. Chỉ đánh dấu phiên bản mới; App.js hiện

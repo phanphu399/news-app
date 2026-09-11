@@ -1,4 +1,4 @@
-const CACHE='aster-v11';
+const CACHE='aster-v12';
 self.addEventListener('install',()=>{self.skipWaiting();});
 self.addEventListener('activate',(e)=>{
   e.waitUntil((async()=>{
