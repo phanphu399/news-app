@@ -69,9 +69,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 9,
     paddingVertical: 3,
     borderRadius: 999,
-    backgroundColor: 'rgba(244,63,94,0.10)',
+    backgroundColor: 'rgba(229,99,110,0.10)',
     borderWidth: 1,
-    borderColor: 'rgba(244,63,94,0.22)',
+    borderColor: 'rgba(229,99,110,0.22)',
   },
   hotText: {
     color: '#FB7185',

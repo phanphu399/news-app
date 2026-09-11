@@ -20,7 +20,7 @@ export function ensureWebPwa() {
     addHtml('link', { rel: 'manifest', href: '/manifest.webmanifest' });
   }
   if (!document.querySelector('meta[name="theme-color"]')) {
-    addHtml('meta', { name: 'theme-color', content: '#0B0E14' });
+    addHtml('meta', { name: 'theme-color', content: '#0F1216' });
   }
   if (!document.querySelector('link[rel="icon"]')) {
     addHtml('link', { rel: 'icon', type: 'image/png', href: '/icons/icon-192.png' });

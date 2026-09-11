@@ -4,7 +4,7 @@ import { COLORS } from '../config/constants';
 
 /**
  * Card dùng chung cho toàn app.
- * - Bề mặt #151921, viền siêu mỏng rgba(255,255,255,0.07), bo góc 14px.
+ * - Bề mặt #171B21, viền siêu mỏng rgba(255,255,255,0.07), bo góc 14px.
  * - Khi có onPress tự chuyển thành TouchableOpacity.
  */
 export default function Card({ children, style, onPress, borderColor, radius = 14, ...rest }) {

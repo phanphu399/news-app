@@ -13,7 +13,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, GRADIENTS, APP_NAME, APP_TAGLINE, FONT_FAMILY } from '../config/constants';
 
-const LOGO_SOURCE = require('../../assets/breaking-news-logo-design.png');
+const LOGO_SOURCE = require('../../assets/logo-mark.png');
 
 function getBuildVersion() {
   if (Platform.OS !== 'web' || typeof window === 'undefined') return '';
@@ -23,10 +23,10 @@ function getBuildVersion() {
 export default function AppHeader({ connected, loading, onRefresh }) {
   const { width } = useWindowDimensions();
   const wide = width >= 720;
-  const logoBox = wide ? styles.logoBoxWide : styles.logoBox;
-  const friendlyStatus = connected ? 'Trực tuyến' : 'Ngoại tuyến';
+  const compact = width < 400;
   const spin = useRef(new Animated.Value(0)).current;
   const build = getBuildVersion();
+  const friendlyStatus = connected ? 'Trực tuyến' : 'Ngoại tuyến';
 
   useEffect(() => {
     if (!loading) {
@@ -53,24 +53,30 @@ export default function AppHeader({ connected, loading, onRefresh }) {
   return (
     <LinearGradient colors={GRADIENTS.header} style={styles.header}>
       <View style={styles.brand}>
-        <View style={[styles.logoBox, logoBox]}>
+        <View style={[styles.logoBox, wide && styles.logoBoxWide]}>
           <Image source={LOGO_SOURCE} style={styles.logo} resizeMode="contain" />
         </View>
-        <View>
-          <Text style={styles.name}>{APP_NAME}</Text>
-          <Text style={styles.tagline}>{APP_TAGLINE}</Text>
+        <View style={styles.brandText}>
+          <Text style={styles.name} numberOfLines={1}>
+            {APP_NAME}
+          </Text>
+          {!compact && (
+            <Text style={styles.tagline} numberOfLines={1}>
+              {APP_TAGLINE}
+            </Text>
+          )}
         </View>
       </View>
 
       <View style={styles.right}>
-        {build ? (
+        {build && wide ? (
           <View style={styles.versionChip}>
             <Text style={styles.versionText}>{build}</Text>
           </View>
         ) : null}
         <View style={[styles.status, !connected && styles.statusOffline]}>
           <View style={[styles.statusDot, { backgroundColor: connected ? COLORS.success : COLORS.danger }]} />
-          <Text style={styles.statusText}>{friendlyStatus}</Text>
+          {!compact && <Text style={styles.statusText}>{friendlyStatus}</Text>}
         </View>
         <TouchableOpacity
           style={[styles.refreshButton, loading && styles.refreshButtonBusy]}
@@ -93,56 +99,64 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.borderSoft,
   },
   brand: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexShrink: 1,
+    minWidth: 0,
   },
   logoBox: {
-    width: 92,
-    height: 42,
-    borderRadius: 12,
-    marginRight: 10,
+    width: 38,
+    height: 38,
+    borderRadius: 11,
+    marginRight: 9,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    backgroundColor: 'rgba(240,168,92,0.12)',
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: 'rgba(240,168,92,0.28)',
+    overflow: 'hidden',
   },
   logoBoxWide: {
-    width: 132,
-    height: 54,
-    marginRight: 14,
+    width: 46,
+    height: 46,
   },
   logo: {
     width: '100%',
     height: '100%',
   },
+  brandText: {
+    flexShrink: 1,
+    minWidth: 0,
+  },
   name: {
     color: COLORS.text,
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '800',
-    letterSpacing: 1.4,
+    letterSpacing: 1.2,
     fontFamily: FONT_FAMILY,
   },
   tagline: {
     color: COLORS.textMuted,
-    fontSize: 11,
+    fontSize: 10.5,
     marginTop: 1,
     fontFamily: FONT_FAMILY,
   },
   right: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginLeft: 8,
+    flexShrink: 0,
   },
   versionChip: {
-    backgroundColor: 'rgba(245,158,11,0.08)',
+    backgroundColor: 'rgba(240,168,92,0.10)',
     borderWidth: 1,
-    borderColor: 'rgba(245,158,11,0.25)',
+    borderColor: 'rgba(240,168,92,0.25)',
     paddingHorizontal: 7,
     paddingVertical: 3,
     borderRadius: 6,
@@ -157,45 +171,45 @@ const styles = StyleSheet.create({
   status: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(22,27,34,0.75)',
-    paddingHorizontal: 9,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    paddingHorizontal: 8,
     paddingVertical: 5,
-    borderRadius: 20,
-    marginRight: 10,
+    borderRadius: 16,
+    marginRight: 8,
     borderWidth: 1,
     borderColor: COLORS.border,
   },
   statusOffline: {
-    borderColor: 'rgba(239,68,68,0.35)',
+    borderColor: 'rgba(229,99,110,0.35)',
   },
   statusDot: {
     width: 7,
     height: 7,
     borderRadius: 4,
-    marginRight: 6,
   },
   statusText: {
     color: COLORS.textSecondary,
-    fontSize: 11,
+    fontSize: 10.5,
     fontWeight: '600',
+    marginLeft: 6,
     fontFamily: FONT_FAMILY,
   },
   refreshButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(22,27,34,0.75)',
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: 'rgba(255,255,255,0.04)',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: COLORS.border,
   },
   refreshButtonBusy: {
-    opacity: 0.5,
+    opacity: 0.55,
   },
   refreshIcon: {
     color: COLORS.primary,
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '800',
   },
 });

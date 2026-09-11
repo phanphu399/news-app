@@ -86,7 +86,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
-    backgroundColor: 'rgba(244,63,94,0.10)',
+    backgroundColor: 'rgba(229,99,110,0.10)',
   },
   iconText: {
     fontSize: 15,

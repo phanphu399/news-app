@@ -11,8 +11,8 @@
     "minimal-ui"
   ],
   "orientation": "portrait",
-  "background_color": "#0B0E14",
-  "theme_color": "#0B0E14",
+  "background_color": "#0F1216",
+  "theme_color": "#0F1216",
   "lang": "vi",
   "categories": [
     "news",

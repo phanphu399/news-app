@@ -167,9 +167,9 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   chipActive: {
-    backgroundColor: 'rgba(245,158,11,0.10)',
+    backgroundColor: 'rgba(240,168,92,0.10)',
     borderWidth: 1,
-    borderColor: 'rgba(245,158,11,0.30)',
+    borderColor: 'rgba(240,168,92,0.30)',
   },
   chipText: {
     color: COLORS.textSecondary,

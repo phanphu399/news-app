@@ -276,6 +276,8 @@ export default function EconomicCalendarView() {
           keyExtractor={(item) => item.key}
           renderItem={renderItem}
           initialNumToRender={25}
+          style={styles.list}
+          contentContainerStyle={styles.listContent}
           ListFooterComponent={
             <View style={styles.footer}>
               <Text style={styles.footerText}>Nguồn: Trading Economics · Cập nhật tự động</Text>
@@ -307,6 +309,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background,
     width: '100%',
+    minHeight: '45vh',
   },
   header: {
     flexDirection: 'row',
@@ -346,9 +349,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.03)',
   },
   filterChipActive: {
-    backgroundColor: 'rgba(245,158,11,0.10)',
+    backgroundColor: 'rgba(240,168,92,0.10)',
     borderWidth: 1,
-    borderColor: 'rgba(245,158,11,0.30)',
+    borderColor: 'rgba(240,168,92,0.30)',
   },
   filterDot: {
     width: 7,
@@ -384,7 +387,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 10,
-    backgroundColor: 'rgba(244,63,94,0.08)',
+    backgroundColor: 'rgba(229,99,110,0.08)',
   },
   errorText: {
     color: COLORS.danger,
@@ -533,6 +536,14 @@ const styles = StyleSheet.create({
   footer: {
     alignItems: 'center',
     paddingVertical: 18,
+  },
+  list: {
+    flex: 1,
+    width: '100%',
+  },
+  listContent: {
+    flexGrow: 1,
+    paddingBottom: 8,
   },
   footerText: {
     color: COLORS.textMuted,

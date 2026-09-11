@@ -1,18 +1,17 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { decodePng, encodePng, makeSquareIcon, fitMaskable, cropToContent } from './png.mjs';
+import { decodePng, encodePng, makeSquareIcon, cropToContent, resizeRgba } from './png.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const DIST = join(ROOT, 'dist');
 const ICONS = join(DIST, 'icons');
-// PWA assets được ghi vào CẢ public/ (commit lên git, Expo tự copy public -> dist
-// trong MỌI đường build, kể cả preset mặc định "expo export" của Vercel) VÀ dist/
-// (cho build cục bộ). Nhờ đó không còn đường build nào sinh ra bản thiếu sw.js/
-// manifest/icons nữa — đây là lỗ hổng đã làm live site chạy raw export.
+// Logo mới (bolt amber): nguồn icon tiêu chuẩn = logo-mark.png,
+// icon maskable = logo-maskable.png (full-bleed, bolt 55% trong vùng an toàn).
 const PUBLIC = join(ROOT, 'public');
 const PUBLIC_ICONS = join(PUBLIC, 'icons');
-export const SOURCE_PNG = join(ROOT, 'assets', 'breaking-news-logo-design.png');
+export const SOURCE_PNG = join(ROOT, 'assets', 'logo-mark.png');
+export const MASKABLE_PNG = join(ROOT, 'assets', 'logo-maskable.png');
 
 function writeIconsTo(dir) {
   mkdirSync(dir, { recursive: true });
@@ -22,25 +21,24 @@ function writeIconsTo(dir) {
   writeSquareIcon(join(dir, 'icon-maskable-512.png'), 512, true);
 }
 
-// ---------- icons từ logo thật (breaking-news-logo-design.png) ----------
+// ---------- icons từ logo thật (logo-mark.png) ----------
 export function loadSourceIcon() {
-  return decodePng(readFileSync(SOURCE_PNG));
+  try {
+    return decodePng(readFileSync(SOURCE_PNG));
+  } catch {
+    throw new Error(`Không đọc được ${SOURCE_PNG}`);
+  }
 }
 
 export function writeSquareIcon(path, size, maskable = false) {
-  const src = (() => {
-    try {
-      return loadSourceIcon();
-    } catch {
-      throw new Error(`Không đọc được ${SOURCE_PNG}`);
-    }
-  })();
   let px;
   if (maskable) {
-    const cropped = cropToContent(src.data, src.width, src.height);
-    px = fitMaskable(cropped.data, cropped.width, cropped.height, size, 0.82);
+    const src = decodePng(readFileSync(MASKABLE_PNG));
+    px = resizeRgba(src.data, src.width, src.height, size, size);
   } else {
-    px = makeSquareIcon(src.data, src.width, src.height, size, 0.98);
+    const src = loadSourceIcon();
+    const cropped = cropToContent(src.data, src.width, src.height);
+    px = makeSquareIcon(cropped.data, cropped.width, cropped.height, size, 0.98, 0);
   }
   writeFileSync(path, encodePng(size, px));
 }
@@ -89,8 +87,8 @@ const manifest = {
   display: 'standalone',
   display_override: ['standalone', 'minimal-ui'],
   orientation: 'portrait',
-  background_color: '#0B0E14',
-  theme_color: '#0B0E14',
+  background_color: '#0F1216',
+  theme_color: '#0F1216',
   lang: 'vi',
   categories: ['news', 'finance'],
   icons: [
@@ -176,8 +174,8 @@ const PRELOAD_SCRIPT = `<script>
 </script>`;
 
 const HEAD_INJECT = [
-  `<meta name="theme-color" content="#0B0E14" />`,
-  `<style>html,body,#root{background:#0B0E14;color-scheme:dark}</style>`,
+  `<meta name="theme-color" content="#0F1216" />`,
+  `<style>html,body,#root{background:#0F1216;color-scheme:dark}</style>`,
   `<meta name="description" content="NEWS - Tin tức Forex & Macro theo thời gian thực" />`,
   `<meta name="mobile-web-app-capable" content="yes" />`,
   `<meta name="apple-mobile-web-app-capable" content="yes" />`,
@@ -205,14 +203,15 @@ export function main() {
   let html = readFileSync(htmlPath, 'utf8');
 
   // Idempotent: nếu index.html đã có PWA wiring (sinh từ mobile/index.html
-  // template) thì không inject lại tránh trùng script.
-  if (!html.includes('window.__ASTER_BUILD')) {
+  // template) thì không inject lại tránh trùng script. Dùng marker riêng biệt
+  // để không nhầm với chuỗi trong script probe.
+  if (!html.includes(`var build = '${BUILD_VERSION}'`)) {
     html = html.replace('<head>', `<head>\n    ${PRELOAD_SCRIPT}`);
   }
-  if (!html.includes('/manifest.webmanifest')) {
+  if (!html.includes('<link rel="manifest"')) {
     html = html.replace('</head>', `${HEAD_INJECT}\n  </head>`);
   }
-  if (!html.includes('serviceWorker.register')) {
+  if (!html.includes("serviceWorker.register('/sw.js')")) {
     html = html.replace(
       '</body>',
       `<script>if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWorker.register('/sw.js'))}</script>\n</body>`

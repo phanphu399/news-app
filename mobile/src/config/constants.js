@@ -11,38 +11,38 @@ export const BACKEND_URL =
   process.env.EXPO_PUBLIC_BACKEND_URL ||
   'https://news-app-realtime-seven.vercel.app';
 
-// Minimalist Fintech Dark Terminal — palette kỷ luật, ít màu, đúng ngữ cảnh
+// Graphite Amber — tông tối dịu mắt, giảm tương phản gắt, một accent duy nhất
 export const COLORS = {
-  background: '#0B0E14',
-  surface: '#151921',
-  surfaceAlt: '#1A1F2B',
-  surfaceElevated: '#1A1F2B',
-  border: 'rgba(255,255,255,0.07)',
-  borderSoft: 'rgba(255,255,255,0.05)',
-  primary: '#F59E0B',
-  primaryDeep: '#D97706',
-  primaryText: '#0B0E14',
-  important: '#F43F5E',
-  importantDeep: '#E11D48',
-  importantSoft: 'rgba(244,63,94,0.10)',
-  text: '#F5F7FA',
-  textSecondary: '#9CA3AF',
-  textMuted: '#6B7280',
-  gold: '#D4AF37',
-  green: '#34D399',
-  success: '#34D399',
-  danger: '#EF4444',
-  amber: '#F59E0B',
-  up: '#34D399',
-  down: '#F43F5E',
+  background: '#0F1216',
+  surface: '#171B21',
+  surfaceAlt: '#1D222B',
+  surfaceElevated: '#20262F',
+  border: 'rgba(255,255,255,0.08)',
+  borderSoft: 'rgba(255,255,255,0.055)',
+  primary: '#F0A85C',
+  primaryDeep: '#D98E4A',
+  primaryText: '#14100A',
+  important: '#E5636E',
+  importantDeep: '#C94B56',
+  importantSoft: 'rgba(229,99,110,0.12)',
+  text: '#E7ECF3',
+  textSecondary: '#A7B3C3',
+  textMuted: '#788592',
+  gold: '#E0B96A',
+  green: '#6FC9A0',
+  success: '#6FC9A0',
+  danger: '#E5636E',
+  amber: '#F0A85C',
+  up: '#6FC9A0',
+  down: '#E5636E',
 };
 
 export const GRADIENTS = {
-  header: ['#0B0E14', '#0D1117'],
-  brand: ['#F59E0B', '#D97706'],
-  gold: ['#F59E0B', '#D97706'],
-  importantRibbon: ['#F43F5E', '#7F1D1D'],
-  cardTop: ['rgba(245,158,11,0.08)', 'rgba(11,14,20,0)'],
+  header: ['#101419', '#0D1015'],
+  brand: ['#F0A85C', '#D98E4A'],
+  gold: ['#F0A85C', '#D98E4A'],
+  importantRibbon: ['#E5636E', '#6E2C33'],
+  cardTop: ['rgba(240,168,92,0.08)', 'rgba(15,18,22,0)'],
 };
 
 export const IMPORTANT_BORDER_COLOR = COLORS.importantDeep;
@@ -60,7 +60,7 @@ export const CATEGORY_STYLES = {
   Crypto: { label: 'TIỀN SỐ', short: 'Crypto', color: '#9CA3AF', bg: 'rgba(255,255,255,0.05)' },
   Geopolitics: { label: 'ĐỊA CHÍNH TRỊ', short: 'Chiến sự', color: '#9CA3AF', bg: 'rgba(255,255,255,0.05)' },
   Paywall: { label: 'BÀI TRẢ PHÍ', short: 'Trả phí', color: '#9CA3AF', bg: 'rgba(255,255,255,0.05)' },
-  Custom: { label: 'FEED CỦA BẠN', short: 'Bạn', color: '#34D399', bg: 'rgba(52,211,153,0.08)' },
+  Custom: { label: 'FEED CỦA BẠN', short: 'Bạn', color: '#6FC9A0', bg: 'rgba(111,201,160,0.08)' },
 };
 
 export function categoryStyle(category) {
@@ -71,8 +71,8 @@ export const REFRESH_INTERVAL_MS = 5 * 60 * 1000;
 export const APP_NAME = 'NEWS';
 export const APP_TAGLINE = 'Tin thị trường · Forex · Macro';
 
-export const TAB_INACTIVE = '#9CA3AF';
-export const TAB_ACTIVE = '#F59E0B';
+export const TAB_INACTIVE = '#8A94A3';
+export const TAB_ACTIVE = '#F0A85C';
 
 // Font sans-serif chuyên nghiệp (Inter/Roboto/SF Pro trên web)
 export const FONT_FAMILY = Platform.select({

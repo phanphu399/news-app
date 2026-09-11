@@ -62,6 +62,7 @@ jobs:
           node --check src/viewmodels/NewsViewModel.js
           node --check src/services/CustomFeedService.js
           node --check scripts/build-web.mjs
+          node --check scripts/generate-logo.mjs
           node --check src/views/EconomicCalendarView.js
 
       - name: Validate app.json
