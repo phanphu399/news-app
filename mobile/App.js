@@ -2,7 +2,16 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, StatusBar, Modal, Platform, Animated, Easing } from 'react-native';
 import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FlameIcon, MarketIcon, CalendarDotIcon, BookmarkIcon, RadioIcon } from './src/components/TabIcons';
-import { DownloadIcon } from './src/components/UIIcons';
+import { DownloadIcon, XIcon } from './src/components/UIIcons';
+import { useOnlineStatus } from './src/hooks/useOnlineStatus';
+import {
+  isStandalone,
+  isIosSafari,
+  getInstallPreference,
+  persistInstallDismissed,
+  isUpdateDismissed,
+  persistUpdateDismissed,
+} from './src/utils/webPwa';
 import NewsViewModel from './src/viewmodels/NewsViewModel';
 import NewsListView from './src/views/NewsListView';
 import NewsArticleView from './src/views/NewsArticleView';
@@ -100,12 +109,24 @@ function TabBar({ active, onChange, insets, badge, hidden }) {
 
 function useInstallPrompt() {
   const [prompt, setPrompt] = useState(null);
+  const [dismissed, setDismissed] = useState(() => {
+    if (Platform.OS !== 'web' || typeof window === 'undefined') return true;
+    return Boolean(getInstallPreference());
+  });
+  const iosStandalone =
+    Platform.OS === 'web' && typeof window !== 'undefined' ? window.navigator.standalone === true : false;
 
   useEffect(() => {
     if (Platform.OS !== 'web' || typeof window === 'undefined') return;
-    const ready = () => setPrompt(window.__asterDeferredPrompt || null);
+    if (isStandalone() || iosStandalone) return;
+    const ready = () => {
+      if (window.__asterInstalled) {
+        setPrompt(null);
+        return;
+      }
+      setPrompt(window.__asterDeferredPrompt || null);
+    };
     const installed = () => setPrompt(null);
-    if (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) return;
     if (window.__asterDeferredPrompt) ready();
     window.addEventListener('aster-prompt-ready', ready);
     window.addEventListener('appinstalled', installed);
@@ -113,22 +134,76 @@ function useInstallPrompt() {
       window.removeEventListener('aster-prompt-ready', ready);
       window.removeEventListener('appinstalled', installed);
     };
-  }, []);
+  }, [iosStandalone]);
 
   const install = async () => {
     if (!prompt) return;
     prompt.prompt();
-    const choice = await prompt.userChoice;
-    if (choice && choice.outcome === 'accepted') setPrompt(null);
-    else setPrompt(null);
+    try {
+      const choice = await prompt.userChoice;
+      if (choice && choice.outcome === 'accepted') {
+        setPrompt(null);
+        persistInstallDismissed();
+      } else {
+        setPrompt(null);
+      }
+    } catch {
+      setPrompt(null);
+    }
   };
 
-  return { canInstall: Boolean(prompt), install };
+  const dismiss = () => {
+    setDismissed(true);
+    persistInstallDismissed();
+  };
+
+  const canPrompt = !dismissed && !isStandalone() && !iosStandalone && Boolean(prompt);
+  const showIosGuide = !dismissed && !isStandalone() && isIosSafari() && !iosStandalone && !canPrompt;
+
+  return { canInstall: canPrompt, showIosGuide, install, dismiss };
+}
+
+function ConnectivityStrip({ online, justReturned }) {
+  const anim = useRef(new Animated.Value(0)).current;
+  const visible = !online || justReturned;
+
+  useEffect(() => {
+    Animated.timing(anim, {
+      toValue: visible ? 1 : 0,
+      duration: 240,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  }, [visible, anim]);
+
+  if (!visible) return null;
+
+  const color = online ? COLORS.success : COLORS.danger;
+  const text = online ? '● Đã kết nối' : '○ Ngoại tuyến — dữ liệu có thể chưa cập nhật';
+
+  return (
+    <Animated.View
+      style={[
+        styles.connStrip,
+        {
+          opacity: anim,
+          transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [-8, 0] }) }],
+        },
+      ]}
+    >
+      <View style={[styles.connDot, { backgroundColor: color }]} />
+      <Text style={[styles.connText, { color }]} numberOfLines={1}>
+        {text}
+      </Text>
+    </Animated.View>
+  );
 }
 
 function MainScreen() {
   const insets = useSafeAreaInsets();
-  const { canInstall, install } = useInstallPrompt();
+  const { online, justReturned } = useOnlineStatus();
+  const { canInstall, showIosGuide, install, dismiss } = useInstallPrompt();
+  const [updateVersion, setUpdateVersion] = useState(null);
   const [activeTab, setActiveTab] = useState(TABS.NEWS);
   const [chartNavVisible, setChartNavVisible] = useState(true);
   const [openedArticle, setOpenedArticle] = useState(null);
@@ -142,6 +217,37 @@ function MainScreen() {
       useNativeDriver: true,
     }).start();
   }, [activeTab, headerOpacity]);
+
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof window === 'undefined') return;
+    const detect = (version) => {
+      if (version && version !== updateVersion && !isUpdateDismissed(version)) {
+        setUpdateVersion(version);
+      }
+    };
+    const onReady = (event) => detect(event && event.detail);
+    if (window.__asterPendingUpdate) detect(window.__asterPendingUpdate);
+    window.addEventListener('aster-update-ready', onReady);
+    return () => window.removeEventListener('aster-update-ready', onReady);
+  }, [updateVersion]);
+
+  const applyUpdate = useCallback(async () => {
+    const version = updateVersion;
+    setUpdateVersion(null);
+    try {
+      const registration = await navigator.serviceWorker.getRegistration();
+      if (registration) await registration.update();
+    } catch {}
+    try {
+      sessionStorage.setItem('aster-apply-' + version, '1');
+      window.location.reload();
+    } catch {}
+  }, [updateVersion]);
+
+  const laterUpdate = useCallback(() => {
+    if (updateVersion) persistUpdateDismissed(updateVersion);
+    setUpdateVersion(null);
+  }, [updateVersion]);
   const [toasts, setToasts] = useState([]);
   const [newCount, setNewCount] = useState(0);
   const [keywords, setKeywords] = useState([]);
@@ -234,8 +340,6 @@ function MainScreen() {
     };
   }, []);
 
-  const connected = !state.error;
-
   const openInNewTab = (url) => {
     if (Platform.OS !== 'web' || typeof document === 'undefined') return;
     const anchor = document.createElement('a');
@@ -302,11 +406,15 @@ function MainScreen() {
       {!showChart && (
         <Animated.View style={{ opacity: headerOpacity }}>
           <AppHeader
-            connected={connected}
+            online={online}
             loading={state.loading || manualRefreshing}
             onRefresh={reloadAll}
           />
         </Animated.View>
+      )}
+
+      {!showChart && (
+        <ConnectivityStrip online={online} justReturned={justReturned} />
       )}
 
       <View style={styles.content}>
@@ -385,16 +493,57 @@ function MainScreen() {
         </TouchableOpacity>
       )}
 
-      {canInstall && (
-        <TouchableOpacity style={styles.installButton} onPress={install} activeOpacity={0.85}>
-          <View style={styles.installIconWrap}>
-            <DownloadIcon size={19} color={COLORS.primary} strokeWidth={2} />
+      {!updateVersion && (canInstall || showIosGuide) && (
+        <View style={styles.installCard}>
+          <View style={styles.installRow}>
+            <View style={styles.installIconWrap}>
+              <DownloadIcon size={19} color={COLORS.primary} strokeWidth={2} />
+            </View>
+            <TouchableOpacity
+              style={styles.installBody}
+              onPress={install}
+              activeOpacity={0.85}
+              accessibilityRole="button"
+            >
+              <Text style={styles.installTitle}>Cài đặt MacroPulse</Text>
+              <Text style={styles.installSub} numberOfLines={2}>
+                {showIosGuide
+                  ? 'iOS: mở menu Chia sẻ › Thêm vào Màn hình chính'
+                  : 'Dùng như ứng dụng riêng, offline và nhận cập nhật'}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.installDismiss}
+              onPress={dismiss}
+              hitSlop={8}
+              accessibilityLabel="Bỏ qua cài đặt"
+            >
+              <XIcon size={14} color={COLORS.textMuted} strokeWidth={2} />
+            </TouchableOpacity>
           </View>
-          <View>
-            <Text style={styles.installTitle}>Cài đặt MacroPulse</Text>
-            <Text style={styles.installSub}>Dùng như ứng dụng riêng</Text>
+        </View>
+      )}
+
+      {updateVersion && (
+        <View style={styles.updateCard}>
+          <View style={styles.updateTextWrap}>
+            <Text style={styles.updateTitle}>Phiên bản mới đã sẵn sàng</Text>
+            <Text style={styles.updateSub} numberOfLines={1}>
+              Cập nhật {updateVersion} — nhận tính năng và sửa lỗi mới nhất
+            </Text>
           </View>
-        </TouchableOpacity>
+          <TouchableOpacity style={styles.updateApply} onPress={applyUpdate} activeOpacity={0.85}>
+            <Text style={styles.updateApplyText}>Cập nhật</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.updateLater}
+            onPress={laterUpdate}
+            activeOpacity={0.7}
+            hitSlop={4}
+          >
+            <Text style={styles.updateLaterText}>Để sau</Text>
+          </TouchableOpacity>
+        </View>
       )}
 
       <Modal
@@ -596,23 +745,125 @@ const styles = StyleSheet.create({
   modalSpacer: {
     width: 40,
   },
-  installButton: {
+  installCard: {
     position: 'absolute',
     right: 16,
     bottom: 92,
-    flexDirection: 'row',
-    alignItems: 'center',
+    maxWidth: 330,
     backgroundColor: COLORS.surface,
     borderWidth: 1,
     borderColor: COLORS.primary,
     borderRadius: 14,
     paddingVertical: 10,
-    paddingHorizontal: 14,
+    paddingLeft: 12,
+    paddingRight: 6,
     shadowColor: '#000',
     shadowOpacity: 0.4,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 4 },
     elevation: 8,
+  },
+  installRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  installBody: {
+    flex: 1,
+    minWidth: 0,
+  },
+  connStrip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'center',
+    width: '100%',
+    maxWidth: 896,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: COLORS.surfaceAlt,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(148,163,184,0.10)',
+  },
+  connDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginRight: 8,
+  },
+  connText: {
+    flex: 1,
+    fontSize: 11,
+    fontWeight: '600',
+    fontFamily: FONT_FAMILY,
+  },
+  updateCard: {
+    position: 'absolute',
+    left: 16,
+    right: 16,
+    bottom: 88,
+    alignSelf: 'center',
+    maxWidth: 560,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.surfaceElevated,
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+    borderRadius: 14,
+    paddingVertical: 10,
+    paddingLeft: 14,
+    paddingRight: 10,
+    shadowColor: '#000',
+    shadowOpacity: 0.5,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 10,
+  },
+  updateTextWrap: {
+    flex: 1,
+    minWidth: 0,
+  },
+  updateTitle: {
+    color: COLORS.text,
+    fontSize: 13,
+    fontWeight: '800',
+    fontFamily: FONT_FAMILY,
+  },
+  updateSub: {
+    color: COLORS.textMuted,
+    fontSize: 11,
+    marginTop: 1,
+    fontFamily: FONT_FAMILY,
+  },
+  updateApply: {
+    backgroundColor: COLORS.primary,
+    borderRadius: 9,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    marginLeft: 8,
+  },
+  updateApplyText: {
+    color: COLORS.primaryText,
+    fontSize: 12,
+    fontWeight: '800',
+    fontFamily: FONT_FAMILY,
+  },
+  updateLater: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    marginLeft: 2,
+  },
+  updateLaterText: {
+    color: COLORS.textSecondary,
+    fontSize: 12,
+    fontWeight: '600',
+    fontFamily: FONT_FAMILY,
+  },
+  installDismiss: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 4,
   },
   installIconWrap: {
     marginRight: 10,

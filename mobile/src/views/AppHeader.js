@@ -9,7 +9,7 @@ function getBuildVersion() {
   return window.__ASTER_BUILD || '';
 }
 
-export default function AppHeader({ connected, loading, onRefresh }) {
+export default function AppHeader({ online, loading, onRefresh }) {
   const spin = useRef(new Animated.Value(0)).current;
   const build = getBuildVersion();
 
@@ -37,8 +37,10 @@ export default function AppHeader({ connected, loading, onRefresh }) {
       <View style={styles.brandLeft}>
         <PulseLogo size={22} showText={true} scale={1} />
         <View style={styles.liveWrap}>
-          <LiveDot size={5} color={connected ? COLORS.success : COLORS.danger} />
-          <Text style={styles.liveText}>{connected ? 'Live' : 'Off'}</Text>
+          <LiveDot size={5} color={online ? COLORS.success : COLORS.danger} />
+          <Text style={[styles.liveText, { color: online ? COLORS.success : COLORS.danger }]}>
+            {online ? '● Trực tiếp' : '○ Ngoại tuyến'}
+          </Text>
         </View>
       </View>
 

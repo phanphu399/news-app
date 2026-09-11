@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Platform, TouchableOpacity, Animated, Easing } 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS, FONT_FAMILY } from '../config/constants';
 import { BoltMark } from '../components/TabIcons';
+import { useOnlineStatus } from '../hooks/useOnlineStatus';
 
 const WIDGET_BASE = 'https://s.tradingview.com/widgetembed/';
 
@@ -30,21 +31,37 @@ export function buildTradingViewUrl({ symbol = 'OANDA:XAUUSD', interval = 60 } =
 
 export default function TradingViewScreen({ onRequestChartTouch }) {
   const insets = useSafeAreaInsets();
+  const { online } = useOnlineStatus();
   const [loaded, setLoaded] = useState(false);
+  const [failed, setFailed] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const urlKey = useRef(0);
   const [iframeKey, setIframeKey] = useState(0);
 
   const onLoad = useCallback(() => {
+    setFailed(false);
     Animated.timing(fadeAnim, { toValue: 1, duration: 400, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
     setLoaded(true);
+  }, [fadeAnim]);
+
+  const onError = useCallback(() => {
+    setLoaded(false);
+    setFailed(true);
+    fadeAnim.setValue(0);
   }, [fadeAnim]);
 
   const handleReload = useCallback(() => {
     fadeAnim.setValue(0);
     setLoaded(false);
+    setFailed(false);
     setIframeKey((k) => k + 1);
   }, [fadeAnim]);
+
+  const statusText = !online
+    ? 'Ngoại tuyến — không hiển thị giá cũ. Thử lại khi có mạng.'
+    : failed
+    ? 'Không tải được biểu đồ — bấm Trực tiếp để thử lại.'
+    : 'Đang tải biểu đồ…';
 
   return (
     <View
@@ -55,19 +72,22 @@ export default function TradingViewScreen({ onRequestChartTouch }) {
     >
       {!loaded && (
         <View style={styles.placeholder}>
-          <BoltMark size={40} color={COLORS.primary} strokeWidth={1.2} />
-          <Text style={styles.placeholderText}>Đang tải biểu đồ…</Text>
+          <BoltMark size={40} color={online ? COLORS.primary : COLORS.textMuted} strokeWidth={1.2} />
+          <Text style={[styles.placeholderText, { color: online ? COLORS.textMuted : COLORS.danger }]}>
+            {statusText}
+          </Text>
         </View>
       )}
 
       <Animated.View style={[styles.chartBox, { opacity: fadeAnim }]}>
-        {Platform.OS === 'web' ? (
+        {Platform.OS === 'web' && online ? (
           <iframe
             key={iframeKey}
             title="MacroPulse XAUUSD Chart"
             src={buildTradingViewUrl()}
             style={styles.iframe}
             onLoad={onLoad}
+            onError={onError}
           />
         ) : null}
       </Animated.View>
@@ -79,8 +99,10 @@ export default function TradingViewScreen({ onRequestChartTouch }) {
         hitSlop={10}
         accessibilityLabel="Tải lại biểu đồ trực tiếp"
       >
-        <BoltMark size={14} color={COLORS.primary} strokeWidth={2} />
-        <Text style={styles.fabText}>Trực tiếp</Text>
+        <BoltMark size={14} color={online ? COLORS.primary : COLORS.textMuted} strokeWidth={2} />
+        <Text style={[styles.fabText, { color: online ? COLORS.textSecondary : COLORS.textMuted }]}>
+          {online ? 'Trực tiếp' : 'Ngoại tuyến'}
+        </Text>
       </TouchableOpacity>
     </View>
   );

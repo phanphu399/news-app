@@ -75,7 +75,7 @@ function vercelJsonContents() {
 // ---------- manifest / service worker / html injection ----------
 // Phiên bản hiển thị trên UI (AppHeader). Tăng mỗi lần đổi SW để người dùng
 // tự xác minh bản đang chạy trên máy là mới nhất.
-const BUILD_VERSION = 'v10';
+const BUILD_VERSION = 'v11';
 
 const manifest = {
   name: 'MacroPulse - Realtime Market News',
@@ -103,7 +103,7 @@ const manifest = {
 // - Asset same-origin (bundle băm ngầm định immutable) network-first, lưu lại bản mới.
 // - KHÔNG cache cross-origin (supabase/backend/translate) — tránh interceptor làm hỏng data.
 // => Bất kỳ deploy mới nào cũng được tải ngay, kể cả machines có SW cũ đang kiểm soát.
-const SW = `const CACHE='aster-v10';
+const SW = `const CACHE='aster-v11';
 self.addEventListener('install',()=>{self.skipWaiting();});
 self.addEventListener('activate',(e)=>{
   e.waitUntil((async()=>{
@@ -160,7 +160,8 @@ const PRELOAD_SCRIPT = `<script>
     window.__asterInstalled = true;
   });
   // Tự kiểm tra phiên bản server (manifest luôn fresh nhờ header no-cache).
-  // Nếu server mới hơn bản đang chạy -> reload 1 lần để thoát cache cũ.
+  // KHÔNG tự reload (tránh phá vỡ phiên người dùng) — chỉ báo để app hiện
+  // "Phiên bản mới đã sẵn sàng" [Cập nhật][Để sau].
   try {
     fetch('/manifest.webmanifest?p=' + Date.now(), { cache: 'no-store' })
       .then(function (r) { return r.ok ? r.json() : null; })
@@ -169,9 +170,9 @@ const PRELOAD_SCRIPT = `<script>
         if (m && m.start_url && m.start_url.indexOf('__v=') >= 0) {
           target = m.start_url.slice(m.start_url.indexOf('__v=') + 4);
         }
-        if (target && target !== build && !sessionStorage.getItem('aster-reload-' + build)) {
-          sessionStorage.setItem('aster-reload-' + build, '1');
-          try { location.reload(); } catch (e) {}
+        if (target && target !== build) {
+          window.__asterPendingUpdate = target;
+          try { window.dispatchEvent(new CustomEvent('aster-update-ready', { detail: target })); } catch (e) {}
         }
       })
       .catch(function () {});

@@ -139,7 +139,15 @@ function fmtPrice(value, unit) {
   return `${value.toFixed(resolved)}${unit ? ` ${unit}` : ''}`;
 }
 
-function MarketTile({ item, compact }) {
+function fmtClock(iso) {
+  if (!iso) return '';
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '';
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function MarketTile({ item, compact, stale }) {
   const up = item.changePct == null ? null : item.changePct >= 0;
   const color = up == null ? Z.zinc400 : up ? Z.emerald400 : Z.rose400;
   return (
@@ -152,6 +160,16 @@ function MarketTile({ item, compact }) {
         {up == null
           ? '—'
           : `${up ? '+' : ''}${item.changePct.toFixed(2)}%`}
+      </Text>
+      <Text
+        style={[styles.marketMeta, { color: stale ? Z.amber400 : Z.zinc600 }]}
+        numberOfLines={1}
+      >
+        {stale
+          ? 'giá dữ liệu cũ'
+          : item.updatedAt
+          ? `Cập nhật ${fmtClock(item.updatedAt)}`
+          : ''}
       </Text>
     </View>
   );
@@ -324,6 +342,7 @@ export default function EconomicCalendarView() {
   const [impact, setImpact] = useState('All');
   const [refreshing, setRefreshing] = useState(false);
   const [markets, setMarkets] = useState({});
+  const [marketsState, setMarketsState] = useState('ok');
   const [related, setRelated] = useState([]);
   const [now, setNow] = useState(() => Date.now());
   const [showTodayButton, setShowTodayButton] = useState(false);
@@ -395,8 +414,10 @@ export default function EconomicCalendarView() {
       const json = await res.json();
       if (!res.ok || !json?.ok) throw new Error(json?.error || `HTTP ${res.status}`);
       setMarkets(json.markets || {});
+      setMarketsState('ok');
     } catch {
-      /* giữ giá cũ nếu lần sau lỗi */
+      /* giữ giá cũ nhưng đánh dấu "dữ liệu cũ" — không được trình bày như LIVE */
+      setMarketsState('stale');
     } finally {
       clearTimeout(timeout);
     }
@@ -575,7 +596,12 @@ export default function EconomicCalendarView() {
       {marketList.length > 0 && (
         <View style={styles.marketsBar}>
           {marketList.map((item) => (
-            <MarketTile key={item.symbol} item={item} compact={compact} />
+            <MarketTile
+              key={item.symbol}
+              item={item}
+              compact={compact}
+              stale={marketsState === 'stale'}
+            />
           ))}
         </View>
       )}
@@ -795,6 +821,12 @@ const styles = StyleSheet.create({
     marginTop: 1,
     fontFamily: FONT_FAMILY,
     fontVariant: TABULAR_NUMS,
+  },
+  marketMeta: {
+    fontSize: 9,
+    fontWeight: '600',
+    marginTop: 3,
+    fontFamily: FONT_FAMILY,
   },
   relatedWrap: {
     paddingTop: 10,
