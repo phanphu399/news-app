@@ -7,6 +7,7 @@ import {
   Animated,
   Easing,
   Image,
+  Platform,
   useWindowDimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -14,12 +15,18 @@ import { COLORS, GRADIENTS, APP_NAME, APP_TAGLINE, FONT_FAMILY } from '../config
 
 const LOGO_SOURCE = require('../../assets/breaking-news-logo-design.png');
 
+function getBuildVersion() {
+  if (Platform.OS !== 'web' || typeof window === 'undefined') return '';
+  return window.__ASTER_BUILD || '';
+}
+
 export default function AppHeader({ connected, loading, onRefresh }) {
   const { width } = useWindowDimensions();
   const wide = width >= 720;
   const logoBox = wide ? styles.logoBoxWide : styles.logoBox;
   const friendlyStatus = connected ? 'Trực tuyến' : 'Ngoại tuyến';
   const spin = useRef(new Animated.Value(0)).current;
+  const build = getBuildVersion();
 
   useEffect(() => {
     if (!loading) {
@@ -56,6 +63,11 @@ export default function AppHeader({ connected, loading, onRefresh }) {
       </View>
 
       <View style={styles.right}>
+        {build ? (
+          <View style={styles.versionChip}>
+            <Text style={styles.versionText}>{build}</Text>
+          </View>
+        ) : null}
         <View style={[styles.status, !connected && styles.statusOffline]}>
           <View style={[styles.statusDot, { backgroundColor: connected ? COLORS.success : COLORS.danger }]} />
           <Text style={styles.statusText}>{friendlyStatus}</Text>
@@ -126,6 +138,21 @@ const styles = StyleSheet.create({
   right: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  versionChip: {
+    backgroundColor: 'rgba(245,158,11,0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(245,158,11,0.25)',
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 6,
+    marginRight: 8,
+  },
+  versionText: {
+    color: COLORS.primary,
+    fontSize: 10,
+    fontWeight: '800',
+    fontFamily: FONT_FAMILY,
   },
   status: {
     flexDirection: 'row',

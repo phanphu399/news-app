@@ -44,13 +44,16 @@ const manifest = {
   name: 'NEWS - Realtime Market News',
   short_name: 'NEWS',
   description: 'Tin tức Forex & Macro theo thời gian thực',
+  id: '/',
   start_url: '/',
   scope: '/',
   display: 'standalone',
+  display_override: ['standalone', 'minimal-ui'],
   orientation: 'portrait',
   background_color: '#0B0E14',
   theme_color: '#0B0E14',
   lang: 'vi',
+  categories: ['news', 'finance'],
   icons: [
     { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
     { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
@@ -58,7 +61,11 @@ const manifest = {
   ],
 };
 
-const SW = `const CACHE='aster-v5';
+// Phiên bản hiển thị trên UI (AppHeader). Tăng khi đổi SW cache để người dùng
+// tự xác minh bản đang chạy trên máy là mới nhất.
+const BUILD_VERSION = 'v6';
+
+const SW = `const CACHE='aster-v6';
 self.addEventListener('install',()=>{self.skipWaiting();});
 self.addEventListener('activate',(e)=>{
   e.waitUntil((async()=>{
@@ -102,6 +109,7 @@ self.addEventListener('fetch',(e)=>{
 
 const PRELOAD_SCRIPT = `<script>
 (function () {
+  window.__ASTER_BUILD = '${BUILD_VERSION}';
   window.__asterDeferredPrompt = null;
   window.addEventListener('beforeinstallprompt', function (e) {
     e.preventDefault();
@@ -132,6 +140,31 @@ export function main() {
 
   writeFileSync(join(DIST, 'manifest.webmanifest'), JSON.stringify(manifest, null, 2));
   writeFileSync(join(DIST, 'sw.js'), SW);
+
+  // Đảm bảo Vercel (kể cả khi upload dist thủ công) trả đúng Content-Type
+  // cho PWA manifest — Chrome từ chối cài đặt nếu sai loại MIME.
+  // index.html phải luôn fresh (no-cache) để không ai bị kẹt bản cũ.
+  writeFileSync(
+    join(DIST, 'vercel.json'),
+    JSON.stringify(
+      {
+        headers: [
+          {
+            source: '/manifest.webmanifest',
+            headers: [{ key: 'Content-Type', value: 'application/manifest+json' }],
+          },
+          {
+            source: '/(.*)',
+            headers: [
+              { key: 'Cache-Control', value: 'public, max-age=0, s-maxage=0, must-revalidate' },
+            ],
+          },
+        ],
+      },
+      null,
+      2
+    )
+  );
 
   const htmlPath = join(DIST, 'index.html');
   let html = readFileSync(htmlPath, 'utf8');
