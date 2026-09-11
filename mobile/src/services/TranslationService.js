@@ -6,7 +6,7 @@ const CACHE_KEY = '@aster/translations';
 const TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const MAX_CACHE = 500;
 const MAX_INFLIGHT = 4;
-const MAX_QUEUE = 40;
+const MAX_QUEUE = 200;
 
 const isWeb = Platform.OS === 'web';
 const inflight = new Map();
@@ -46,7 +46,7 @@ async function loadCache() {
     const entries = Array.isArray(parsed) ? parsed : parsed?.items || [];
     const fresh = new Map();
     for (const [en, vi, at] of entries) {
-      if (en && vi && Date.now() - (at || 0) < TTL_MS) fresh.set(en, vi);
+      if (en && vi && en !== vi && Date.now() - (at || 0) < TTL_MS) fresh.set(en, vi);
     }
     memory = fresh;
   } catch {
@@ -102,7 +102,7 @@ export async function translateToVietnamese(text) {
 
   const promise = new Promise((resolve, reject) => {
     if (queue.length >= MAX_QUEUE) {
-      resolve(trimmed);
+      resolve(null);
       return;
     }
     queue.push({ text: trimmed, resolve, reject });
@@ -112,7 +112,7 @@ export async function translateToVietnamese(text) {
 
   promise
     .then((vi) => {
-      if (vi) {
+      if (vi && vi !== trimmed) {
         memory.set(trimmed, vi);
         persist();
       }
@@ -122,5 +122,5 @@ export async function translateToVietnamese(text) {
       inflight.delete(trimmed);
     });
 
-  return promise.catch(() => trimmed);
+  return promise.then((vi) => vi || trimmed);
 }

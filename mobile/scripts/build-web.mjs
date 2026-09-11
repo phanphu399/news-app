@@ -75,7 +75,7 @@ function vercelJsonContents() {
 // ---------- manifest / service worker / html injection ----------
 // Phiên bản hiển thị trên UI (AppHeader). Tăng mỗi lần đổi SW để người dùng
 // tự xác minh bản đang chạy trên máy là mới nhất.
-const BUILD_VERSION = 'v12';
+const BUILD_VERSION = 'v13';
 
 const manifest = {
   name: 'MacroPulse - Realtime Market News',
@@ -103,7 +103,7 @@ const manifest = {
 // - Asset same-origin (bundle băm ngầm định immutable) network-first, lưu lại bản mới.
 // - KHÔNG cache cross-origin (supabase/backend/translate) — tránh interceptor làm hỏng data.
 // => Bất kỳ deploy mới nào cũng được tải ngay, kể cả machines có SW cũ đang kiểm soát.
-const SW = `const CACHE='aster-v12';
+const SW = `const CACHE='aster-v13';
 self.addEventListener('install',()=>{self.skipWaiting();});
 self.addEventListener('activate',(e)=>{
   e.waitUntil((async()=>{

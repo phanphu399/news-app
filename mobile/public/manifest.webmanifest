@@ -3,7 +3,7 @@
   "short_name": "MacroPulse",
   "description": "Tin tức Forex & Macro theo thời gian thực",
   "id": "/",
-  "start_url": "/?__v=v12",
+  "start_url": "/?__v=v13",
   "scope": "/",
   "display": "standalone",
   "display_override": [
