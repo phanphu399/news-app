@@ -73,9 +73,9 @@ function vercelJsonContents() {
 }
 
 // ---------- manifest / service worker / html injection ----------
-// Phiên bản hiển thị trên UI (AppHeader). Tăng khi đổi SW cache để người dùng
+// Phiên bản hiển thị trên UI (AppHeader). Tăng mỗi lần đổi SW để người dùng
 // tự xác minh bản đang chạy trên máy là mới nhất.
-const BUILD_VERSION = 'v8';
+const BUILD_VERSION = 'v9';
 
 const manifest = {
   name: 'NEWS - Realtime Market News',
@@ -87,8 +87,8 @@ const manifest = {
   display: 'standalone',
   display_override: ['standalone', 'minimal-ui'],
   orientation: 'portrait',
-  background_color: '#0F1216',
-  theme_color: '#0F1216',
+  background_color: '#10151C',
+  theme_color: '#10151C',
   lang: 'vi',
   categories: ['news', 'finance'],
   icons: [
@@ -98,7 +98,12 @@ const manifest = {
   ],
 };
 
-const SW = `const CACHE='aster-v8';
+// Service worker "network-first" — chống kẹt bản cũ vĩnh viễn:
+// - Navigate/index.html luôn lấy từ mạng trước (fresh 100%), cache chỉ là fallback offline.
+// - Asset same-origin (bundle băm ngầm định immutable) network-first, lưu lại bản mới.
+// - KHÔNG cache cross-origin (supabase/backend/translate) — tránh interceptor làm hỏng data.
+// => Bất kỳ deploy mới nào cũng được tải ngay, kể cả machines có SW cũ đang kiểm soát.
+const SW = `const CACHE='aster-v9';
 self.addEventListener('install',()=>{self.skipWaiting();});
 self.addEventListener('activate',(e)=>{
   e.waitUntil((async()=>{
@@ -111,17 +116,17 @@ self.addEventListener('fetch',(e)=>{
   if(e.request.method!=='GET')return;
   const u=new URL(e.request.url);
   if(u.origin!==location.origin)return;
-  if(e.request.mode==='navigate'){
+  if(e.request.mode==='navigate'||e.request.headers.get('accept')?.includes('text/html')){
     e.respondWith((async()=>{
       try{
         const res=await fetch(e.request);
         if(res.ok){const c=await caches.open(CACHE);c.put(e.request,res.clone());}
         return res;
       }catch(err){
-        const hit=await caches.match(e.request);
+        const hit=await caches.match(e.request)
+          || await caches.match('/')
+          || await caches.match('/index.html');
         if(hit)return hit;
-        const idx=await caches.match('/');
-        if(idx)return idx;
         throw err;
       }
     })());
@@ -129,14 +134,15 @@ self.addEventListener('fetch',(e)=>{
   }
   e.respondWith((async()=>{
     const c=await caches.open(CACHE);
-    const hit=await caches.match(e.request);
-    const net=async()=>{
+    try{
       const res=await fetch(e.request);
       if(res&&res.ok&&res.type==='basic')c.put(e.request,res.clone());
       return res;
-    };
-    if(hit){net().catch(()=>{});return hit;}
-    return net();
+    }catch(err){
+      const hit=await caches.match(e.request);
+      if(hit)return hit;
+      throw err;
+    }
   })());
 });`;
 
@@ -174,8 +180,8 @@ const PRELOAD_SCRIPT = `<script>
 </script>`;
 
 const HEAD_INJECT = [
-  `<meta name="theme-color" content="#0F1216" />`,
-  `<style>html,body,#root{background:#0F1216;color-scheme:dark}</style>`,
+  `<meta name="theme-color" content="#10151C" />`,
+  `<style>html,body,#root{background:#10151C;color-scheme:dark}</style>`,
   `<meta name="description" content="NEWS - Tin tức Forex & Macro theo thời gian thực" />`,
   `<meta name="mobile-web-app-capable" content="yes" />`,
   `<meta name="apple-mobile-web-app-capable" content="yes" />`,
@@ -184,6 +190,9 @@ const HEAD_INJECT = [
   `<link rel="manifest" href="/manifest.webmanifest" />`,
   `<link rel="icon" type="image/png" href="/icons/icon-192.png" />`,
   `<link rel="apple-touch-icon" href="/icons/icon-180.png" />`,
+  `<link rel="preconnect" href="https://vsrzhjdqaftsfyyzfuai.supabase.co" crossorigin />`,
+  `<link rel="preconnect" href="https://news-app-realtime-seven.vercel.app" crossorigin />`,
+  `<link rel="preconnect" href="https://translate.googleapis.com" crossorigin />`,
 ].join('\n    ');
 
 export function main() {

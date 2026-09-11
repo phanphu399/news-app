@@ -3,7 +3,7 @@
   "short_name": "NEWS",
   "description": "Tin tức Forex & Macro theo thời gian thực",
   "id": "/",
-  "start_url": "/?__v=v8",
+  "start_url": "/?__v=v9",
   "scope": "/",
   "display": "standalone",
   "display_override": [
@@ -11,8 +11,8 @@
     "minimal-ui"
   ],
   "orientation": "portrait",
-  "background_color": "#0F1216",
-  "theme_color": "#0F1216",
+  "background_color": "#10151C",
+  "theme_color": "#10151C",
   "lang": "vi",
   "categories": [
     "news",

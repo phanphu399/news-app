@@ -3,7 +3,7 @@
 // do Expo luôn tự sinh index.html mà không dùng template).
 // public/ (manifest, sw.js, icons) luôn được expo export copy vào dist nên
 // chỉ cần nối wiring này là Chrome nhận app là cài được.
-export const WEB_BUILD_VERSION = 'v8';
+export const WEB_BUILD_VERSION = 'v9';
 
 export function ensureWebPwa() {
   if (typeof window === 'undefined' || typeof document === 'undefined') return;
@@ -20,7 +20,7 @@ export function ensureWebPwa() {
     addHtml('link', { rel: 'manifest', href: '/manifest.webmanifest' });
   }
   if (!document.querySelector('meta[name="theme-color"]')) {
-    addHtml('meta', { name: 'theme-color', content: '#0F1216' });
+    addHtml('meta', { name: 'theme-color', content: '#10151C' });
   }
   if (!document.querySelector('link[rel="icon"]')) {
     addHtml('link', { rel: 'icon', type: 'image/png', href: '/icons/icon-192.png' });

@@ -5,7 +5,8 @@ const GTX_ENDPOINT = 'https://translate.googleapis.com/translate_a/single';
 const CACHE_KEY = '@aster/translations';
 const TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const MAX_CACHE = 500;
-const MAX_INFLIGHT = 3;
+const MAX_INFLIGHT = 4;
+const MAX_QUEUE = 40;
 
 const isWeb = Platform.OS === 'web';
 const inflight = new Map();
@@ -100,6 +101,10 @@ export async function translateToVietnamese(text) {
   if (inflight.has(trimmed)) return inflight.get(trimmed);
 
   const promise = new Promise((resolve, reject) => {
+    if (queue.length >= MAX_QUEUE) {
+      resolve(trimmed);
+      return;
+    }
     queue.push({ text: trimmed, resolve, reject });
     runQueue();
   });

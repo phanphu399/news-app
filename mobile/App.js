@@ -403,7 +403,7 @@ const styles = StyleSheet.create({
   },
   tabBar: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(11,14,20,0.92)',
+    backgroundColor: 'rgba(16,21,28,0.92)',
     backdropFilter: 'blur(14px)',
     borderTopWidth: 1,
     borderTopColor: 'rgba(255,255,255,0.08)',
@@ -419,7 +419,7 @@ const styles = StyleSheet.create({
     paddingBottom: 2,
   },
   tabItemActive: {
-    backgroundColor: 'rgba(245,158,11,0.05)',
+    backgroundColor: 'rgba(240,168,92,0.06)',
   },
   tabLabel: {
     color: TAB_INACTIVE,
