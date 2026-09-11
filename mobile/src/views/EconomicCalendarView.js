@@ -13,10 +13,14 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
+  Animated,
+  Easing,
+  Linking,
   useWindowDimensions,
 } from 'react-native';
 import { COLORS, FONT_FAMILY, TABULAR_NUMS } from '../config/constants';
 import { BACKEND_URL } from '../config/constants';
+import { fetchLatestNews } from '../services/SupabaseService';
 import { ChevronUpIcon, RefreshIcon } from '../components/UIIcons';
 import { showToast } from '../services/ToastService';
 import localizeTitle, {
@@ -72,12 +76,85 @@ const FILTER_ACTIVE_STYLES = {
   },
 };
 
+// Đếm ngược hiển thị khi tin sắp ra trong vòng 5 phút.
+const COUNTDOWN_WINDOW_MS = 5 * 60 * 1000;
+// Sau khi qua giờ ra tin, vẫn xoay icon chờ kết quả trong tối đa 4 giờ.
+const SPIN_PAST_MS = 4 * 60 * 60 * 1000;
+// Tin liên quan ảnh hưởng giá vàng/bạc/CPI/Fed.
+const RELATED_TERM_RE =
+  /fed|fomc|rate decision|interest rate|cpi|inflation|ppi|gold|xau|silver|xag|vàng|bạc|oil|brent|treasury|dollar index|dxy/i;
+const RELATED_JUNK_RE =
+  /(live|bitcoin|crypto|presale|airdropp?|casino|betting|free signal|sponsored|advertising|discount|sale|limited time|sign up)/i;
+
 function TimeoutWatch({ onTimeout }) {
   useEffect(() => {
     const timer = setTimeout(onTimeout, 15000);
     return () => clearTimeout(timer);
   }, [onTimeout]);
   return null;
+}
+
+function formatCountdown(ms) {
+  const total = Math.max(0, Math.ceil(ms / 1000));
+  const m = Math.floor(total / 60);
+  const s = total % 60;
+  return `${m}:${String(s).padStart(2, '0')}`;
+}
+
+function timeAgo(ms) {
+  const diff = Date.now() - ms;
+  if (diff < 60 * 1000) return 'vừa xong';
+  if (diff < 60 * 60 * 1000) return `${Math.floor(diff / 60000)}p`;
+  if (diff < 24 * 60 * 60 * 1000) return `${Math.floor(diff / 3600000)}h`;
+  return `${Math.floor(diff / 86400000)}d`;
+}
+
+// Icon reload xoay liên tục — dùng khi qua giờ ra tin mà chưa có kết quả.
+function SpinIcon({ size = 13, color = Z.amber400, strokeWidth = 2.2 }) {
+  const spin = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const animation = Animated.loop(
+      Animated.timing(spin, {
+        toValue: 1,
+        duration: 950,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      })
+    );
+    animation.start();
+    return () => animation.stop();
+  }, [spin]);
+  const rotate = spin.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] });
+  return (
+    <Animated.View style={{ transform: [{ rotate }] }}>
+      <RefreshIcon size={size} color={color} strokeWidth={strokeWidth} />
+    </Animated.View>
+  );
+}
+
+function fmtPrice(value, unit) {
+  if (value == null || Number.isNaN(value)) return '—';
+  const resolved =
+    value >= 1000 ? 0 : value >= 100 ? 1 : 2;
+  return `${value.toFixed(resolved)}${unit ? ` ${unit}` : ''}`;
+}
+
+function MarketTile({ item, compact }) {
+  const up = item.changePct == null ? null : item.changePct >= 0;
+  const color = up == null ? Z.zinc400 : up ? Z.emerald400 : Z.rose400;
+  return (
+    <View style={styles.marketTile}>
+      <Text style={styles.marketName}>{item.name}</Text>
+      <Text style={styles.marketPrice} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5}>
+        {fmtPrice(item.price, item.unit)}
+      </Text>
+      <Text style={[styles.marketChange, { color }]}>
+        {up == null
+          ? '—'
+          : `${up ? '+' : ''}${item.changePct.toFixed(2)}%`}
+      </Text>
+    </View>
+  );
 }
 
 // Cờ "Actual tốt hơn Dự báo" có thật không — heuristic cho loại chỉ số nghịch đảo.
@@ -115,24 +192,48 @@ function ImpactIndicator({ impact }) {
   );
 }
 
-function CalendarRow({ event }) {
+function CalendarRow({ event, compact, now, last }) {
   const time = formatTime(event.date);
   const currency = event.country || '?';
   const forecast = event.forecast ?? '—';
   const previous = event.previous ?? '—';
   const actual = event.actual ?? '';
   const actualCol = actual ? actualColor(actual, event.forecast, event.title) : null;
+  const eventMs = new Date(event.date || 0).getTime();
+  const diff = eventMs - now;
+  const countDown = diff > 0 && diff <= COUNTDOWN_WINDOW_MS;
+  const waiting = !actual && diff <= 0 && now - eventMs <= SPIN_PAST_MS;
+  const isFed = /fed|fomc/i.test(String(event.title || ''));
 
   return (
-    <View style={styles.row}>
+    <View style={[styles.row, compact && styles.rowCompact]}>
       <View style={styles.timeCol}>
         <Text style={styles.timeText}>{time}</Text>
         <Text style={styles.currencyText}>{currency}</Text>
+        {countDown ? (
+          <Text
+            style={styles.countdownText}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.55}
+          >
+            Còn {formatCountdown(diff)}
+          </Text>
+        ) : waiting ? (
+          <View style={styles.waitingIconWrap}>
+            <SpinIcon size={12} color={Z.amber400} strokeWidth={2.4} />
+          </View>
+        ) : null}
       </View>
 
       <View style={styles.infoCol}>
         <View style={styles.titleWrap}>
           <ImpactIndicator impact={event.impact} />
+          {isFed && (
+            <View style={styles.fedTag}>
+              <Text style={styles.fedTagText}>FED</Text>
+            </View>
+          )}
           <Text style={styles.titleText} numberOfLines={2}>
             {localizeTitle(event.title)}
           </Text>
@@ -183,7 +284,7 @@ function CalendarRow({ event }) {
   );
 }
 
-const DayGroup = forwardRef(function DayGroup({ date, events, isToday, compact }, ref) {
+const DayGroup = forwardRef(function DayGroup({ date, events, isToday, compact, now }, ref) {
   return (
     <View ref={ref} id={`date-group-${date}`} style={styles.dayGroup}>
       <View style={styles.dateHeader}>
@@ -198,12 +299,17 @@ const DayGroup = forwardRef(function DayGroup({ date, events, isToday, compact }
         <Text style={styles.dateCount}>{events.length} sự kiện</Text>
       </View>
       {events.map((event, index) => (
-        <CalendarRow
+        <View
           key={`${event.date}-${index}`}
-          event={event}
-          compact={compact}
-          last={index === events.length - 1}
-        />
+          id={`event-row-${date}-${index}`}
+        >
+          <CalendarRow
+            event={event}
+            compact={compact}
+            now={now}
+            last={index === events.length - 1}
+          />
+        </View>
       ))}
     </View>
   );
@@ -217,11 +323,22 @@ export default function EconomicCalendarView() {
   const [error, setError] = useState(null);
   const [impact, setImpact] = useState('All');
   const [refreshing, setRefreshing] = useState(false);
+  const [markets, setMarkets] = useState({});
+  const [related, setRelated] = useState([]);
+  const [now, setNow] = useState(() => Date.now());
   const [showTodayButton, setShowTodayButton] = useState(false);
   const abortRef = useRef(null);
   const scrollRef = useRef(null);
   const todayRef = useRef(null);
+  const pollBusyRef = useRef(false);
+  const didFocus = useRef(false);
   const todayKey = useMemo(() => new Date().toDateString(), []);
+
+  // Ticker 1s để đếm ngược chạy realtime.
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   const rescueFromHang = useCallback(() => {
     setLoading(false);
@@ -233,12 +350,12 @@ export default function EconomicCalendarView() {
     });
   }, []);
 
-  const load = useCallback(async (mode = 'initial') => {
+  const loadEvents = useCallback(async (mode = 'initial') => {
     const abort = new AbortController();
     abortRef.current = abort;
     const timeout = setTimeout(() => abort.abort(), 12000);
     if (mode === 'initial') setLoading(true);
-    else setRefreshing(true);
+    else if (mode === 'refresh') setRefreshing(true);
     setError(null);
     try {
       const res = await fetch(`${BACKEND_URL}/api/calendar`, {
@@ -250,35 +367,94 @@ export default function EconomicCalendarView() {
       setEvents(json.events || []);
     } catch (err) {
       if (err.name === 'AbortError') {
-        setError('Quá thời gian chờ (12s), thử lại.');
-        showToast({ type: 'error', title: 'Lịch kinh tế quá chậm', message: 'Kết nối tới server bị treo, hãy thử lại.' });
+        if (mode !== 'poll') {
+          setError('Quá thời gian chờ (12s), thử lại.');
+          showToast({ type: 'error', title: 'Lịch kinh tế quá chậm', message: 'Kết nối tới server bị treo, hãy thử lại.' });
+        }
         return;
       }
-      setError(err.message);
-      showToast({ type: 'error', title: 'Lỗi lịch kinh tế', message: err.message });
+      if (mode !== 'poll') {
+        setError(err.message);
+        showToast({ type: 'error', title: 'Lỗi lịch kinh tế', message: err.message });
+      }
     } finally {
       clearTimeout(timeout);
       if (mode === 'initial') setLoading(false);
-      else setRefreshing(false);
+      else if (mode === 'refresh') setRefreshing(false);
+    }
+  }, []);
+
+  const loadMarkets = useCallback(async () => {
+    const abort = new AbortController();
+    const timeout = setTimeout(() => abort.abort(), 10000);
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/markets`, {
+        signal: abort.signal,
+        headers: { Accept: 'application/json' },
+      });
+      const json = await res.json();
+      if (!res.ok || !json?.ok) throw new Error(json?.error || `HTTP ${res.status}`);
+      setMarkets(json.markets || {});
+    } catch {
+      /* giữ giá cũ nếu lần sau lỗi */
+    } finally {
+      clearTimeout(timeout);
+    }
+  }, []);
+
+  const loadRelated = useCallback(async () => {
+    try {
+      const items = await fetchLatestNews(60);
+      const scored = items
+        .filter(
+          (item) =>
+            item?.title &&
+            RELATED_TERM_RE.test(item.title) &&
+            !RELATED_JUNK_RE.test(item.title)
+        )
+        .sort((a, b) => b.publishedAt.getTime() - a.publishedAt.getTime())
+        .slice(0, 6);
+      setRelated(scored);
+    } catch {
+      /* best-effort */
     }
   }, []);
 
   useEffect(() => {
-    load('initial');
+    loadEvents('initial');
+    loadMarkets();
+    loadRelated();
     return () => abortRef.current?.abort();
-  }, [load]);
+  }, [loadEvents, loadMarkets, loadRelated]);
+
+  // Auto-poll 30s: cập nhật chỉ số hiện tại + giá vàng/bạc ngay khi có kết quả.
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (pollBusyRef.current) return;
+      pollBusyRef.current = true;
+      Promise.resolve()
+        .then(() => loadEvents('poll'))
+        .then(() => loadMarkets())
+        .catch(() => {})
+        .finally(() => {
+          pollBusyRef.current = false;
+          loadRelated();
+        });
+    }, 30000);
+    return () => clearInterval(timer);
+  }, [loadEvents, loadMarkets, loadRelated]);
 
   const filtered = useMemo(() => {
     const list =
       impact === 'All' ? events : events.filter((event) => event.impact === impact);
-    const now = Date.now();
+    const nowMs = Date.now();
     const valid = list.filter((event) => {
       if (!event || !event.date) return false;
       const time = new Date(event.date).getTime();
       return !Number.isNaN(time);
     });
-    const upcoming = valid.filter((event) => new Date(event.date) >= now - 3600_000);
-    const past = valid.filter((event) => new Date(event.date) < now - 3600_000);
+    const upcoming = valid.filter((event) => new Date(event.date) >= nowMs - 3600_000);
+    const past = valid.filter((event) => new Date(event.date) < nowMs - 3600_000);
     return [...upcoming, ...past];
   }, [events, impact]);
 
@@ -311,25 +487,37 @@ export default function EconomicCalendarView() {
     [sections]
   );
 
-  // AUTO-SCROLL VỀ HÔM NAY khi danh sách render xong.
-  // Fallback: nhóm tương lai gần nhất, còn không thì nhóm cuối (gần hôm nay nhất).
+  // Vị trí cần "mount": hôm nay, ở sự kiện đang/đến giờ hoặc sắp ra gần nhất.
+  const focusId = useMemo(() => {
+    if (!listData.length) return null;
+    const nowMs = Date.now();
+    const todayIndex = listData.findIndex((g) => g.date === todayKey);
+    let idx = todayIndex;
+    if (idx < 0) idx = listData.findIndex((g) => new Date(g.date).getTime() >= nowMs);
+    if (idx < 0) idx = listData.length - 1;
+    const group = listData[idx];
+    const focus = group.events.find(
+      (e) => new Date(e.date).getTime() >= nowMs - 10 * 60 * 1000
+    );
+    return focus
+      ? `event-row-${group.key}-${group.events.indexOf(focus)}`
+      : `date-group-${group.key}`;
+  }, [listData, todayKey]);
+
   const listReady = !loading && !error && listData.length > 0;
   useEffect(() => {
-    if (!listReady || typeof document === 'undefined') return;
+    if (!listReady || typeof document === 'undefined' || didFocus.current) return;
+    didFocus.current = true;
     const timer = setTimeout(() => {
-      let target = todayRef.current;
-      if (!target) {
-        const todayTime = new Date(todayKey).getTime();
-        let index = listData.findIndex((group) => new Date(group.date).getTime() >= todayTime);
-        if (index === -1) index = listData.length - 1;
-        if (index >= 0) target = document.getElementById(`date-group-${listData[index].key}`);
-      }
+      let target = null;
+      if (focusId) target = document.getElementById(focusId);
+      if (!target) target = todayRef.current;
       if (target && typeof target.scrollIntoView === 'function') {
         target.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
-    }, 160);
+    }, 200);
     return () => clearTimeout(timer);
-  }, [listReady, todayKey, listData]);
+  }, [listReady, focusId]);
 
   // Hiện nút "Về hôm nay" khi cuộn xa khỏi nhóm hôm nay (> 240px).
   const handleScroll = useCallback(() => {
@@ -355,6 +543,11 @@ export default function EconomicCalendarView() {
     }
   }, [todayKey, listData]);
 
+  const marketList = useMemo(
+    () => (['GC=F', 'SI=F'].map((sym) => markets[sym]).filter(Boolean)),
+    [markets]
+  );
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -364,7 +557,7 @@ export default function EconomicCalendarView() {
         </View>
         <TouchableOpacity
           style={styles.updateBtn}
-          onPress={() => load('refresh')}
+          onPress={() => loadEvents('refresh')}
           activeOpacity={0.7}
           disabled={refreshing}
         >
@@ -378,6 +571,41 @@ export default function EconomicCalendarView() {
           )}
         </TouchableOpacity>
       </View>
+
+      {marketList.length > 0 && (
+        <View style={styles.marketsBar}>
+          {marketList.map((item) => (
+            <MarketTile key={item.symbol} item={item} compact={compact} />
+          ))}
+        </View>
+      )}
+
+      {related.length > 0 && (
+        <View style={styles.relatedWrap}>
+          <Text style={styles.relatedTitle}>Tin ảnh hưởng · Vàng/Bạc · CPI · Fed</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.relatedRow}
+          >
+            {related.map((item) => (
+              <TouchableOpacity
+                key={item.id}
+                style={styles.relatedChip}
+                onPress={() => Linking.openURL(item.url).catch(() => {})}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.relatedChipText} numberOfLines={1}>
+                  {item.title}
+                </Text>
+                <Text style={styles.relatedChipTime}>
+                  {timeAgo(item.publishedAt.getTime())}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      )}
 
       <View style={styles.filtersBar}>
         {IMPACT_FILTERS.map((filter) => {
@@ -409,7 +637,7 @@ export default function EconomicCalendarView() {
           <Text style={styles.errorText}>Không tải được lịch kinh tế — {error}</Text>
           <TouchableOpacity
             style={[styles.retryBtn, styles.errorRetry]}
-            onPress={() => load('refresh')}
+            onPress={() => loadEvents('refresh')}
             activeOpacity={0.8}
           >
             <Text style={styles.retryBtnText}>Thử lại</Text>
@@ -428,7 +656,7 @@ export default function EconomicCalendarView() {
           <Text style={styles.centerText}>Chưa có sự kiện cho kỳ này.</Text>
           <TouchableOpacity
             style={styles.retryBtn}
-            onPress={() => load('refresh')}
+            onPress={() => loadEvents('refresh')}
             activeOpacity={0.8}
           >
             <Text style={styles.retryBtnText}>Làm mới</Text>
@@ -449,12 +677,13 @@ export default function EconomicCalendarView() {
               events={item.events}
               isToday={item.date === todayKey}
               compact={compact}
+              now={now}
               ref={item.date === todayKey ? todayRef : null}
             />
           ))}
           <View style={styles.safeBottom} />
           <View style={styles.footer}>
-            <Text style={styles.footerText}>Nguồn: Trading Economics · Múi giờ Việt Nam</Text>
+            <Text style={styles.footerText}>Nguồn: Trading Economics · Giá: Yahoo Finance · Múi giờ Việt Nam</Text>
           </View>
         </ScrollView>
       )}
@@ -530,6 +759,84 @@ const styles = StyleSheet.create({
     marginLeft: 5,
     fontFamily: FONT_FAMILY,
   },
+  marketsBar: {
+    flexDirection: 'row',
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingTop: 10,
+  },
+  marketTile: {
+    flex: 1,
+    minWidth: 0,
+    backgroundColor: 'rgba(255,255,255,0.035)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.07)',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+  },
+  marketName: {
+    color: Z.zinc500,
+    fontSize: 10,
+    fontWeight: '600',
+    fontFamily: FONT_FAMILY,
+  },
+  marketPrice: {
+    color: Z.zinc100,
+    fontSize: 15,
+    fontWeight: '700',
+    marginTop: 2,
+    fontFamily: FONT_FAMILY,
+    fontVariant: TABULAR_NUMS,
+  },
+  marketChange: {
+    fontSize: 11.5,
+    fontWeight: '600',
+    marginTop: 1,
+    fontFamily: FONT_FAMILY,
+    fontVariant: TABULAR_NUMS,
+  },
+  relatedWrap: {
+    paddingTop: 10,
+  },
+  relatedTitle: {
+    color: Z.zinc500,
+    fontSize: 10.5,
+    fontWeight: '600',
+    paddingHorizontal: 16,
+    marginBottom: 6,
+    fontFamily: FONT_FAMILY,
+  },
+  relatedRow: {
+    paddingHorizontal: 12,
+    paddingRight: 4,
+    gap: 6,
+    alignItems: 'center',
+  },
+  relatedChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    maxWidth: 280,
+    backgroundColor: 'rgba(245,166,35,0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(245,166,35,0.22)',
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  relatedChipText: {
+    color: Z.zinc200,
+    fontSize: 11,
+    flexShrink: 1,
+    fontFamily: FONT_FAMILY,
+  },
+  relatedChipTime: {
+    color: Z.zinc500,
+    fontSize: 10,
+    marginLeft: 6,
+    flexShrink: 0,
+    fontFamily: FONT_FAMILY,
+  },
   filtersBar: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -560,6 +867,9 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   listContent: {
+    width: '100%',
+    maxWidth: 900,
+    alignSelf: 'center',
     paddingBottom: 4,
   },
   dayGroup: {
@@ -623,10 +933,14 @@ const styles = StyleSheet.create({
     borderBottomColor: 'rgba(255,255,255,0.04)',
     minHeight: 54,
   },
+  rowCompact: {
+    gap: 8,
+    paddingHorizontal: 12,
+  },
   timeCol: {
-    width: '15%',
+    width: '12%',
     flexShrink: 0,
-    minWidth: 52,
+    minWidth: 44,
   },
   timeText: {
     color: Z.zinc200,
@@ -641,6 +955,18 @@ const styles = StyleSheet.create({
     marginTop: 2,
     fontFamily: FONT_FAMILY,
     fontVariant: TABULAR_NUMS,
+  },
+  countdownText: {
+    color: Z.amber400,
+    fontSize: 9.5,
+    fontWeight: '700',
+    marginTop: 3,
+    fontFamily: FONT_FAMILY,
+    fontVariant: TABULAR_NUMS,
+  },
+  waitingIconWrap: {
+    marginTop: 4,
+    alignItems: 'flex-start',
   },
   impactCol: {
     width: 14,
@@ -662,6 +988,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     minWidth: 0,
   },
+  fedTag: {
+    backgroundColor: 'rgba(245,166,35,0.18)',
+    borderWidth: 1,
+    borderColor: 'rgba(245,166,35,0.40)',
+    borderRadius: 4,
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    marginRight: 5,
+  },
+  fedTagText: {
+    color: Z.amber400,
+    fontSize: 8.5,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+    fontFamily: FONT_FAMILY,
+  },
   titleText: {
     color: Z.zinc100,
     fontSize: 12,
@@ -678,7 +1020,7 @@ const styles = StyleSheet.create({
     fontFamily: FONT_FAMILY,
   },
   statsCol: {
-    width: '30%',
+    width: '34%',
     flexShrink: 0,
     minWidth: 0,
     alignItems: 'stretch',

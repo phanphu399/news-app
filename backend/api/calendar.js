@@ -1,6 +1,6 @@
 const TARGET = 'https://nfs.faireconomy.media/ff_calendar_thisweek.json';
-const CACHE_TTL_MS = 45 * 60 * 1000;
-const CACHE_MAX_AGE = 60 * 60;
+const CACHE_TTL_MS = 5 * 60 * 1000;
+const CACHE_MAX_AGE = 300;
 
 let cache = { at: 0, payload: null };
 
@@ -41,6 +41,8 @@ export default async function handler(request, response) {
         impact: e.impact,
         forecast: String(e.forecast ?? '').trim(),
         previous: String(e.previous ?? '').trim(),
+        actual: e.actual != null && e.actual !== '' ? String(e.actual) : '',
+        unit: String(e.unit ?? '').trim(),
       }))
       .sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
 
