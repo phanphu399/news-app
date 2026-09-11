@@ -6,7 +6,21 @@ import { decodePng, encodePng, makeSquareIcon, fitMaskable, cropToContent } from
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const DIST = join(ROOT, 'dist');
 const ICONS = join(DIST, 'icons');
+// PWA assets được ghi vào CẢ public/ (commit lên git, Expo tự copy public -> dist
+// trong MỌI đường build, kể cả preset mặc định "expo export" của Vercel) VÀ dist/
+// (cho build cục bộ). Nhờ đó không còn đường build nào sinh ra bản thiếu sw.js/
+// manifest/icons nữa — đây là lỗ hổng đã làm live site chạy raw export.
+const PUBLIC = join(ROOT, 'public');
+const PUBLIC_ICONS = join(PUBLIC, 'icons');
 export const SOURCE_PNG = join(ROOT, 'assets', 'breaking-news-logo-design.png');
+
+function writeIconsTo(dir) {
+  mkdirSync(dir, { recursive: true });
+  writeSquareIcon(join(dir, 'icon-192.png'), 192);
+  writeSquareIcon(join(dir, 'icon-180.png'), 180);
+  writeSquareIcon(join(dir, 'icon-512.png'), 512);
+  writeSquareIcon(join(dir, 'icon-maskable-512.png'), 512, true);
+}
 
 // ---------- icons từ logo thật (breaking-news-logo-design.png) ----------
 export function loadSourceIcon() {
@@ -32,17 +46,38 @@ export function writeSquareIcon(path, size, maskable = false) {
 }
 
 export function buildWebIcons() {
-  mkdirSync(ICONS, { recursive: true });
-  writeSquareIcon(join(ICONS, 'icon-192.png'), 192);
-  writeSquareIcon(join(ICONS, 'icon-180.png'), 180);
-  writeSquareIcon(join(ICONS, 'icon-512.png'), 512);
-  writeSquareIcon(join(ICONS, 'icon-maskable-512.png'), 512, true);
+  writeIconsTo(ICONS);
+  writeIconsTo(PUBLIC_ICONS);
+}
+
+// Đảm bảo Vercel (kể cả khi upload dist thủ công) trả đúng Content-Type
+// cho PWA manifest — Chrome từ chối cài đặt nếu sai loại MIME.
+// index.html phải luôn fresh (no-cache) để không ai bị kẹt bản cũ.
+function vercelJsonContents() {
+  return JSON.stringify(
+    {
+      headers: [
+        {
+          source: '/manifest.webmanifest',
+          headers: [{ key: 'Content-Type', value: 'application/manifest+json' }],
+        },
+        {
+          source: '/(.*)',
+          headers: [
+            { key: 'Cache-Control', value: 'public, max-age=0, s-maxage=0, must-revalidate' },
+          ],
+        },
+      ],
+    },
+    null,
+    2
+  );
 }
 
 // ---------- manifest / service worker / html injection ----------
 // Phiên bản hiển thị trên UI (AppHeader). Tăng khi đổi SW cache để người dùng
 // tự xác minh bản đang chạy trên máy là mới nhất.
-const BUILD_VERSION = 'v7';
+const BUILD_VERSION = 'v8';
 
 const manifest = {
   name: 'NEWS - Realtime Market News',
@@ -65,7 +100,7 @@ const manifest = {
   ],
 };
 
-const SW = `const CACHE='aster-v7';
+const SW = `const CACHE='aster-v8';
 self.addEventListener('install',()=>{self.skipWaiting();});
 self.addEventListener('activate',(e)=>{
   e.waitUntil((async()=>{
@@ -156,42 +191,33 @@ const HEAD_INJECT = [
 export function main() {
   buildWebIcons();
 
-  writeFileSync(join(DIST, 'manifest.webmanifest'), JSON.stringify(manifest, null, 2));
-  writeFileSync(join(DIST, 'sw.js'), SW);
-
-  // Đảm bảo Vercel (kể cả khi upload dist thủ công) trả đúng Content-Type
-  // cho PWA manifest — Chrome từ chối cài đặt nếu sai loại MIME.
-  // index.html phải luôn fresh (no-cache) để không ai bị kẹt bản cũ.
-  writeFileSync(
-    join(DIST, 'vercel.json'),
-    JSON.stringify(
-      {
-        headers: [
-          {
-            source: '/manifest.webmanifest',
-            headers: [{ key: 'Content-Type', value: 'application/manifest+json' }],
-          },
-          {
-            source: '/(.*)',
-            headers: [
-              { key: 'Cache-Control', value: 'public, max-age=0, s-maxage=0, must-revalidate' },
-            ],
-          },
-        ],
-      },
-      null,
-      2
-    )
-  );
+  const pwaFiles = [
+    ['manifest.webmanifest', JSON.stringify(manifest, null, 2)],
+    ['sw.js', SW],
+    ['vercel.json', vercelJsonContents()],
+  ];
+  for (const [name, content] of pwaFiles) {
+    writeFileSync(join(DIST, name), content);
+    writeFileSync(join(PUBLIC, name), content);
+  }
 
   const htmlPath = join(DIST, 'index.html');
   let html = readFileSync(htmlPath, 'utf8');
-  html = html.replace('<head>', `<head>\n    ${PRELOAD_SCRIPT}`);
-  html = html.replace('</head>', `${HEAD_INJECT}\n  </head>`);
-  html = html.replace(
-    '</body>',
-    `<script>if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWorker.register('/sw.js'))}</script>\n</body>`
-  );
+
+  // Idempotent: nếu index.html đã có PWA wiring (sinh từ mobile/index.html
+  // template) thì không inject lại tránh trùng script.
+  if (!html.includes('window.__ASTER_BUILD')) {
+    html = html.replace('<head>', `<head>\n    ${PRELOAD_SCRIPT}`);
+  }
+  if (!html.includes('/manifest.webmanifest')) {
+    html = html.replace('</head>', `${HEAD_INJECT}\n  </head>`);
+  }
+  if (!html.includes('serviceWorker.register')) {
+    html = html.replace(
+      '</body>',
+      `<script>if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWorker.register('/sw.js'))}</script>\n</body>`
+    );
+  }
   writeFileSync(htmlPath, html);
 
   verifyDist();
@@ -203,20 +229,22 @@ export function main() {
 // mà không có sw.js / manifest / version probe (chính là thứ đã gây lỗi).
 export function verifyDist() {
   const failures = [];
-  const has = (p) => {
+  const has = (dir, p) => {
     try {
-      readFileSync(join(DIST, p));
+      readFileSync(join(dir, p));
       return true;
     } catch {
       return false;
     }
   };
-  if (!has('manifest.webmanifest')) failures.push('manifest.webmanifest');
-  if (!has('sw.js')) failures.push('sw.js');
-  if (!has('icons/icon-192.png')) failures.push('icons/icon-192.png');
-  if (!has('icons/icon-512.png')) failures.push('icons/icon-512.png');
-  if (!has('icons/icon-maskable-512.png')) failures.push('icons/icon-maskable-512.png');
-  if (!has('vercel.json')) failures.push('vercel.json');
+  for (const dir of [DIST, PUBLIC]) {
+    if (!has(dir, 'manifest.webmanifest')) failures.push(`manifest.webmanifest (${dir})`);
+    if (!has(dir, 'sw.js')) failures.push(`sw.js (${dir})`);
+    if (!has(dir, 'icons/icon-192.png')) failures.push(`icons/icon-192.png (${dir})`);
+    if (!has(dir, 'icons/icon-512.png')) failures.push(`icons/icon-512.png (${dir})`);
+    if (!has(dir, 'icons/icon-maskable-512.png')) failures.push(`icons/icon-maskable-512.png (${dir})`);
+    if (!has(dir, 'vercel.json')) failures.push(`vercel.json (${dir})`);
+  }
 
   const htmlPath = join(DIST, 'index.html');
   try {

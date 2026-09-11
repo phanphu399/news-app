@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <title>NEWS - Realtime Market News</title>
+    <meta name="theme-color" content="#0B0E14" />
+    <meta name="description" content="NEWS - Tin tức Forex & Macro theo thời gian thực" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="NEWS" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" type="image/png" href="/icons/icon-192.png" />
+    <link rel="apple-touch-icon" href="/icons/icon-180.png" />
+    <style>
+      html,
+      body,
+      #root {
+        background: #0b0e14;
+        color-scheme: dark;
+      }
+    </style>
+    <script>
+      (function () {
+        var build = 'v8';
+        window.__ASTER_BUILD = build;
+        window.__asterDeferredPrompt = null;
+        window.addEventListener('beforeinstallprompt', function (e) {
+          e.preventDefault();
+          window.__asterDeferredPrompt = e;
+          window.dispatchEvent(new Event('aster-prompt-ready'));
+        });
+        window.addEventListener('appinstalled', function () {
+          window.__asterInstalled = true;
+        });
+        // Tự kiểm tra phiên bản server (manifest luôn fresh nhờ header no-cache).
+        // Nếu server mới hơn bản đang chạy -> reload 1 lần để thoát cache cũ.
+        try {
+          fetch('/manifest.webmanifest?p=' + Date.now(), { cache: 'no-store' })
+            .then(function (r) {
+              return r.ok ? r.json() : null;
+            })
+            .then(function (m) {
+              var target = build;
+              if (m && m.start_url && m.start_url.indexOf('__v=') >= 0) {
+                target = m.start_url.slice(m.start_url.indexOf('__v=') + 4);
+              }
+              if (target && target !== build && !sessionStorage.getItem('aster-reload-' + build)) {
+                sessionStorage.setItem('aster-reload-' + build, '1');
+                try {
+                  location.reload();
+                } catch (e) {}
+              }
+            })
+            .catch(function () {});
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+      if ('serviceWorker' in navigator) {
+        addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
+      }
+    </script>
+  </body>
+</html>
