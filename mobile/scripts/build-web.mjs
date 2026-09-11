@@ -40,12 +40,16 @@ export function buildWebIcons() {
 }
 
 // ---------- manifest / service worker / html injection ----------
+// Phiên bản hiển thị trên UI (AppHeader). Tăng khi đổi SW cache để người dùng
+// tự xác minh bản đang chạy trên máy là mới nhất.
+const BUILD_VERSION = 'v7';
+
 const manifest = {
   name: 'NEWS - Realtime Market News',
   short_name: 'NEWS',
   description: 'Tin tức Forex & Macro theo thời gian thực',
   id: '/',
-  start_url: '/',
+  start_url: `/?__v=${BUILD_VERSION}`,
   scope: '/',
   display: 'standalone',
   display_override: ['standalone', 'minimal-ui'],
@@ -61,11 +65,7 @@ const manifest = {
   ],
 };
 
-// Phiên bản hiển thị trên UI (AppHeader). Tăng khi đổi SW cache để người dùng
-// tự xác minh bản đang chạy trên máy là mới nhất.
-const BUILD_VERSION = 'v6';
-
-const SW = `const CACHE='aster-v6';
+const SW = `const CACHE='aster-v7';
 self.addEventListener('install',()=>{self.skipWaiting();});
 self.addEventListener('activate',(e)=>{
   e.waitUntil((async()=>{
@@ -109,7 +109,8 @@ self.addEventListener('fetch',(e)=>{
 
 const PRELOAD_SCRIPT = `<script>
 (function () {
-  window.__ASTER_BUILD = '${BUILD_VERSION}';
+  var build = '${BUILD_VERSION}';
+  window.__ASTER_BUILD = build;
   window.__asterDeferredPrompt = null;
   window.addEventListener('beforeinstallprompt', function (e) {
     e.preventDefault();
@@ -119,6 +120,23 @@ const PRELOAD_SCRIPT = `<script>
   window.addEventListener('appinstalled', function () {
     window.__asterInstalled = true;
   });
+  // Tự kiểm tra phiên bản server (manifest luôn fresh nhờ header no-cache).
+  // Nếu server mới hơn bản đang chạy -> reload 1 lần để thoát cache cũ.
+  try {
+    fetch('/manifest.webmanifest?p=' + Date.now(), { cache: 'no-store' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (m) {
+        var target = build;
+        if (m && m.start_url && m.start_url.indexOf('__v=') >= 0) {
+          target = m.start_url.slice(m.start_url.indexOf('__v=') + 4);
+        }
+        if (target && target !== build && !sessionStorage.getItem('aster-reload-' + build)) {
+          sessionStorage.setItem('aster-reload-' + build, '1');
+          try { location.reload(); } catch (e) {}
+        }
+      })
+      .catch(function () {});
+  } catch (e) {}
 })();
 </script>`;
 

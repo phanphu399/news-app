@@ -32,6 +32,14 @@ const IMPACT_FILTERS = [
   { key: 'Low', label: 'Thấp' },
 ];
 
+function TimeoutWatch({ onTimeout }) {
+  useEffect(() => {
+    const timer = setTimeout(onTimeout, 15000);
+    return () => clearTimeout(timer);
+  }, [onTimeout]);
+  return null;
+}
+
 function ImpactBadge({ impact }) {
   return (
     <View style={[styles.impactBadge, { backgroundColor: `${IMPACT_COLORS[impact]}22` }]}>
@@ -106,6 +114,16 @@ export default function EconomicCalendarView() {
   const [impact, setImpact] = useState('All');
   const [refreshing, setRefreshing] = useState(false);
   const abortRef = useRef(null);
+
+  const rescueFromHang = useCallback(() => {
+    setLoading(false);
+    setError('Quá lâu không phản hồi (15s), hãy thử lại.');
+    showToast({
+      type: 'error',
+      title: 'Lịch kinh tế quá chậm',
+      message: 'Kết nối tới server bị treo, hãy thử lại.',
+    });
+  }, []);
 
   const load = useCallback(async (mode = 'initial') => {
     const abort = new AbortController();
@@ -237,6 +255,7 @@ export default function EconomicCalendarView() {
 
       {loading && !error ? (
         <View style={styles.center}>
+          <TimeoutWatch onTimeout={rescueFromHang} />
           <ActivityIndicator color={COLORS.primary} />
           <Text style={styles.centerText}>Đang tải lịch kinh tế…</Text>
         </View>
