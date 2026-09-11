@@ -132,49 +132,6 @@ function SpinIcon({ size = 13, color = Z.amber400, strokeWidth = 2.2 }) {
   );
 }
 
-function fmtPrice(value, unit) {
-  if (value == null || Number.isNaN(value)) return '—';
-  const resolved =
-    value >= 1000 ? 0 : value >= 100 ? 1 : 2;
-  return `${value.toFixed(resolved)}${unit ? ` ${unit}` : ''}`;
-}
-
-function fmtClock(iso) {
-  if (!iso) return '';
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return '';
-  const pad = (n) => String(n).padStart(2, '0');
-  return `${pad(date.getHours())}:${pad(date.getMinutes())}`;
-}
-
-function MarketTile({ item, compact, stale }) {
-  const up = item.changePct == null ? null : item.changePct >= 0;
-  const color = up == null ? Z.zinc400 : up ? Z.emerald400 : Z.rose400;
-  return (
-    <View style={styles.marketTile}>
-      <Text style={styles.marketName}>{item.name}</Text>
-      <Text style={styles.marketPrice} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5}>
-        {fmtPrice(item.price, item.unit)}
-      </Text>
-      <Text style={[styles.marketChange, { color }]}>
-        {up == null
-          ? '—'
-          : `${up ? '+' : ''}${item.changePct.toFixed(2)}%`}
-      </Text>
-      <Text
-        style={[styles.marketMeta, { color: stale ? Z.amber400 : Z.zinc600 }]}
-        numberOfLines={1}
-      >
-        {stale
-          ? 'giá dữ liệu cũ'
-          : item.updatedAt
-          ? `Cập nhật ${fmtClock(item.updatedAt)}`
-          : ''}
-      </Text>
-    </View>
-  );
-}
-
 // Cờ "Actual tốt hơn Dự báo" có thật không — heuristic cho loại chỉ số nghịch đảo.
 function isDownsideGood(title) {
   return /unemploy|jobless|claims/i.test(String(title || ''));
@@ -341,8 +298,6 @@ export default function EconomicCalendarView() {
   const [error, setError] = useState(null);
   const [impact, setImpact] = useState('All');
   const [refreshing, setRefreshing] = useState(false);
-  const [markets, setMarkets] = useState({});
-  const [marketsState, setMarketsState] = useState('ok');
   const [related, setRelated] = useState([]);
   const [now, setNow] = useState(() => Date.now());
   const [showTodayButton, setShowTodayButton] = useState(false);
@@ -403,26 +358,6 @@ export default function EconomicCalendarView() {
     }
   }, []);
 
-  const loadMarkets = useCallback(async () => {
-    const abort = new AbortController();
-    const timeout = setTimeout(() => abort.abort(), 10000);
-    try {
-      const res = await fetch(`${BACKEND_URL}/api/markets`, {
-        signal: abort.signal,
-        headers: { Accept: 'application/json' },
-      });
-      const json = await res.json();
-      if (!res.ok || !json?.ok) throw new Error(json?.error || `HTTP ${res.status}`);
-      setMarkets(json.markets || {});
-      setMarketsState('ok');
-    } catch {
-      /* giữ giá cũ nhưng đánh dấu "dữ liệu cũ" — không được trình bày như LIVE */
-      setMarketsState('stale');
-    } finally {
-      clearTimeout(timeout);
-    }
-  }, []);
-
   const loadRelated = useCallback(async () => {
     try {
       const items = await fetchLatestNews(60);
@@ -443,19 +378,17 @@ export default function EconomicCalendarView() {
 
   useEffect(() => {
     loadEvents('initial');
-    loadMarkets();
     loadRelated();
     return () => abortRef.current?.abort();
-  }, [loadEvents, loadMarkets, loadRelated]);
+  }, [loadEvents, loadRelated]);
 
-  // Auto-poll 30s: cập nhật chỉ số hiện tại + giá vàng/bạc ngay khi có kết quả.
+  // Auto-poll 30s: cập nhật chỉ số hiện tại + tin liên quan ngay khi có kết quả.
   useEffect(() => {
     const timer = setInterval(() => {
       if (pollBusyRef.current) return;
       pollBusyRef.current = true;
       Promise.resolve()
         .then(() => loadEvents('poll'))
-        .then(() => loadMarkets())
         .catch(() => {})
         .finally(() => {
           pollBusyRef.current = false;
@@ -463,7 +396,7 @@ export default function EconomicCalendarView() {
         });
     }, 30000);
     return () => clearInterval(timer);
-  }, [loadEvents, loadMarkets, loadRelated]);
+  }, [loadEvents, loadRelated]);
 
   const filtered = useMemo(() => {
     const list =
@@ -564,11 +497,6 @@ export default function EconomicCalendarView() {
     }
   }, [todayKey, listData]);
 
-  const marketList = useMemo(
-    () => (['GC=F', 'SI=F'].map((sym) => markets[sym]).filter(Boolean)),
-    [markets]
-  );
-
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -592,19 +520,6 @@ export default function EconomicCalendarView() {
           )}
         </TouchableOpacity>
       </View>
-
-      {marketList.length > 0 && (
-        <View style={styles.marketsBar}>
-          {marketList.map((item) => (
-            <MarketTile
-              key={item.symbol}
-              item={item}
-              compact={compact}
-              stale={marketsState === 'stale'}
-            />
-          ))}
-        </View>
-      )}
 
       {related.length > 0 && (
         <View style={styles.relatedWrap}>
@@ -783,49 +698,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     marginLeft: 5,
-    fontFamily: FONT_FAMILY,
-  },
-  marketsBar: {
-    flexDirection: 'row',
-    gap: 8,
-    paddingHorizontal: 12,
-    paddingTop: 10,
-  },
-  marketTile: {
-    flex: 1,
-    minWidth: 0,
-    backgroundColor: 'rgba(255,255,255,0.035)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.07)',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 9,
-  },
-  marketName: {
-    color: Z.zinc500,
-    fontSize: 10,
-    fontWeight: '600',
-    fontFamily: FONT_FAMILY,
-  },
-  marketPrice: {
-    color: Z.zinc100,
-    fontSize: 15,
-    fontWeight: '700',
-    marginTop: 2,
-    fontFamily: FONT_FAMILY,
-    fontVariant: TABULAR_NUMS,
-  },
-  marketChange: {
-    fontSize: 11.5,
-    fontWeight: '600',
-    marginTop: 1,
-    fontFamily: FONT_FAMILY,
-    fontVariant: TABULAR_NUMS,
-  },
-  marketMeta: {
-    fontSize: 9,
-    fontWeight: '600',
-    marginTop: 3,
     fontFamily: FONT_FAMILY,
   },
   relatedWrap: {

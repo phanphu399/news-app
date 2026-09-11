@@ -94,7 +94,7 @@ Exports (key items):
 |---|---|---|---|
 | `/api/cron-fetch` | Yes | Yes (daily cron) | Only registered cron: `0 1 * * *` tier=full |
 | `/api/manual-fetch` | Yes | `REQUIRES RUNTIME VERIFICATION` | Requires backend redeploy to `news-app-realtime-seven` |
-| `/api/markets` | Yes | `REQUIRES RUNTIME VERIFICATION` | Same redeploy needed; `TradingViewScreen` shows "chart coming soon" when offline |
+| `/api/markets` | Yes | `REQUIRES RUNTIME VERIFICATION` | Same redeploy needed; **no longer referenced by mobile** since the gold/silver price panel was removed from `EconomicCalendarView` |
 | `/api/article` | Yes | `REQUIRES RUNTIME VERIFICATION` | Backend redeploy needed |
 | `/api/cleanup` | Yes | `REQUIRES RUNTIME VERIFICATION` | Requires `CRON_SECRET` for auth |
 | `/api/sources` | Yes | `REQUIRES RUNTIME VERIFICATION` | — |

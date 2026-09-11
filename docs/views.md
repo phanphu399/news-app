@@ -84,20 +84,18 @@ Position: absolute top, `top: 10 + offset*140`, max 3 stacked, `zIndex:1000`.
 - "ĐÃ LƯU (n)" section — bookmarked items with "Bỏ lưu" button
 
 ## EconomicCalendarView.js
-"Lịch KT" tab. Economic calendar with live price ticker for gold/silver.
+"Lịch KT" tab. Economic calendar (fixture calendar, no price ticker).
 
 **Props:** (none — self-contained; but relies on global body device width via `useWindowDimensions`).
 
 **Features:**
-- **Markets ticker**: fetches `/api/markets` → GC=F (Vàng), SI=F (Bạc) price tiles
-  - `marketsState` 'ok' | 'stale' — stale shows "giá dữ liệu cũ" in amber; fresh shows "Cập nhật HH:MM"
 - **Related chips**: "Tin ảnh hưởng · Vàng/Bạc · CPI · Fed" — fetches latest 60 news, filters by RELATED_TERM_RE / RELATED_JUNK_RE, links out via `Linking.openURL`
 - **Impact filters**: All / High / Medium / Low with per-filter active colors
 - **Auto-focus**: scrolls to today's group on mount (`scrollIntoView` — web only, guarded by `typeof document`)
 - **"Hôm nay" FAB**: shows when scrolled > 240px away from today's group
 - **1s ticker**: countdown timer for upcoming events
 - **Countdown chip**: shows while in 5-min window before slot; spinning refresh icon while waiting after slot (≤4h window)
-- **Real-time polls**: every 30s refetches events (`loadEvents('poll')`) + markets; 12s fetch timeout with AbortController; 15s hang-rescue toast
+- **Real-time polls**: every 30s refetches events (`loadEvents('poll')`); 12s fetch timeout with AbortController; 15s hang-rescue toast
 - **Backend source**: `BACKEND_URL/api/calendar`
 
 **Localization:** `localizeTitle()`, `localizeCountry()`, `formatDateHeader()`, `formatTime()` from `utils/calendarVi.js`.

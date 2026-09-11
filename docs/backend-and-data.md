@@ -22,6 +22,7 @@ All endpoints are Vercel serverless functions (ESM). Runtime Node ≥18 with `fe
 - Cache: 60s in-memory. On upstream failure, returns stale cache with `stale:true`; if no cache → `502`.
 - `Cache-Control: public, max-age=60`.
 - Upstream: `https://query1.finance.yahoo.com/v8/finance/chart/{symbol}`, UA spoofed "Mozilla/5.0 (news-app markets proxy)", 8s timeout.
+- **No longer consumed by mobile** — the gold/silver price panel was removed from `EconomicCalendarView` (2026-09-11). Endpoint kept in backend.
 
 ### GET /api/calendar
 - Proxies `https://nfs.faireconomy.media/ff_calendar_thisweek.json`.
