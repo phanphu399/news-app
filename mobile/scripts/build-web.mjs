@@ -194,7 +194,47 @@ export function main() {
   );
   writeFileSync(htmlPath, html);
 
-  console.log('[build-web] PWA assets written: icon-192, icon-180, icon-512, icon-maskable-512, manifest.webmanifest, sw.js');
+  verifyDist();
+}
+
+// Chang quang: bất kỳ đường build nào (Vercel auto-deploy, upload thủ công,
+// npm run build cục bộ) đều PHẢI ra dist đầy đủ PWA. Nếu thiếu bất kỳ thành
+// phần nào => build trả lỗi, không cho phép sinh ra bản "raw expo export"
+// mà không có sw.js / manifest / version probe (chính là thứ đã gây lỗi).
+export function verifyDist() {
+  const failures = [];
+  const has = (p) => {
+    try {
+      readFileSync(join(DIST, p));
+      return true;
+    } catch {
+      return false;
+    }
+  };
+  if (!has('manifest.webmanifest')) failures.push('manifest.webmanifest');
+  if (!has('sw.js')) failures.push('sw.js');
+  if (!has('icons/icon-192.png')) failures.push('icons/icon-192.png');
+  if (!has('icons/icon-512.png')) failures.push('icons/icon-512.png');
+  if (!has('icons/icon-maskable-512.png')) failures.push('icons/icon-maskable-512.png');
+  if (!has('vercel.json')) failures.push('vercel.json');
+
+  const htmlPath = join(DIST, 'index.html');
+  try {
+    const html = readFileSync(htmlPath, 'utf8');
+    if (!html.includes('serviceWorker.register')) failures.push('index.html thiếu SW registration');
+    if (!html.includes('/manifest.webmanifest')) failures.push('index.html thiếu manifest link');
+    if (!html.includes(`var build = '${BUILD_VERSION}'`)) failures.push('index.html thiếu build version');
+  } catch {
+    failures.push('index.html');
+  }
+
+  if (failures.length) {
+    console.error('[verify-dist] FAIL — dist KHÔNG HỢP LỆ, đang thiếu:');
+    failures.forEach((f) => console.error('   - ' + f));
+    console.error('[verify-dist] Lưu ý: bản ' + BUILD_VERSION + ' chỉ hợp lệ khi sinh từ "npm run build".');
+    process.exit(1);
+  }
+  console.log('[verify-dist] OK — ' + BUILD_VERSION + ' (sw.js, manifest, icons, vercel.json, version probe)');
 }
 
 const isDirectRun =
@@ -204,5 +244,9 @@ const isDirectRun =
     'file:///' + process.argv[1].replace(/\\/g, '/');
 
 if (isDirectRun) {
-  main();
+  if (process.argv.includes('--verify')) {
+    verifyDist();
+  } else {
+    main();
+  }
 }

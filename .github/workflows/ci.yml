@@ -59,6 +59,12 @@ jobs:
           node --check App.js
           node --check src/viewmodels/NewsViewModel.js
           node --check src/services/CustomFeedService.js
+          node --check scripts/build-web.mjs
+          node --check src/views/EconomicCalendarView.js
 
       - name: Validate app.json
         run: node -e "const c = require('./app.json'); if (!c.expo || !c.expo.plugins) throw new Error('app.json invalid'); console.log('app.json OK');"
+
+      - name: Validate vercel.json (build pipeline)
+        run: node -e "const m = require('./vercel.json'); if (!m.buildCommand || !m.outputDirectory) throw new Error('mobile/vercel.json invalid'); console.log('mobile/vercel.json OK:', m.buildCommand, '->', m.outputDirectory);"
+        working-directory: mobile
