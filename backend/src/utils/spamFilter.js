@@ -26,6 +26,17 @@ export const SPAM_REGEX = [
   /\b(watch:|watch now|in 60 seconds|3 charts|2 charts)\b/i,
 ];
 
+/** Nội dung Crypto/Bitcoin — người dùng không muốn cào nữa. */
+export const CRYPTO_REGEX = [
+  /\b(bitcoin|btc|ethereum|eth|dogecoin|xrp|solana|litecoin|tether|usdt|altcoin|stablecoin)\b/i,
+  /\b(crypto|cryptocurrenc(y|ies))\b/i,
+  /\bblockchain\b/i,
+];
+
+function isBitcoinContent(text) {
+  return CRYPTO_REGEX.some((re) => re.test(text));
+}
+
 /** Độ dài tiêu đề tối thiểu còn nhận — dưới ngưỡng là rác (fragment, nav). */
 export const MIN_TITLE_LENGTH = 16;
 
@@ -38,6 +49,7 @@ export function isJunkTitle(title) {
   const text = title.trim();
   if (!text || text.length < MIN_TITLE_LENGTH) return true;
   if (SPAM_REGEX.some((re) => re.test(text))) return true;
+  if (isBitcoinContent(text)) return true;
 
   if (text.length >= CAPS_MIN_LENGTH) {
     const letters = text.replace(/[^A-Za-z]/g, '');

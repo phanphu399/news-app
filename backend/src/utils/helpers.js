@@ -31,9 +31,9 @@ export function sanitizeTitle(title) {
 }
 
 export function parseIsoDate(value) {
-  if (!value) return new Date().toISOString();
+  if (!value) return null;
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? new Date().toISOString() : date.toISOString();
+  return Number.isNaN(date.getTime()) ? null : date.toISOString();
 }
 
 export function generateRunId() {

@@ -39,8 +39,6 @@ export const RED_ALERT_KEYWORDS = [
   'COLLAPSE',
   'TREASURY',
   'INFLATION',
-  'BITCOIN',
-  'BTC',
   'TARIFF',
   'TRUMP',
   'YEN',
@@ -90,11 +88,7 @@ export const FOREX_QUERIES = [
   { q: 'EUR USD euro exchange rate', c: 'Forex' },
 ];
 
-export const CRYPTO_QUERIES = [
-  { q: 'Bitcoin BTC price', c: 'Crypto' },
-  { q: 'cryptocurrency market Trump', c: 'Crypto' },
-  { q: 'Ethereum crypto price', c: 'Crypto' },
-];
+export const CRYPTO_QUERIES = [];
 
 export const PAYWALL_QUERIES = [
   'site:bloomberg.com markets',

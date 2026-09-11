@@ -55,12 +55,12 @@ export default class NewsViewModel {
         const isFresh = ageMs >= 0 && ageMs <= NEW_ITEM_MAX_AGE_MS;
 
         this.items = sortByTime([item, ...this.items]).slice(0, 150);
-        if (item?.isImportant) {
-          this.importantIds.add(item.id);
-          NewsWarningService.playBeep();
-          NewsWarningService.scheduleLocal(item);
-        }
         if (isFresh) {
+          if (item?.isImportant) {
+            this.importantIds.add(item.id);
+            NewsWarningService.playBeep();
+            NewsWarningService.scheduleLocal(item);
+          }
           this.newItemListeners.forEach((listener) => listener(item));
         }
         this.emit();
