@@ -4,6 +4,7 @@ import {
   EXTRA_FEEDS,
   KNOWN_SOURCES,
 } from '../src/config/constants.js';
+import { safeFetch } from '../src/utils/safeFetch.js';
 
 const HEALTH_TTL_MS = 5 * 60 * 1000;
 const healthCache = new Map();
@@ -57,18 +58,14 @@ async function checkHealth(source) {
   let healthy = false;
   let error = '';
   try {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 5000);
-    const res = await fetch(source.url, {
-      signal: controller.signal,
-      redirect: 'follow',
+    const res = await safeFetch(source.url, {
+      timeoutMs: 5000,
       headers: {
         'User-Agent':
           'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36',
         Accept: 'application/rss+xml, application/xml, text/xml, */*',
       },
     });
-    clearTimeout(timer);
     healthy = res.ok && res.status < 400;
     if (!healthy) error = `HTTP ${res.status}`;
   } catch (err) {

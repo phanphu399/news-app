@@ -46,7 +46,8 @@ jobs:
           node --check src/config/constants.js
 
       - name: Validate vercel.json
-        run: node -e "const c = require('./vercel.json'); if (!Array.isArray(c.crons)) throw new Error('crons array missing'); console.log(c.crons.length ? 'cron(s): ' + c.crons.map(x => x.schedule + ' ' + x.path).join(', ') : 'no committed cron — configure the daily cron in Vercel Dashboard with ?secret=<CRON_SECRET>&tier=full');"
+        run: |
+          node -e "const c = require('./vercel.json'); if (!Array.isArray(c.crons)) throw new Error('crons array missing'); const msg = c.crons.length ? 'cron(s): ' + c.crons.map(x => x.schedule + ' ' + x.path).join(', ') : 'no committed cron — configure the daily cron in Vercel Dashboard with ?secret=<CRON_SECRET>&tier=full'; console.log(msg);"
 
   mobile:
     name: Mobile checks (Expo)

@@ -12,6 +12,9 @@ const PRIVATE_IPV4 = [
   [/^192\.168\./, 'private 192.168/16'],
   [/^100\.(6[4-9]|[7-9]\d)\./, 'CGNAT 100.64/10'],
   [/^198\.(18|19)\./, 'benchmarking'],
+  [/^192\.0\.2\./, 'TEST-NET-1 (documentation)'],
+  [/^198\.51\.100\./, 'TEST-NET-2 (documentation)'],
+  [/^203\.0\.113\./, 'TEST-NET-3 (documentation)'],
   [/^224\./, 'multicast'],
   [/^(22[4-9]|23[0-9])\./, 'multicast'],
   [/^2[4-7]\d\./, 'reserved'],
@@ -22,13 +25,35 @@ function isPrivateIpv4(ip) {
   return PRIVATE_IPV4.some(([re]) => re.test(ip));
 }
 
+// Trích IPv4 nhúng trong địa chỉ IPv6 dạng ::ffff:a.b.c.d hoặc ::ffff:xxxx:xxxx
+// (URL chuẩn hóa về dạng hex, nên regex dạng thập phân là không đủ).
+function mappedIpv4(lower) {
+  if (!lower.startsWith('::ffff:')) return null;
+  const tail = lower.slice('::ffff:'.length);
+  if (/^\d{1,3}(?:\.\d{1,3}){3}$/.test(tail)) return tail;
+  const hexGroups = tail.split(':');
+  if (hexGroups.length === 2 && hexGroups.every((g) => /^[0-9a-f]{1,4}$/.test(g))) {
+    const bytes = [];
+    for (const group of hexGroups) {
+      const n = parseInt(group, 16);
+      bytes.push((n >> 8) & 0xff, n & 0xff);
+    }
+    return bytes.join('.');
+  }
+  if (/^[0-9a-f]{8}$/.test(tail)) {
+    const n = parseInt(tail, 16);
+    return [(n >>> 24) & 0xff, (n >>> 16) & 0xff, (n >>> 8) & 0xff, n & 0xff].join('.');
+  }
+  return null;
+}
+
 function isPrivateIpv6(ip) {
   const lower = ip.toLowerCase();
   if (lower === '::' || lower === '::1' || lower === '0:0:0:0:0:0:0:1') return true;
   if (lower.startsWith('fc') || lower.startsWith('fd')) return true; // fc00::/7
-  if (/^fe[89ab]/.test(lower)) return true; // fe80::/10
-  const v4Mapped = lower.match(/^::ffff:(\d{1,3}(?:\.\d{1,3}){3})$/);
-  if (v4Mapped) return isPrivateIpv4(v4Mapped[1]);
+  if (/^fe[89a-f]/.test(lower)) return true; // fe80::/10 và fec0::/10
+  const mapped = mappedIpv4(lower);
+  if (mapped) return isPrivateIpv4(mapped);
   return false;
 }
 
