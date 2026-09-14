@@ -14,26 +14,12 @@ create table if not exists public.market_news (
 create index if not exists idx_market_news_published_at on public.market_news (published_at desc, created_at asc);
 create index if not exists idx_market_news_is_important on public.market_news (is_important);
 
--- Auto cleanup: purge records older than 3 days.
--- Read-only role used by the API cannot install triggers via the client;
--- run the function + trigger once in the Supabase SQL editor.
-create or replace function public.delete_old_market_news()
-returns trigger
-language plpgsql
-security definer
-set search_path = public
-as $$
-begin
-  delete from public.market_news
-  where published_at < now() - interval '3 days';
-  return null;
-end;
-$$;
-
-drop trigger if exists trg_delete_old_market_news on public.market_news;
-create trigger trg_delete_old_market_news
-after insert or update on public.market_news
-for each statement execute function public.delete_old_market_news();
+-- Auto cleanup: BASE DỮ LIỆU KHÔNG tự xoá.
+-- Việc dọn tin cũ (>3 ngày) và rác/trùng được backend xử lý trong cron
+-- (deleteSpamNews + cleanupOldNews trong /api/cron-fetch tier=full).
+-- KHÔNG tạo hàm SECURITY DEFINER + trigger ở đây nữa: hàm này tạo lỗ hổng
+-- RPC (anon gọi được qua /rest/v1/rpc/...) và mâu thuẫn với db/security_fix.sql.
+-- Nếu DB còn sót hàm/trigger từ bản cũ, chạy db/security_fix.sql để gỡ.
 
 -- Realtime: enable broadcast for mobile subscriptions.
 alter publication supabase_realtime add table public.market_news;

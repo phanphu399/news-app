@@ -11,6 +11,7 @@ import {
 import { notifyImportantNews } from '../src/services/fcm.js';
 import { generateRunId } from '../src/utils/helpers.js';
 import { isJunkItem, buildTitleSelection } from '../src/utils/spamFilter.js';
+import { checkCronSecret } from '../src/utils/auth.js';
 
 async function withRetry(run, label, attempts = 2) {
   for (let attempt = 1; attempt <= attempts; attempt += 1) {
@@ -93,16 +94,8 @@ export default async function handler(request, response) {
     message: '',
   };
 
-  const authHeader = request.headers.authorization || '';
-  const cronSecret = process.env.CRON_SECRET || '';
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-    return response.status(401).json({
-      run_id: runId,
-      status: 'unauthorized',
-      tier,
-      started_at: startAt,
-    });
-  }
+  const denied = checkCronSecret(request, response);
+  if (denied) return denied;
 
   try {
     const acquired = await cronAcquireLock(tierCfg.lockSeconds, tierCfg.lockId);

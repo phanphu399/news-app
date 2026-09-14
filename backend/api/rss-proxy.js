@@ -1,5 +1,6 @@
 import { XMLParser } from 'fast-xml-parser';
 import { KNOWN_SOURCES } from '../src/config/constants.js';
+import { safeFetch } from '../src/utils/safeFetch.js';
 
 const xmlParser = new XMLParser({
   ignoreAttributes: false,
@@ -28,13 +29,13 @@ export default async function handler(request, response) {
   }
 
   try {
-    const upstream = await fetch(url, {
+    const upstream = await safeFetch(url, {
+      timeoutMs: 10000,
       headers: {
         'User-Agent':
           'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36',
         Accept: 'application/rss+xml, application/atom+xml, application/xml, text/xml, */*',
       },
-      signal: AbortSignal.timeout(10000),
     });
 
     if (!upstream.ok) {

@@ -14,6 +14,17 @@ function sortByTime(items) {
     });
 }
 
+// Gộp danh sách cũ + mới theo id (giữ bản mới hơn), chống mất tin khi poll
+// chậm về sau và ghi đè tin realtime vừa được chèn.
+function mergeById(prev, next) {
+  const merged = new Map();
+  for (const item of next) merged.set(item.id, item);
+  for (const item of prev) {
+    if (!merged.has(item.id)) merged.set(item.id, item);
+  }
+  return sortByTime(Array.from(merged.values())).slice(0, 150);
+}
+
 const NEW_ITEM_MAX_AGE_MS = 6 * 60 * 60 * 1000;
 
 export default class NewsViewModel {
@@ -27,6 +38,7 @@ export default class NewsViewModel {
     this.error = null;
     this.offRealtime = null;
     this.offTimer = null;
+    this.started = false;
   }
 
   subscribe(listener) {
@@ -44,6 +56,9 @@ export default class NewsViewModel {
   }
 
   async start() {
+    if (this.started) return;
+    this.started = true;
+
     await this.initialLoad();
     this.offRealtime = subscribeRealtime(
       (item) => {
@@ -83,7 +98,12 @@ export default class NewsViewModel {
 
   stop() {
     this.offRealtime?.();
-    this.offTimer && clearInterval(this.offTimer);
+    this.offRealtime = null;
+    if (this.offTimer) {
+      clearInterval(this.offTimer);
+      this.offTimer = null;
+    }
+    this.started = false;
   }
 
   async initialLoad() {
@@ -104,13 +124,17 @@ export default class NewsViewModel {
     }
 
     try {
-      this.items = sortByTime(await fetchLatestNews());
+      this.items = mergeById(this.items, await fetchLatestNews());
       this.importantIds = new Set(
         this.items.filter((item) => item.isImportant).map((item) => item.id)
       );
       this.knownIds = new Set(this.items.map((item) => item.id));
       this.error = null;
-      await LocalStorageService.setNewsCache(this.items);
+      try {
+        await LocalStorageService.setNewsCache(this.items);
+      } catch {
+        /* cache không available — không coi là lỗi tải dữ liệu */
+      }
     } catch (error) {
       if (!this.items.length) this.error = error.message;
     } finally {
@@ -121,15 +145,20 @@ export default class NewsViewModel {
 
   async refresh() {
     try {
-      this.items = sortByTime(await fetchLatestNews());
+      const fetched = await fetchLatestNews();
+      this.items = mergeById(this.items, fetched);
       this.importantIds = new Set(
         this.items.filter((item) => item.isImportant).map((item) => item.id)
       );
       this.knownIds = new Set(this.items.map((item) => item.id));
       this.error = null;
-      await LocalStorageService.setNewsCache(this.items);
+      try {
+        await LocalStorageService.setNewsCache(this.items);
+      } catch {
+        /* cache không available — không coi là lỗi tải dữ liệu */
+      }
     } catch (error) {
-      this.error = error.message;
+      if (!this.items.length) this.error = error.message;
     }
     this.emit();
   }

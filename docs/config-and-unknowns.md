@@ -27,7 +27,8 @@
 | `FCM_CLIENT_EMAIL` | Yes | — | Firebase service account email |
 | `FCM_PRIVATE_KEY` | Yes | — | Firebase service account private key |
 | `FCM_SERVER_KEY` | No | — | Legacy FCM key (deprecated, fallback) |
-| `CRON_SECRET` | No | — | Optional auth for `/api/cleanup` |
+| `CRON_SECRET` | **Yes** | — | Bắt buộc cho `/api/cron-fetch`, `/api/manual-fetch`, `/api/cleanup` (fail-closed, so sánh constant-time; nhận từ header `x-cron-secret`, `Authorization: Bearer`, hoặc `?secret=`) |
+| `USER_FEEDS_WRITE_SECRET` | No | = `CRON_SECRET` | Auth riêng cho ghi `/api/user-feeds` |
 | `FCM_TOPIC` | No | `market_alerts` | FCM topic name |
 | `TRANSLATE_API_KEY` | No | — | `NOT IMPLEMENTED` — declared in `.env.example` but no code consumes it |
 
@@ -77,9 +78,9 @@ Exports (key items):
 
 | File | Purpose | Runtime used? |
 |---|---|---|
-| `db/schema.sql` | `market_news` table + indexes + 3-day auto-purge trigger + Realtime publication | Yes |
+| `db/schema.sql` | `market_news` table + indexes; **KHÔNG còn tạo hàm SECURITY DEFINER/trigger dọn 3 ngày** — cleanup do backend cron xử lý | Yes |
 | `db/realtime_rls.sql` | Row-level security policies for Realtime subscriptions | Yes |
-| `db/security_fix.sql` | Security-related fixes | `UNKNOWN` |
+| `db/security_fix.sql` | Gỡ: drop trigger `trg_delete_old_market_news` TRƯỚC rồi mới drop hàm `delete_old_market_news()` (chạy trên DB đã apply schema cũ) | Yes |
 | `db/add_title_vi.sql` | Adds `title_vi` column to `market_news` | **Yes, column exists but never populated** |
 | `db/drop_title_vi.sql` | Drops `title_vi` column | `UNKNOWN` — both add and drop exist |
 | `db/add_user_feeds.sql` | `user_feeds` table for user RSS management | Yes (API) |
@@ -92,15 +93,15 @@ Exports (key items):
 
 | Endpoint | In repo | Live? | Notes |
 |---|---|---|---|
-| `/api/cron-fetch` | Yes | Yes (daily cron) | Only registered cron: `0 1 * * *` tier=full |
-| `/api/manual-fetch` | Yes | `REQUIRES RUNTIME VERIFICATION` | Requires backend redeploy to `news-app-realtime-seven` |
+| `/api/cron-fetch` | Yes | Yes (daily cron) | Cron **phải tạo lại trong Vercel Dashboard**: `/api/cron-fetch?secret=<CRON_SECRET>&tier=full`, schedule `0 1 * * *` (không commit secret vào vercel.json) |
+| `/api/manual-fetch` | Yes | `REQUIRES RUNTIME VERIFICATION` | Requires backend redeploy to `news-app-realtime-seven`; giờ yêu cầu `CRON_SECRET` |
 | `/api/markets` | Yes | `REQUIRES RUNTIME VERIFICATION` | Same redeploy needed; **no longer referenced by mobile** since the gold/silver price panel was removed from `EconomicCalendarView` |
 | `/api/article` | Yes | `REQUIRES RUNTIME VERIFICATION` | Backend redeploy needed |
-| `/api/cleanup` | Yes | `REQUIRES RUNTIME VERIFICATION` | Requires `CRON_SECRET` for auth |
+| `/api/cleanup` | Yes | `REQUIRES RUNTIME VERIFICATION` | Requires `CRON_SECRET` for auth (fail-closed) |
 | `/api/sources` | Yes | `REQUIRES RUNTIME VERIFICATION` | — |
 | `/api/calendar` | Yes | `REQUIRES RUNTIME VERIFICATION` | — |
-| `/api/rss-proxy` | Yes | `REQUIRES RUNTIME VERIFICATION` | **NOT referenced by mobile app** (grep confirmed) |
-| `/api/user-feeds` | Yes | `REQUIRES RUNTIME VERIFICATION` | — |
+| `/api/rss-proxy` | Yes | `REQUIRES RUNTIME VERIFICATION` | **NOT referenced by mobile app** (grep confirmed); SSRF-guarded |
+| `/api/user-feeds` | Yes | `REQUIRES RUNTIME VERIFICATION` | GET/test mở; ghi (POST/PATCH/DELETE) yêu cầu secret |
 
 ## Known Debt, Stale References & Unknowns
 
@@ -109,8 +110,8 @@ Exports (key items):
 | File | Issue |
 |---|---|
 | `README.md` (root) | References removed `CustomFeedService.js`, `CustomFeedView`, `AddFeedModal` — all deleted. Describes outdated UI. |
-| `.github/workflows/ci.yml` | Mobile job `node --check` references `src/services/CustomFeedService.js` which does **NOT FOUND** — this CI step would fail on push. |
-| `mobile/index.html` | Contains stale inline script with `var build = 'v10'` and old auto-reload logic (`location.reload()` via sessionStorage). **Does NOT ship to dist** — Expo generates `dist/index.html` fresh and `build-web.mjs` injects v11 preload. But the source file is misleading. |
+| `.github/workflows/ci.yml` | **Đã sửa (2026-09-14)**: bỏ `src/services/CustomFeedService.js` không tồn tại; check toàn bộ backend `.js`; thêm step `verify:dist`. |
+| `mobile/index.html` | Contains stale inline script with `var build = 'v10'` and old auto-reload logic (`location.reload()` via sessionStorage). **Does NOT ship to dist** — Expo generates `dist/index.html` fresh and `build-web.mjs` injects the v14 preload. But the source file is misleading and should be deleted or renamed. |
 
 ### Code-level unused/dead
 

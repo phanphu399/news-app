@@ -1,3 +1,5 @@
+import { safeFetch } from '../src/utils/safeFetch.js';
+
 const REMOVE_RE =
   /<(script|style|noscript|svg|iframe|form|nav|aside|footer|header|button|input|select|textarea|template|figure)[^>]*>[\s\S]*?<\/\1>/gi;
 const P_RE = /<p[^>]*>([\s\S]*?)<\/p>/gi;
@@ -83,11 +85,8 @@ export default async function handler(request, response) {
   }
 
   try {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 9000);
-    const res = await fetch(url, {
-      signal: controller.signal,
-      redirect: 'follow',
+    const res = await safeFetch(url, {
+      timeoutMs: 9000,
       headers: {
         'User-Agent':
           'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36',
@@ -95,7 +94,6 @@ export default async function handler(request, response) {
         Accept: 'text/html,application/xhtml+xml',
       },
     });
-    clearTimeout(timer);
 
     if (!res.ok) {
       return errorResponse(response, `Trang trả về HTTP ${res.status}`);

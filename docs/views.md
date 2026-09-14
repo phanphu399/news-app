@@ -10,7 +10,7 @@ Top app bar shown on all tabs except GOLD.
 **Renders:**
 - `PulseLogo size=22`
 - `LiveDot` + status label: `● Trực tiếp` (green) when online / `○ Ngoại tuyến` (red) when offline
-- Web build version badge (`window.__ASTER_BUILD`, e.g. `v11`) via `getBuildVersion()`
+- Web build version badge (`window.__ASTER_BUILD`, e.g. `v14`) via `getBuildVersion()`
 - Refresh button with spinning icon while loading (Animated 900ms loop)
 
 **Background:** `rgba(11,20,38,0.82)` with `backdropFilter: blur(14px)`, bordered by `rgba(148,163,184,0.10)`, `zIndex:50`. Width capped at 896px centered.

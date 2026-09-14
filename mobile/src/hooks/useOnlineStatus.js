@@ -17,17 +17,32 @@ export function useOnlineStatus() {
   useEffect(() => {
     if (!isWeb || typeof window === 'undefined') return;
 
+    let disposed = false;
+    let returnTimer = null;
+    const clearReturnTimer = () => {
+      if (returnTimer) {
+        clearTimeout(returnTimer);
+        returnTimer = null;
+      }
+    };
+
     const handleOnline = () => {
+      if (disposed) return;
       setOnline(true);
       if (wasOffline.current) {
         wasOffline.current = false;
+        clearReturnTimer();
         setJustReturned(true);
-        const timer = setTimeout(() => setJustReturned(false), 3000);
-        return () => clearTimeout(timer);
+        returnTimer = setTimeout(() => {
+          returnTimer = null;
+          if (!disposed) setJustReturned(false);
+        }, 3000);
       }
     };
     const handleOffline = () => {
       wasOffline.current = true;
+      clearReturnTimer();
+      if (disposed) return;
       setJustReturned(false);
       setOnline(false);
     };
@@ -35,6 +50,8 @@ export function useOnlineStatus() {
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
     return () => {
+      disposed = true;
+      clearReturnTimer();
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };

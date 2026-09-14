@@ -25,16 +25,28 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Syntax check
+      - name: Syntax check (all backend .js)
         run: |
           node --check api/cron-fetch.js
+          node --check api/manual-fetch.js
+          node --check api/cleanup.js
+          node --check api/article.js
+          node --check api/rss-proxy.js
+          node --check api/user-feeds.js
+          node --check api/sources.js
+          node --check api/markets.js
+          node --check api/calendar.js
           node --check src/services/scraper.js
           node --check src/services/supabase.js
           node --check src/services/fcm.js
           node --check src/utils/helpers.js
+          node --check src/utils/auth.js
+          node --check src/utils/safeFetch.js
+          node --check src/utils/spamFilter.js
+          node --check src/config/constants.js
 
       - name: Validate vercel.json
-        run: node -e "const c = require('./vercel.json'); if (!c.crons || c.crons.length === 0) throw new Error('crons missing'); console.log('cron schedule:', c.crons[0].schedule);"
+        run: node -e "const c = require('./vercel.json'); if (!Array.isArray(c.crons)) throw new Error('crons array missing'); console.log(c.crons.length ? 'cron(s): ' + c.crons.map(x => x.schedule + ' ' + x.path).join(', ') : 'no committed cron — configure the daily cron in Vercel Dashboard with ?secret=<CRON_SECRET>&tier=full');"
 
   mobile:
     name: Mobile checks (Expo)
@@ -54,20 +66,38 @@ jobs:
       - name: Install dependencies
         run: npm ci || npm install --no-audit --no-fund
 
-      - name: Syntax check
+      - name: Syntax check (all mobile .js)
         run: |
           node --check App.js
           node --check index.js
           node --check src/utils/webPwa.js
           node --check src/viewmodels/NewsViewModel.js
-          node --check src/services/CustomFeedService.js
+          node --check src/services/TranslationService.js
+          node --check src/services/LocalStorageService.js
+          node --check src/services/NewsWarningService.js
+          node --check src/services/SourceService.js
+          node --check src/services/ReaderService.js
+          node --check src/services/ToastService.js
+          node --check src/services/SupabaseService.js
+          node --check src/hooks/useOnlineStatus.js
+          node --check src/hooks/useSwipeDismiss.js
           node --check scripts/build-web.mjs
           node --check scripts/generate-logo.mjs
           node --check src/views/EconomicCalendarView.js
+          node --check src/views/NewsListView.js
 
       - name: Validate app.json
         run: node -e "const c = require('./app.json'); if (!c.expo || !c.expo.plugins) throw new Error('app.json invalid'); console.log('app.json OK');"
 
       - name: Validate vercel.json (build pipeline)
         run: node -e "const m = require('./vercel.json'); if (!m.buildCommand || !m.outputDirectory) throw new Error('mobile/vercel.json invalid'); console.log('mobile/vercel.json OK:', m.buildCommand, '->', m.outputDirectory);"
+        working-directory: mobile
+
+      - name: Verify dist PWA integrity (if dist is committed)
+        run: |
+          if [ -d dist ]; then
+            node scripts/build-web.mjs --verify
+          else
+            echo "dist/ is git-ignored and not present in CI — skipping verify (run 'npm run build' locally to produce dist)"
+          fi
         working-directory: mobile

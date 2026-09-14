@@ -152,6 +152,47 @@ export default function NewsListView({ items, loading, error, onItemPress, onRef
     );
   }
 
+  if (flatList.length === 0) {
+    const q = query.trim();
+    return (
+      <View style={styles.flex}>
+        <View style={styles.chipsBar}>
+          {chips.map((chip) => {
+            const isActive = filter === chip.key;
+            return (
+              <TouchableOpacity
+                key={chip.key}
+                style={[styles.chip, isActive && styles.chipActive]}
+                onPress={() => setFilter(chip.key)}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.chipText, isActive && styles.chipTextActive]}>{chip.label}</Text>
+                <Text style={[styles.chipCount, isActive && styles.chipCountActive]}>{chip.count}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+        <View style={styles.center}>
+          <Text style={styles.errorTitle}>Không có tin khớp</Text>
+          <Text style={styles.errorBody}>
+            {q
+              ? `Không tìm thấy tin nào khớp "${q}". Thử từ khóa khác hoặc đổi category.`
+              : 'Category này hiện chưa có tin nào.'}
+          </Text>
+          <TouchableOpacity
+            style={styles.retry}
+            onPress={() => {
+              setFilter(ALL);
+              setQuery('');
+            }}
+          >
+            <Text style={styles.retryText}>Xem tất cả tin</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.flex}>
       <View style={styles.chipsBar}>

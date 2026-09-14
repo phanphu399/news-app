@@ -11,8 +11,13 @@ const MAX_QUEUE = 200;
 const isWeb = Platform.OS === 'web';
 const inflight = new Map();
 const queue = [];
-let memory = null;
+
+// cache: Map(en -> { vi, at }) — at = thời điểm gốc lưu lần đầu (không được
+// gán lại mỗi lần persist, nếu không TTL 30 ngày không bao giờ hết hạn).
+const cache = new Map();
+let loaded = false;
 let active = 0;
+let persistTimer = null;
 
 function looksTranslatable(text) {
   const t = text.trim();
@@ -39,27 +44,52 @@ async function storageSet(key, value) {
 }
 
 async function loadCache() {
-  if (memory) return;
+  if (loaded) return;
+  loaded = true;
   try {
     const raw = await storageGet(CACHE_KEY);
     const parsed = raw ? JSON.parse(raw) : null;
     const entries = Array.isArray(parsed) ? parsed : parsed?.items || [];
-    const fresh = new Map();
+    const now = Date.now();
     for (const [en, vi, at] of entries) {
-      if (en && vi && en !== vi && Date.now() - (at || 0) < TTL_MS) fresh.set(en, vi);
+      if (!en || !vi || en === vi) continue;
+      const savedAt = Number(at) || now;
+      if (now - savedAt >= TTL_MS) continue;
+      cache.set(en, { vi, at: savedAt });
     }
-    memory = fresh;
   } catch {
-    memory = new Map();
+    /* cache hư → bắt đầu trống */
   }
 }
 
+// Xóa entry hết hạn + quá dung lượng (giữ 500 entry mới nhất theo at).
+function prune() {
+  const now = Date.now();
+  for (const [en, entry] of cache) {
+    if (now - entry.at >= TTL_MS) cache.delete(en);
+  }
+  if (cache.size > MAX_CACHE) {
+    const oldest = Array.from(cache.entries())
+      .sort((a, b) => a[1].at - b[1].at)
+      .slice(0, cache.size - MAX_CACHE);
+    for (const [en] of oldest) cache.delete(en);
+  }
+}
+
+// Ghi toàn bộ cache nhưng GIỮ NGUYÊN at gốc; gộp nhiều bản dịch liên tiếp
+// thành 1 lần ghi (debounce) để tránh rewrite file mỗi lần dịch.
 function persist() {
-  if (!memory) return;
-  const items = Array.from(memory.entries())
-    .slice(-MAX_CACHE)
-    .map(([en, vi]) => [en, vi, Date.now()]);
+  prune();
+  const items = Array.from(cache.entries()).map(([en, entry]) => [en, entry.vi, entry.at]);
   storageSet(CACHE_KEY, JSON.stringify(items));
+}
+
+function schedulePersist() {
+  if (persistTimer) return;
+  persistTimer = setTimeout(() => {
+    persistTimer = null;
+    persist();
+  }, 1500);
 }
 
 function buildUrl(text) {
@@ -97,11 +127,13 @@ export async function translateToVietnamese(text) {
   if (!looksTranslatable(trimmed)) return trimmed;
 
   await loadCache();
-  if (memory.has(trimmed)) return memory.get(trimmed);
+  const hit = cache.get(trimmed);
+  if (hit) return hit.vi;
   if (inflight.has(trimmed)) return inflight.get(trimmed);
 
   const promise = new Promise((resolve, reject) => {
     if (queue.length >= MAX_QUEUE) {
+      // Queue đầy: KHÔNG cache bản gốc — trả null để gọi chỗ khác tự fallback.
       resolve(null);
       return;
     }
@@ -113,8 +145,8 @@ export async function translateToVietnamese(text) {
   promise
     .then((vi) => {
       if (vi && vi !== trimmed) {
-        memory.set(trimmed, vi);
-        persist();
+        cache.set(trimmed, { vi, at: Date.now() });
+        schedulePersist();
       }
     })
     .catch(() => {})

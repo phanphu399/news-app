@@ -8,7 +8,8 @@ All endpoints are Vercel serverless functions (ESM). Runtime Node ≥18 with `fe
 |---|---|
 | `SUPABASE_URL` | Supabase project URL |
 | `SUPABASE_SERVICE_ROLE_KEY` | Service-role key (server-side, full access) |
-| `CRON_SECRET` | Bearer/query secret for cron + cleanup endpoints |
+| `CRON_SECRET` | **Bắt buộc.** Auth cho cron-fetch / manual-fetch / cleanup (header `x-cron-secret`, `Authorization: Bearer`, hoặc `?secret=`). Fail-closed khi thiếu. |
+| `USER_FEEDS_WRITE_SECRET` | (Tùy chọn) Auth riêng cho ghi user-feeds. Mặc định dùng `CRON_SECRET`. |
 | `FCM_PROJECT_ID` | Firebase project ID (V1 push) |
 | `FCM_CLIENT_EMAIL` | Firebase service account client email (JWT issuer) |
 | `FCM_PRIVATE_KEY` | Private key for JWT signing (newline JSON escaped as `\n`) |
@@ -31,20 +32,20 @@ All endpoints are Vercel serverless functions (ESM). Runtime Node ≥18 with `fe
 - `Cache-Control: public, max-age=300`.
 
 ### GET /api/article?url=...
-- Fetches arbitrary article URL (9s AbortController, 900KB HTML cap).
+- Fetches arbitrary article URL (9s timeout, 900KB HTML cap).
 - Rejects `news.google.com` (host check) with error `GOOGLE_NEWS`.
 - Strips script/style/nav/footer/etc.; extracts og:title/description/image/site_name + `<p>` paragraphs (max 120, each >22 chars).
 - Returns `{ok, url, fetchedAt, source, title, description, image, paragraphs}`.
 - `Cache-Control: public, max-age=60, s-maxage=600`.
-- **Security:** open SSRF proxy — fetches any `http(s)` URL. `REQUIRES RUNTIME VERIFICATION` for access control.
+- **SSRF**: fetch qua `safeFetch` (src/utils/safeFetch.js) — chặn IP riêng tư / loopback / 169.254.169.254 (metadata), chỉ http/https public, theo dõi redirect thủ công và kiểm tra lại từng hop.
 
 ### CRUD /api/user-feeds
 - Backed by `user_feeds` table via service-role client.
-- **GET** → list (`id,name,rss_url,category,enabled,last_error,last_fetched_at,created_at`).
-- **POST ?action=test** → validate RSS/Atom (checks XML signature) + preview up to 6 items.
-- **POST** → add feed, `upsert` on conflict `rss_url` (dedup).
-- **PATCH/PUT** → update `name/category/enabled/rss_url` (validates URL if changed).
-- **DELETE** → remove feed.
+- **GET** → list (`id,name,rss_url,category,enabled,last_error,last_fetched_at,created_at`) — mở cho anon (đọc).
+- **POST ?action=test** → validate RSS/Atom (checks XML signature) + preview up to 6 items — mở cho anon (SSRF-guarded).
+- **POST** → add feed, `upsert` on conflict `rss_url` (dedup) — **yêu cầu `USER_FEEDS_WRITE_SECRET`/`CRON_SECRET`** (header `x-cron-secret` / Bearer / `?secret=`).
+- **PATCH/PUT** → update `name/category/enabled/rss_url` (validates URL if changed) — **yêu cầu secret**.
+- **DELETE** → remove feed — **yêu cầu secret**.
 - all non-200 → `{ok:false,error}`.
 
 ### GET /api/sources
@@ -55,22 +56,24 @@ All endpoints are Vercel serverless functions (ESM). Runtime Node ≥18 with `fe
 
 ### POST /api/manual-fetch
 - Manual trigger from Refresh button. Rate limit: 1 per 60s (`429`).
+- **Yêu cầu `CRON_SECRET`** (fail-closed).
 - Full pipeline: `scrapeAll()` + all user feeds → spam filter → title-dedupe → upsert → force purge spam → force cleanup old (>100 rows) → reclassify Paywall→Macro.
 - Returns `{ok, scraped, user_feeds, spam_filtered, duplicate_filtered, upserted, junk_deleted, message}`.
 
 ### GET /api/cron-fetch?tier=hot|standard|full
 - Cron-driven fetch. Tiers: `hot` (5 hot Google queries + 2 hot RSS feeds), `standard` (everything non-hot), `full` (everything + maintenance).
-- Optional auth: `Authorization: Bearer ${CRON_SECRET}` (if env set).
+- **Yêu cầu `CRON_SECRET`** (fail-closed, constant-time). Nguồn: header `x-cron-secret`, `Authorization: Bearer`, hoặc query `?secret=`.
 - Locks via `cron_state` table (`cronAcquireLock`): hot 60s, standard 5m, full 4h.
 - On full tier additionally: purge spam (non-forced, 1h cooldown), cleanup old news, reclassify Paywall→Macro.
 - Sends FCM notifications for brand-new `is_important` rows (`notifyImportantNews`).
 - Returns full stats payload.
 
 ### GET|POST /api/cleanup
-- Manual spam purge with `?key=secret` or Bearer. Auto-limit 500 rows (max 2000), non-forced cooldown 1h.
+- Manual spam purge. **Yêu cầu `CRON_SECRET`** (header `x-cron-secret` / Bearer / `?secret=`; so sánh constant-time). Auto-limit 500 rows (max 2000), non-forced cooldown 1h.
 
 ### GET /api/rss-proxy?url=...
 - Generic RSS→JSON (max 15 items) using `fast-xml-parser`. Used for preview/testing. No category, hardcoded source `Google News`. `NOT REFERENCED` in mobile app — only via user feeds testing? `NOT FOUND` in current view code — see Services note.
+- **SSRF**: fetch qua `safeFetch` — chặn IP riêng tư/metadata.
 
 ## Database (Supabase/Postgres)
 
@@ -100,6 +103,8 @@ All endpoints are Vercel serverless functions (ESM). Runtime Node ≥18 with `fe
 | `last_error` | Last fetch error (240 chars) |
 | `last_fetched_at` | Timestamp |
 
+RLS: bật cho mọi role; chỉ có policy SELECT cho anon; `revoke insert, update, delete ... from anon, authenticated` (db/add_user_feeds.sql). Ghi chỉ qua backend (service role, đã có auth).
+
 ### cron_state
 | Column | Notes |
 |---|---|
@@ -121,7 +126,7 @@ All endpoints are Vercel serverless functions (ESM). Runtime Node ≥18 with `fe
   - `PAYWALL_QUERIES` — `site:bloomberg.com markets` / `site:wsj.com markets finance` / `site:reuters.com markets`.
   - `DIRECT_RSS_FEEDS` — Yahoo, CNBC, MarketWatch (dowjones), OilPrice.
   - `EXTRA_FEEDS` — White House (via Google News site search) + 12 Federal Reserve feeds (maxAgeHours 168) + ForexFactory (hot) + Investing.com (hot).
-- **Per-feed:** `fetchFeed(url)` with 3 retries on 4xx/429/timeout (600ms * attempt), XML parse via fast-xml-parser (RSS/RDF/Atom), max 20 items/feed.
+- **Per-feed:** `fetchFeed(url)` with 3 retries on 4xx/429/timeout (600ms * attempt), XML parse via fast-xml-parser (RSS/RDF/Atom), max 20 items/feed. Mọi fetch đi qua `safeFetch` (SSRF guard + redirect thủ công).
 - **Filtering:** `filterFresh(items, maxAgeHours=24)` → reject future/too-old; `isJunkItem` (spam regex) → drop; `dedupe` by `id` (URL hash).
 - **`isRedAlert(title)`**: title contains any `RED_ALERT_KEYWORDS` (FED, FOMC, CPI, PPI, NFP, XAUUSD, GOLD, OIL, WAR, MISSILE, NUCLEAR, RECESSION, TARIFF...) → `is_important`.
 - **`hashUrl`**: SHA-256 of normalized URL (base64url) — note the **server hashes `google|${url}`** in `fetchFeedOnce` (id = sha256(`google|${url}`)) but `hashUrl` in helpers otherwise hashes plain URL. The `google|` prefix is only applied in scraper items from Google News. This means Google News items and direct items for the same URL **do not collide** in dedup. `REQUIRES RUNTIME VERIFICATION` for cross-feed dedup effectiveness.
@@ -132,12 +137,12 @@ All endpoints are Vercel serverless functions (ESM). Runtime Node ≥18 with `fe
 - `isJunkTitle`: too-short (<16 chars), spam, crypto, ALL-CAPS (>60% uppercase over 40 chars).
 - `buildTitleSelection(items)`: dedupe by `titleKey` (lowercase alnum-only). Keeps preferred: important > non-Google source > newer.
 
-## Cron (backend/vercel.json)
-| Cron | Endpoint |
-|---|---|
-| `0 1 * * *` | `/api/cron-fetch?tier=full` |
-
-**Only one cron registered** — a daily full-tier run at 01:00. No hot/standard crons are scheduled. `REQUIRES RUNTIME VERIFICATION`: with only a daily full cron, the feed only refreshes once/day unless a manual fetch or user-triggered fetch happens; realtime push (INSERT) keeps the client feeling live within that window.
+## Cron
+- `backend/vercel.json` **không còn đăng ký cron** (`"crons": []`) — cron không thể mang secret trong URL commit lên git.
+- **Phải tạo cron trong Vercel Dashboard** (project `news-app-realtime-seven` → Cron Jobs):
+  - Path: `/api/cron-fetch?secret=<CRON_SECRET>&tier=full`
+  - Schedule: `0 1 * * *`
+- Endpoint từng chạy mỗi ngày 01:00 qua `?tier=full`. `REQUIRES RUNTIME VERIFICATION`: nhớ tạo lại cron ở Dashboard sau khi deploy, nếu không feed chỉ refresh khi có manual fetch.
 
 ## Push Notifications (services/fcm.js)
 - FCM V1 via service account JWT (RS256) → OAuth token → `POST /fcm.googleapis.com/v1/projects/{id}/messages:send`.

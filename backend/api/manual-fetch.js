@@ -8,6 +8,7 @@ import {
   reclassifyPaywallToMacro,
 } from '../src/services/supabase.js';
 import { isJunkItem, buildTitleSelection } from '../src/utils/spamFilter.js';
+import { checkCronSecret } from '../src/utils/auth.js';
 
 const MIN_INTERVAL_MS = 60 * 1000;
 let lastRunAt = 0;
@@ -24,6 +25,9 @@ export default async function handler(request, response) {
   if (request.method !== 'POST') {
     return response.status(405).json({ ok: false, error: 'Method phải là POST' });
   }
+
+  const denied = checkCronSecret(request, response);
+  if (denied) return denied;
 
   const now = Date.now();
   if (now - lastRunAt < MIN_INTERVAL_MS) {

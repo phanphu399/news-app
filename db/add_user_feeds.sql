@@ -17,3 +17,4 @@ create policy "user_feeds_select_for_all" on public.user_feeds
   for select using (true);
 
 -- Chỉ service key (bypass RLS) mới insert/update/delete được; anon không có quyền ghi
+revoke insert, update, delete on public.user_feeds from anon, authenticated;

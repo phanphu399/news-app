@@ -6,11 +6,11 @@ Three files must stay in sync when bumping the version:
 
 | Location | Current Value | Purpose |
 |---|---|---|
-| `mobile/src/utils/webPwa.js:6` | `WEB_BUILD_VERSION = 'v11'` | Runtime probe: polls manifest, shows update banner |
-| `mobile/scripts/build-web.mjs:78` | `BUILD_VERSION = 'v11'` | Build-time: SW cache name, manifest `start_url`, injected preload script |
-| `mobile/public/sw.js:1` | `CACHE = 'aster-v11'` | Service worker cache bucket name |
+| `mobile/src/utils/webPwa.js:6` | `WEB_BUILD_VERSION = 'v14'` | Runtime probe: polls manifest, shows update banner |
+| `mobile/scripts/build-web.mjs:78` | `BUILD_VERSION = 'v14'` | Build-time: SW cache name, manifest `start_url`, injected preload script |
+| `mobile/public/sw.js:1` | `CACHE = 'aster-v14'` | Service worker cache bucket name |
 
-**manifest.webmanifest `start_url`** is set to `/?__v=v11` by `build-web.mjs`. The runtime preload probes this value and compares against `WEB_BUILD_VERSION`.
+**manifest.webmanifest `start_url`** is set to `/?__v=v14` by `build-web.mjs`. The runtime preload probes this value and compares against `WEB_BUILD_VERSION`.
 
 ## Service Worker
 
@@ -18,9 +18,9 @@ Three files must stay in sync when bumping the version:
 
 ### Behavior
 
-- **Cache name:** `aster-v11` (single bucket, all versions share the name).
+- **Cache name:** `aster-v14` (single bucket, all versions share the name).
 - **Install:** `self.skipWaiting()` — new SW activates immediately.
-- **Activate:** Deletes all caches not named `aster-v11`, then `self.clients.claim()`.
+- **Activate:** Deletes all caches not named `aster-v14`, then `self.clients.claim()`.
 - **Fetch strategy — same-origin only, GET only:**
   - **Navigation / HTML:** Network-first. On success, cache the response. On failure, serve from cache (`/` → `/index.html` fallback chain).
   - **Other same-origin resources:** Network-first. On success + `response.type === 'basic'`, cache the response. On failure, serve from cache.
