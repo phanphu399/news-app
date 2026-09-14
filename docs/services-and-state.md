@@ -65,6 +65,8 @@ Backend REST client for sources + user feeds.
 
 All use `AbortSignal.timeout(...)`; errors thrown as `new Error(json.error || HTTP n)`.
 
+> **v15:** `triggerManualFetch()` vẫn export từ `SourceService` nhưng **không còn được `App.js` gọi** — nút Refresh hiện chỉ tải lại tin từ Supabase (`vm.refresh()`). Manual trigger (POST `/api/manual-fetch`) chỉ dùng từ admin curl / cron và yêu cầu `CRON_SECRET`.
+
 ## SupabaseService.js
 Direct client to Supabase for news feed (bypasses backend for read/realtime).
 

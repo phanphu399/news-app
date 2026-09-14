@@ -38,22 +38,3 @@ export function checkCronSecret(request, response) {
   }
   return null;
 }
-
-// Cho endpoint user-feeds (ghi) — nguồn secret độc lập, mặc định dùng CRON_SECRET.
-export function checkWritableSecret(request, response) {
-  const configured = process.env.USER_FEEDS_WRITE_SECRET || process.env.CRON_SECRET || '';
-  if (!configured) {
-    return response.status(500).json({
-      ok: false,
-      error:
-        'Backend chưa cấu hình USER_FEEDS_WRITE_SECRET (hoặc CRON_SECRET) — từ chối ghi user_feeds.',
-    });
-  }
-  const provided = extractSecret(request);
-  if (!provided || !safeEqual(provided, configured)) {
-    return response
-      .status(401)
-      .json({ ok: false, error: 'Thiếu hoặc sai secret (header x-cron-secret, Authorization Bearer hoặc ?secret=).' });
-  }
-  return null;
-}

@@ -28,7 +28,6 @@
 | `FCM_PRIVATE_KEY` | Yes | — | Firebase service account private key |
 | `FCM_SERVER_KEY` | No | — | Legacy FCM key (deprecated, fallback) |
 | `CRON_SECRET` | **Yes** | — | Bắt buộc cho `/api/cron-fetch`, `/api/manual-fetch`, `/api/cleanup` (fail-closed, so sánh constant-time; nhận từ header `x-cron-secret`, `Authorization: Bearer`, hoặc `?secret=`) |
-| `USER_FEEDS_WRITE_SECRET` | No | = `CRON_SECRET` | Auth riêng cho ghi `/api/user-feeds` |
 | `FCM_TOPIC` | No | `market_alerts` | FCM topic name |
 | `TRANSLATE_API_KEY` | No | — | `NOT IMPLEMENTED` — declared in `.env.example` but no code consumes it |
 

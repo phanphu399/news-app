@@ -1,7 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { fetchFeed } from '../src/services/scraper.js';
 import { safeFetch } from '../src/utils/safeFetch.js';
-import { checkWritableSecret } from '../src/utils/auth.js';
 
 const supabaseUrl = process.env.SUPABASE_URL || '';
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
@@ -94,8 +93,6 @@ export default async function handler(request, response) {
     }
 
     if (request.method === 'POST') {
-      const denied = checkWritableSecret(request, response);
-      if (denied) return denied;
       const { name, rssUrl, category } = request.body || {};
       if (!name || !String(name).trim()) {
         return response.status(400).json({ ok: false, error: 'Thiếu tên nguồn tin' });
@@ -126,8 +123,6 @@ export default async function handler(request, response) {
     }
 
     if (request.method === 'PATCH' || request.method === 'PUT') {
-      const denied = checkWritableSecret(request, response);
-      if (denied) return denied;
       const id = request.query.id || (request.body && request.body.id) || '';
       if (!id) {
         return response.status(400).json({ ok: false, error: 'Thiếu mã nguồn tin' });
@@ -161,8 +156,6 @@ export default async function handler(request, response) {
     }
 
     if (request.method === 'DELETE') {
-      const denied = checkWritableSecret(request, response);
-      if (denied) return denied;
       const id = request.query.id || '';
       const { error } = await client.from('user_feeds').delete().eq('id', id);
       if (error) throw new Error(error.message);

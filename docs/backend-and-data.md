@@ -9,7 +9,6 @@ All endpoints are Vercel serverless functions (ESM). Runtime Node ≥18 with `fe
 | `SUPABASE_URL` | Supabase project URL |
 | `SUPABASE_SERVICE_ROLE_KEY` | Service-role key (server-side, full access) |
 | `CRON_SECRET` | **Bắt buộc.** Auth cho cron-fetch / manual-fetch / cleanup (header `x-cron-secret`, `Authorization: Bearer`, hoặc `?secret=`). Fail-closed khi thiếu. |
-| `USER_FEEDS_WRITE_SECRET` | (Tùy chọn) Auth riêng cho ghi user-feeds. Mặc định dùng `CRON_SECRET`. |
 | `FCM_PROJECT_ID` | Firebase project ID (V1 push) |
 | `FCM_CLIENT_EMAIL` | Firebase service account client email (JWT issuer) |
 | `FCM_PRIVATE_KEY` | Private key for JWT signing (newline JSON escaped as `\n`) |
@@ -43,19 +42,20 @@ All endpoints are Vercel serverless functions (ESM). Runtime Node ≥18 with `fe
 - Backed by `user_feeds` table via service-role client.
 - **GET** → list (`id,name,rss_url,category,enabled,last_error,last_fetched_at,created_at`) — mở cho anon (đọc).
 - **POST ?action=test** → validate RSS/Atom (checks XML signature) + preview up to 6 items — mở cho anon (SSRF-guarded).
-- **POST** → add feed, `upsert` on conflict `rss_url` (dedup) — **yêu cầu `USER_FEEDS_WRITE_SECRET`/`CRON_SECRET`** (header `x-cron-secret` / Bearer / `?secret=`).
-- **PATCH/PUT** → update `name/category/enabled/rss_url` (validates URL if changed) — **yêu cầu secret**.
-- **DELETE** → remove feed — **yêu cầu secret**.
+- **POST** → add feed, `upsert` on conflict `rss_url` (dedup) — **mở (không cần secret)**; yêu cầu đúng http/https, `validateFeed` qua `safeFetch` (SSRF-guarded).
+- **PATCH/PUT** → update `name/category/enabled/rss_url` (validates URL if changed) — **mở**, SSRF-guarded.
+- **DELETE** → remove feed — **mở**.
 - all non-200 → `{ok:false,error}`.
 
 ### GET /api/sources
 - Builds static source list: `DIRECT_RSS_FEEDS` + `EXTRA_FEEDS` + Google News aggregator + user_feeds (first 60).
-- Checks health of each feed URL (5s timeout each, 5-min health cache); computes 24h article counts from `market_news` (1-min counts cache, limit 3000 rows).
+- Checks health of each feed URL via `safeFetch` (SSRF-guarded, 5s timeout each, 5-min health cache); computes 24h article counts from `market_news` (1-min counts cache, limit 3000 rows).
 - Returns `{ok, fetchedAt, sources: [{source,url,categories,healthy,error,count24h,userFeedId,enabled}]}` sorted by `count24h` desc.
 - `Cache-Control: public, max-age=60, s-maxage=120`.
 
 ### POST /api/manual-fetch
-- Manual trigger from Refresh button. Rate limit: 1 per 60s (`429`).
+- Trigger bên ngoài (cron-job / admin curl). **Từ v15, nút "Tải mới" trong app KHÔNG còn gọi endpoint này** — chỉ tải lại tin từ Supabase (`vm.refresh()`).
+- Rate limit: 1 per 60s (`429`).
 - **Yêu cầu `CRON_SECRET`** (fail-closed).
 - Full pipeline: `scrapeAll()` + all user feeds → spam filter → title-dedupe → upsert → force purge spam → force cleanup old (>100 rows) → reclassify Paywall→Macro.
 - Returns `{ok, scraped, user_feeds, spam_filtered, duplicate_filtered, upserted, junk_deleted, message}`.

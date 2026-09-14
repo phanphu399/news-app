@@ -25,7 +25,6 @@ import AppHeader from './src/views/AppHeader';
 import ToastHost from './src/components/ToastHost';
 import ErrorBoundary from './src/components/ErrorBoundary';
 import { showToast } from './src/services/ToastService';
-import { triggerManualFetch } from './src/services/SourceService';
 import { LocalStorageService } from './src/services/LocalStorageService';
 import { normalizeUrl } from './src/utils/url';
 import { COLORS, TAB_INACTIVE, FONT_FAMILY, TABULAR_NUMS } from './src/config/constants';
@@ -267,32 +266,16 @@ function MainScreen() {
   const reloadAll = useCallback(async () => {
     if (manualRefreshing) return;
     setManualRefreshing(true);
-    showToast({ type: 'info', title: 'Đang cào tin mới…' });
+    showToast({ type: 'info', title: 'Đang làm mới tin tức…' });
     try {
-      const result = await triggerManualFetch();
       await vm.refresh();
-      if (!result?.ok) {
-        showToast({
-          type: 'error',
-          title: 'Cập nhật thất bại',
-          message: result?.error || 'Không xác định được lỗi.',
-        });
-      } else if (result.upserted > 0) {
-        showToast({
-          type: 'success',
-          title: `Đã cập nhật ${result.upserted} tin mới`,
-          message: `Scraped ${result.scraped} bài hệ thống + ${result.user_feeds} nguồn của bạn.`,
-        });
-      } else {
-        showToast({
-          type: 'info',
-          title: 'Không có tin mới',
-          message: 'Đã kiểm tra tất cả nguồn tin, mọi thứ đều cập nhật.',
-        });
-      }
+      showToast({
+        type: 'success',
+        title: 'Đã làm mới',
+        message: 'Danh sách tin tức đã được cập nhật từ máy chủ.',
+      });
     } catch (error) {
-      await vm.refresh();
-      showToast({ type: 'error', title: 'Cập nhật thất bại', message: error.message });
+      showToast({ type: 'error', title: 'Làm mới thất bại', message: error.message });
     } finally {
       setManualRefreshing(false);
     }
