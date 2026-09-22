@@ -19,7 +19,7 @@ export const NewsCard = memo(function NewsCard({ item, onPress, dimmed }) {
 
   return (
     <TouchableOpacity
-      activeOpacity={0.8}
+      activeOpacity={0.75}
       onPress={() => onPress?.(item)}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
@@ -32,7 +32,7 @@ export const NewsCard = memo(function NewsCard({ item, onPress, dimmed }) {
     >
       <View style={styles.body}>
         <View style={styles.topRow}>
-          <View style={[styles.catBadge, { backgroundColor: cat.bg, borderColor: `${cat.color}35` }]}>
+          <View style={[styles.catBadge, { backgroundColor: cat.bg, borderColor: cat.border || `${cat.color}30` }]}>
             <View style={[styles.catDot, { backgroundColor: cat.color }]} />
             <Text style={[styles.catText, { color: cat.color }]} numberOfLines={1}>
               {cat.short}
@@ -48,7 +48,7 @@ export const NewsCard = memo(function NewsCard({ item, onPress, dimmed }) {
 
         <TranslatedText
           style={[styles.title, isImportant && styles.titleImportant]}
-          numberOfLines={3}
+          numberOfLines={2}
           text={item.title}
         />
 
@@ -71,81 +71,82 @@ export default NewsCard;
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.025)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.07)',
-    marginHorizontal: 12,
-    marginVertical: 5,
-    overflow: 'hidden',
+    backgroundColor: 'transparent',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.05)',
+    paddingVertical: 13,
+    paddingHorizontal: 10,
+    borderRadius: 10,
+    marginHorizontal: 6,
+    marginVertical: 0,
   },
   cardHovered: {
-    backgroundColor: 'rgba(255, 255, 255, 0.045)',
-    borderColor: 'rgba(255, 255, 255, 0.14)',
+    backgroundColor: 'rgba(255, 255, 255, 0.02)',
   },
   cardImportant: {
-    borderColor: 'rgba(244, 63, 94, 0.22)',
+    borderBottomColor: 'rgba(244, 63, 94, 0.20)',
   },
   cardDimmed: {
-    opacity: 0.55,
+    opacity: 0.5,
   },
   body: {
-    padding: 15,
+    padding: 0,
   },
   topRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 9,
+    marginBottom: 8,
   },
   catBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 999,
-    paddingHorizontal: 8,
-    paddingVertical: 2.5,
+    borderRadius: 6,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
     borderWidth: 1,
   },
   catDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 2.5,
-    marginRight: 5,
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    marginRight: 4.5,
   },
   catText: {
     fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 0.6,
+    fontWeight: '600',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
     fontFamily: FONT_FAMILY,
   },
   hotBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 999,
-    paddingHorizontal: 8,
-    paddingVertical: 2.5,
-    backgroundColor: 'rgba(244, 63, 94, 0.12)',
+    borderRadius: 6,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    backgroundColor: 'rgba(244, 63, 94, 0.10)',
     borderWidth: 1,
-    borderColor: 'rgba(244, 63, 94, 0.30)',
+    borderColor: 'rgba(244, 63, 94, 0.20)',
   },
   hotDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 2.5,
-    marginRight: 5,
-    backgroundColor: COLORS.important,
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    marginRight: 4.5,
+    backgroundColor: '#FB7185',
   },
   hotText: {
-    color: COLORS.important,
+    color: '#FB7185',
     fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 0.6,
+    fontWeight: '700',
+    letterSpacing: 0.5,
     fontFamily: FONT_FAMILY,
   },
   title: {
-    color: '#F8FAFC',
-    fontSize: 15.5,
-    lineHeight: 23,
+    color: '#F1F5F9',
+    fontSize: 14.5,
+    lineHeight: 21,
     fontWeight: '500',
     fontFamily: FONT_FAMILY,
   },
@@ -156,41 +157,41 @@ const styles = StyleSheet.create({
   metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 12,
+    marginTop: 10,
     minHeight: 18,
   },
   monogram: {
-    width: 20,
-    height: 20,
-    borderRadius: 6,
+    width: 18,
+    height: 18,
+    borderRadius: 5,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    marginRight: 6,
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: 'rgba(255, 255, 255, 0.06)',
   },
   monogramText: {
-    color: COLORS.textSecondary,
-    fontSize: 8.5,
+    color: '#94A3B8',
+    fontSize: 8,
     fontWeight: '700',
     fontFamily: FONT_FAMILY,
   },
   source: {
-    color: COLORS.textSecondary,
+    color: '#64748B',
     fontSize: 12,
     fontWeight: '500',
     flexShrink: 1,
     fontFamily: FONT_FAMILY,
   },
   dot: {
-    color: '#475569',
+    color: '#334155',
     fontSize: 12,
-    marginHorizontal: 6,
+    marginHorizontal: 5,
   },
   time: {
-    color: COLORS.textSecondary,
-    fontSize: 12,
+    color: '#64748B',
+    fontSize: 11.5,
     fontFamily: FONT_FAMILY,
     fontVariant: TABULAR_NUMS,
   },

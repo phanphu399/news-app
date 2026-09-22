@@ -86,14 +86,14 @@ function TabBar({ active, onChange, insets, badge, hidden }) {
             onPress={() => onChange(tab.key)}
             activeOpacity={0.75}
           >
-            {isActive && <View style={styles.tabTopLine} />}
             <Icon
-              size={20}
-              strokeWidth={isActive ? 2 : 1.6}
+              size={19}
+              strokeWidth={isActive ? 2.2 : 1.6}
               variant={isActive ? 'solid' : 'outline'}
-              color={isActive ? '#F8FAFC' : '#94A3B8'}
+              color={isActive ? '#F1F5F9' : '#64748B'}
             />
             <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>{tab.label}</Text>
+            {isActive && <View style={styles.activeDot} />}
             {badge > 0 && tab.key === TABS.NEWS && (
               <View style={styles.badgeDot}>
                 <Text style={styles.badgeText}>{badge > 99 ? '99+' : badge}</Text>
@@ -599,11 +599,11 @@ const styles = StyleSheet.create({
   },
   tabBar: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(11, 14, 20, 0.88)',
+    backgroundColor: 'rgba(8, 11, 17, 0.90)',
     backdropFilter: 'blur(24px)',
     borderTopWidth: 1,
     borderTopColor: 'rgba(255, 255, 255, 0.08)',
-    paddingTop: 4,
+    paddingTop: 6,
     width: '100%',
     maxWidth: 896,
     alignSelf: 'center',
@@ -626,34 +626,32 @@ const styles = StyleSheet.create({
   tabItem: {
     flex: 1,
     alignItems: 'center',
-    paddingTop: 8,
+    paddingTop: 6,
     paddingBottom: 4,
     position: 'relative',
   },
-  tabTopLine: {
-    position: 'absolute',
-    top: -4,
-    alignSelf: 'center',
-    width: 28,
-    height: 2.5,
+  activeDot: {
+    width: 4,
+    height: 4,
     borderRadius: 2,
-    backgroundColor: COLORS.primary,
-    shadowColor: COLORS.primary,
-    shadowOpacity: 0.9,
-    shadowRadius: 6,
+    backgroundColor: '#F5A623',
+    marginTop: 3,
+    shadowColor: '#F5A623',
+    shadowOpacity: 0.8,
+    shadowRadius: 4,
   },
   tabItemActive: {
     backgroundColor: 'transparent',
   },
   tabLabel: {
-    color: TAB_INACTIVE,
-    fontSize: 11,
+    color: '#64748B',
+    fontSize: 10,
     fontWeight: '500',
     marginTop: 3,
     fontFamily: FONT_FAMILY,
   },
   tabLabelActive: {
-    color: '#F8FAFC',
+    color: '#F1F5F9',
     fontWeight: '600',
   },
   tabIndicator: {

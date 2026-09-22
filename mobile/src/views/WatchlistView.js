@@ -82,7 +82,7 @@ ListHeaderComponent={
                   autoCapitalize="none"
                 />
                 <TouchableOpacity style={styles.addBtn} onPress={submitKeyword}>
-                  <Sparkles size={16} strokeWidth={2} color={COLORS.primaryText} />
+                  <Sparkles size={16} strokeWidth={2} color={COLORS.primary} />
                   <Text style={styles.addBtnText}>Thêm</Text>
                 </TouchableOpacity>
               </View>
@@ -219,14 +219,16 @@ const styles = StyleSheet.create({
   },
   addBtn: {
     marginLeft: 10,
-    backgroundColor: COLORS.primary,
+    backgroundColor: 'rgba(245, 166, 35, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(245, 166, 35, 0.30)',
     borderRadius: 12,
     paddingHorizontal: 16,
     flexDirection: 'row',
     alignItems: 'center',
   },
   addBtnText: {
-    color: '#0B0E14',
+    color: COLORS.primary,
     fontWeight: '700',
     fontSize: 13,
     marginLeft: 6,
