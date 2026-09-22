@@ -35,17 +35,29 @@ export default function AppHeader({ online, loading, onRefresh }) {
   return (
     <View style={styles.header}>
       <View style={styles.brandLeft}>
-        <PulseLogo size={22} showText={true} scale={1} />
-        <View style={styles.liveWrap}>
-          <LiveDot size={5} color={online ? COLORS.success : COLORS.danger} />
+        <PulseLogo size={24} showText={true} scale={1.05} />
+        <View
+          style={[
+            styles.liveWrap,
+            {
+              backgroundColor: online ? 'rgba(52, 211, 153, 0.08)' : 'rgba(244, 63, 94, 0.08)',
+              borderColor: online ? 'rgba(52, 211, 153, 0.22)' : 'rgba(244, 63, 94, 0.22)',
+            },
+          ]}
+        >
+          <LiveDot size={6} color={online ? COLORS.success : COLORS.danger} />
           <Text style={[styles.liveText, { color: online ? COLORS.success : COLORS.danger }]}>
-            {online ? '● Trực tiếp' : '○ Ngoại tuyến'}
+            {online ? 'Trực tiếp' : 'Ngoại tuyến'}
           </Text>
         </View>
       </View>
 
       <View style={styles.right}>
-        {build ? <Text style={styles.versionText}>{build}</Text> : null}
+        {build ? (
+          <View style={styles.versionBadge}>
+            <Text style={styles.versionText}>{build}</Text>
+          </View>
+        ) : null}
         <TouchableOpacity
           style={styles.refreshBtn}
           onPress={onRefresh}
@@ -54,7 +66,7 @@ export default function AppHeader({ online, loading, onRefresh }) {
           accessibilityLabel="Cập nhật tin mới"
         >
           <Animated.View style={[styles.refreshIconWrap, { transform: [{ rotate }] }]}>
-            <RefreshIcon size={17} color={loading ? COLORS.primary : COLORS.textSecondary} strokeWidth={2} />
+            <RefreshIcon size={16} color={loading ? COLORS.primary : COLORS.textSecondary} strokeWidth={2.2} />
           </Animated.View>
         </TouchableOpacity>
       </View>
@@ -67,59 +79,74 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 12,
-    paddingVertical: 9,
+    paddingHorizontal: 16,
+    paddingVertical: 11,
     width: '100%',
     maxWidth: 896,
     alignSelf: 'center',
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(148,163,184,0.10)',
-    backgroundColor: 'rgba(11,20,38,0.82)',
-    backdropFilter: 'blur(14px)',
-    zIndex: 50,
+    borderBottomColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: 'rgba(11, 14, 20, 0.82)',
+    backdropFilter: 'blur(20px)',
+    zIndex: 100,
   },
   brandLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     flexShrink: 1,
     minWidth: 0,
+    gap: 10,
   },
   liveWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginLeft: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 999,
+    borderWidth: 1,
   },
   liveText: {
-    color: COLORS.textMuted,
-    fontSize: 10,
-    fontWeight: '500',
-    marginLeft: 4,
+    fontSize: 10.5,
+    fontWeight: '600',
+    marginLeft: 3,
     fontFamily: FONT_FAMILY,
+    letterSpacing: 0.2,
   },
   right: {
     flexDirection: 'row',
     alignItems: 'center',
     flexShrink: 0,
-    marginLeft: 8,
+    gap: 8,
+  },
+  versionBadge: {
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    paddingHorizontal: 7,
+    paddingVertical: 2.5,
+    borderRadius: 6,
   },
   versionText: {
     color: COLORS.textMuted,
-    fontSize: 10,
+    fontSize: 10.5,
     fontWeight: '600',
-    marginRight: 8,
     fontFamily: FONT_FAMILY,
-    opacity: 0.6,
+    fontVariant: ['tabular-nums'],
+    letterSpacing: 0.3,
   },
   refreshBtn: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    width: 32,
+    height: 32,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
   },
   refreshIconWrap: {
-    width: 17,
-    height: 17,
+    width: 18,
+    height: 18,
     alignItems: 'center',
     justifyContent: 'center',
   },

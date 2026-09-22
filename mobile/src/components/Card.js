@@ -7,7 +7,7 @@ import { COLORS } from '../config/constants';
  * - Bề mặt #171B21, viền siêu mỏng rgba(255,255,255,0.07), bo góc 14px.
  * - Khi có onPress tự chuyển thành TouchableOpacity.
  */
-export default function Card({ children, style, onPress, borderColor, radius = 14, ...rest }) {
+export default function Card({ children, style, onPress, borderColor, radius = 16, ...rest }) {
   const Wrapper = onPress ? TouchableOpacity : View;
   return (
     <Wrapper
@@ -27,14 +27,14 @@ export default function Card({ children, style, onPress, borderColor, radius = 1
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: COLORS.surface,
-    borderRadius: 14,
+    backgroundColor: 'rgba(255, 255, 255, 0.025)',
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: 'rgba(255, 255, 255, 0.07)',
     shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 5,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 1,
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 2,
   },
 });

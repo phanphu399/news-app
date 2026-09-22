@@ -87,8 +87,8 @@ const manifest = {
   display: 'standalone',
   display_override: ['standalone', 'minimal-ui'],
   orientation: 'portrait',
-  background_color: '#0B1426',
-  theme_color: '#0B1426',
+  background_color: '#0B0E14',
+  theme_color: '#0B0E14',
   lang: 'vi',
   categories: ['news', 'finance'],
   icons: [
@@ -181,8 +181,8 @@ const PRELOAD_SCRIPT = `<script>
 </script>`;
 
 const HEAD_INJECT = [
-  `<meta name="theme-color" content="#0B1426" />`,
-  `<style>html,body,#root{background:#0B1426;color-scheme:dark}::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(148,163,184,0.25);border-radius:6px}::-webkit-scrollbar-thumb:hover{background:rgba(148,163,184,0.40)}*{scrollbar-width:thin;scrollbar-color:rgba(148,163,184,0.25) transparent}</style>`,
+  `<meta name="theme-color" content="#0B0E14" />`,
+  `<style>html,body,#root{background:#0B0E14;color-scheme:dark}::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.12);border-radius:999px}::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,0.22)}*{scrollbar-width:thin;scrollbar-color:rgba(255,255,255,0.12) transparent}</style>`,
   `<meta name="description" content="MacroPulse - Tin tức Forex & Macro theo thời gian thực" />`,
   `<meta name="mobile-web-app-capable" content="yes" />`,
   `<meta name="apple-mobile-web-app-capable" content="yes" />`,

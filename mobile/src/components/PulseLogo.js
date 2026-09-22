@@ -42,27 +42,36 @@ function useLoop(toValue, duration, delay = 0) {
 }
 
 /** Chấm LIVE xanh với vòng ripple lan tỏa. */
-export function LiveDot({ size = 8, color = COLORS.success }) {
-  const ripple = useLoop(1, 1500);
+export function LiveDot({ size = 7, color = COLORS.success }) {
+  const ripple = useLoop(1, 1600);
   return (
-    <View style={[styles.liveWrap, { width: size * 2.6, height: size * 2.6 }]}>
+    <View style={[styles.liveWrap, { width: size * 3, height: size * 3 }]}>
       <Animated.View
         style={[
           styles.rippleRing,
           {
-            width: size * 2.4,
-            height: size * 2.4,
-            borderRadius: size * 1.2,
+            width: size * 2.8,
+            height: size * 2.8,
+            borderRadius: (size * 2.8) / 2,
             borderColor: color,
-            opacity: ripple.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0.55, 0.1, 0] }),
-            transform: [{ scale: ripple.interpolate({ inputRange: [0, 1], outputRange: [0.4, 1.2] }) }],
+            opacity: ripple.interpolate({ inputRange: [0, 0.4, 1], outputRange: [0.7, 0.2, 0] }),
+            transform: [{ scale: ripple.interpolate({ inputRange: [0, 1], outputRange: [0.5, 1.3] }) }],
           },
         ]}
       />
       <View
         style={[
           styles.liveDot,
-          { width: size, height: size, borderRadius: size / 2, backgroundColor: color },
+          {
+            width: size,
+            height: size,
+            borderRadius: size / 2,
+            backgroundColor: color,
+            shadowColor: color,
+            shadowOpacity: 0.8,
+            shadowRadius: 4,
+            shadowOffset: { width: 0, height: 0 },
+          },
         ]}
       />
     </View>
@@ -146,7 +155,7 @@ export function PulseLogo({
 
       {showText && (
         <Animated.View style={[styles.nameWrap, { opacity: nameFade }]}>
-          <Text style={[styles.nameThin, { color: textColor, fontSize: 14 * scale }]}>
+          <Text style={[styles.nameThin, { color: textColor, fontSize: 14.5 * scale }]}>
             Macro
           </Text>
           <Animated.Text
@@ -154,8 +163,8 @@ export function PulseLogo({
               styles.nameBold,
               {
                 color: pulseColor,
-                fontSize: 14 * scale,
-                opacity: breathe.interpolate({ inputRange: [0, 1], outputRange: [0.82, 1] }),
+                fontSize: 14.5 * scale,
+                opacity: breathe.interpolate({ inputRange: [0, 1], outputRange: [0.85, 1] }),
               },
             ]}
           >
@@ -175,7 +184,7 @@ const styles = StyleSheet.create({
   markWrap: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 7,
+    marginRight: 6,
   },
   markSvg: {
     width: '100%',
@@ -186,8 +195,8 @@ const styles = StyleSheet.create({
     alignItems: 'baseline',
   },
   nameThin: {
-    fontWeight: '300',
-    letterSpacing: 0.4,
+    fontWeight: '400',
+    letterSpacing: 0.3,
     fontFamily: FONT_FAMILY,
   },
   nameBold: {
@@ -196,19 +205,16 @@ const styles = StyleSheet.create({
     fontFamily: FONT_FAMILY,
   },
   liveWrap: {
+    position: 'relative',
     alignItems: 'center',
     justifyContent: 'center',
   },
   rippleRing: {
     position: 'absolute',
-    borderWidth: 1,
-    top: 0,
-    left: 0,
+    borderWidth: 1.5,
   },
   liveDot: {
     position: 'absolute',
-    top: 0,
-    left: 0,
   },
 });
 

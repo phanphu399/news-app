@@ -87,6 +87,7 @@ function NewsItem({ index, item, onPress }) {
 export default function NewsListView({ items, loading, error, onItemPress, onRefresh }) {
   const [filter, setFilter] = useState(ALL);
   const [query, setQuery] = useState('');
+  const [searchFocused, setSearchFocused] = useState(false);
 
   const chips = useMemo(() => {
     const counts = new Map();
@@ -164,7 +165,7 @@ export default function NewsListView({ items, loading, error, onItemPress, onRef
                 key={chip.key}
                 style={[styles.chip, isActive && styles.chipActive]}
                 onPress={() => setFilter(chip.key)}
-                activeOpacity={0.7}
+                activeOpacity={0.75}
               >
                 <Text style={[styles.chipText, isActive && styles.chipTextActive]}>{chip.label}</Text>
                 <Text style={[styles.chipCount, isActive && styles.chipCountActive]}>{chip.count}</Text>
@@ -203,7 +204,7 @@ export default function NewsListView({ items, loading, error, onItemPress, onRef
               key={chip.key}
               style={[styles.chip, isActive && styles.chipActive]}
               onPress={() => setFilter(chip.key)}
-              activeOpacity={0.7}
+              activeOpacity={0.75}
             >
               <Text style={[styles.chipText, isActive && styles.chipTextActive]}>{chip.label}</Text>
               <Text style={[styles.chipCount, isActive && styles.chipCountActive]}>{chip.count}</Text>
@@ -212,14 +213,16 @@ export default function NewsListView({ items, loading, error, onItemPress, onRef
         })}
       </View>
 
-      <View style={styles.searchWrap}>
+      <View style={[styles.searchWrap, searchFocused && styles.searchWrapFocused]}>
         <View style={styles.searchIconWrap}>
-          <SearchIcon size={15} color={COLORS.textMuted} strokeWidth={2} />
+          <SearchIcon size={16} color={searchFocused ? COLORS.primary : COLORS.textMuted} strokeWidth={2} />
         </View>
         <TextInput
           style={styles.searchInput}
           value={query}
           onChangeText={setQuery}
+          onFocus={() => setSearchFocused(true)}
+          onBlur={() => setSearchFocused(false)}
           placeholder="Tìm tin theo từ khóa hoặc nguồn…"
           placeholderTextColor={COLORS.textMuted}
           autoCorrect={false}
@@ -263,25 +266,28 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: 8,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.borderSoft,
-    backgroundColor: COLORS.background,
-    paddingHorizontal: 10,
-    paddingVertical: 9,
+    borderBottomColor: 'rgba(255, 255, 255, 0.06)',
+    backgroundColor: 'rgba(11, 14, 20, 0.95)',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
   },
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 8,
-    backgroundColor: COLORS.surface,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
     borderWidth: 1,
-    borderColor: COLORS.borderSoft,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
     paddingLeft: 12,
-    paddingRight: 9,
+    paddingRight: 8,
     paddingVertical: 6,
   },
   chipActive: {
-    borderWidth: 1,
-    borderColor: 'rgba(245,166,35,0.30)',
+    backgroundColor: 'rgba(245, 166, 35, 0.12)',
+    borderColor: 'rgba(245, 166, 35, 0.35)',
+    shadowColor: '#F5A623',
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
   },
   chipText: {
     color: COLORS.textSecondary,
@@ -290,46 +296,58 @@ const styles = StyleSheet.create({
     fontFamily: FONT_FAMILY,
   },
   chipTextActive: {
-    color: COLORS.primary,
+    color: '#F8FAFC',
     fontWeight: '600',
   },
   chipCount: {
     marginLeft: 6,
     color: COLORS.textMuted,
     fontSize: 10,
-    opacity: 0.6,
+    fontWeight: '600',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 999,
+    paddingHorizontal: 6,
+    paddingVertical: 1.5,
     fontFamily: FONT_FAMILY,
     fontVariant: TABULAR_NUMS,
   },
   chipCountActive: {
     color: COLORS.primary,
+    backgroundColor: 'rgba(245, 166, 35, 0.20)',
   },
   searchWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginHorizontal: 10,
-    marginTop: 8,
-    marginBottom: 2,
-    backgroundColor: COLORS.surface,
-    borderRadius: 10,
+    marginHorizontal: 12,
+    marginTop: 10,
+    marginBottom: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: COLORS.border,
-    paddingHorizontal: 10,
-    height: 36,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    paddingHorizontal: 12,
+    height: 40,
+  },
+  searchWrapFocused: {
+    borderColor: 'rgba(245, 166, 35, 0.45)',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    shadowColor: COLORS.primary,
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
   },
   searchIconWrap: {
-    marginRight: 7,
+    marginRight: 8,
   },
   searchInput: {
     flex: 1,
     color: COLORS.text,
-    fontSize: 13,
+    fontSize: 13.5,
     fontFamily: FONT_FAMILY,
     paddingVertical: 0,
   },
   content: {
     paddingVertical: 10,
-    paddingBottom: 28,
+    paddingBottom: 32,
   },
   center: {
     flex: 1,
@@ -344,13 +362,13 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   skeletonCard: {
-    backgroundColor: COLORS.surface,
-    borderRadius: 14,
-    padding: 14,
+    backgroundColor: 'rgba(255, 255, 255, 0.025)',
+    borderRadius: 16,
+    padding: 16,
     marginHorizontal: 12,
-    marginVertical: 5,
+    marginVertical: 6,
     borderWidth: 1,
-    borderColor: COLORS.borderSoft,
+    borderColor: 'rgba(255, 255, 255, 0.06)',
     overflow: 'hidden',
   },
   skeletonColumn: {
@@ -360,21 +378,21 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 0,
     bottom: 0,
-    width: 110,
-    backgroundColor: 'rgba(148,163,184,0.08)',
+    width: 120,
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
     borderRadius: 8,
   },
   skeletonLine: {
-    height: 11,
+    height: 12,
     borderRadius: 6,
-    backgroundColor: COLORS.surfaceAlt,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
   },
   skeletonMeta: {
-    marginTop: 10,
+    marginTop: 12,
     height: 16,
     width: '45%',
     borderRadius: 8,
-    backgroundColor: COLORS.surfaceAlt,
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
   },
   errorIcon: {
     fontSize: 36,
@@ -384,19 +402,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     marginTop: 10,
+    fontFamily: FONT_FAMILY,
   },
   errorBody: {
     color: COLORS.textMuted,
     fontSize: 13,
     textAlign: 'center',
     marginTop: 6,
-    lineHeight: 18,
+    lineHeight: 19,
+    fontFamily: FONT_FAMILY,
   },
   retry: {
     marginTop: 18,
     backgroundColor: COLORS.primary,
-    paddingHorizontal: 26,
-    paddingVertical: 9,
+    paddingHorizontal: 24,
+    paddingVertical: 10,
     borderRadius: 10,
   },
   retryText: {

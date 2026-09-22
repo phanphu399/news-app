@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { formatRelativeTime } from '../utils/time_format';
 import { categoryStyle, COLORS, FONT_FAMILY, TABULAR_NUMS } from '../config/constants';
@@ -13,6 +13,7 @@ function monogram(source) {
 }
 
 export const NewsCard = memo(function NewsCard({ item, onPress, dimmed }) {
+  const [hovered, setHovered] = useState(false);
   const isImportant = Boolean(item.isImportant);
   const cat = categoryStyle(item.category);
 
@@ -20,19 +21,26 @@ export const NewsCard = memo(function NewsCard({ item, onPress, dimmed }) {
     <TouchableOpacity
       activeOpacity={0.8}
       onPress={() => onPress?.(item)}
-      style={[styles.card, dimmed && styles.cardDimmed]}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={[
+        styles.card,
+        hovered && styles.cardHovered,
+        isImportant && styles.cardImportant,
+        dimmed && styles.cardDimmed,
+      ]}
     >
       <View style={styles.body}>
         <View style={styles.topRow}>
-          <View style={styles.catRow}>
+          <View style={[styles.catBadge, { backgroundColor: cat.bg, borderColor: `${cat.color}35` }]}>
             <View style={[styles.catDot, { backgroundColor: cat.color }]} />
             <Text style={[styles.catText, { color: cat.color }]} numberOfLines={1}>
               {cat.short}
             </Text>
           </View>
           {isImportant && (
-            <View style={styles.hotRow}>
-              <View style={styles.hotBadge} />
+            <View style={styles.hotBadge}>
+              <View style={styles.hotDot} />
               <Text style={styles.hotText}>NÓNG</Text>
             </View>
           )}
@@ -45,7 +53,7 @@ export const NewsCard = memo(function NewsCard({ item, onPress, dimmed }) {
         />
 
         <View style={styles.metaRow}>
-          <View style={[styles.monogram, { backgroundColor: 'rgba(255,255,255,0.06)' }]}>
+          <View style={styles.monogram}>
             <Text style={styles.monogramText}>{monogram(item.source)}</Text>
           </View>
           <Text style={styles.source} numberOfLines={1}>
@@ -63,54 +71,68 @@ export default NewsCard;
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 14,
-    backgroundColor: COLORS.surface,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.025)',
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: 'rgba(255, 255, 255, 0.07)',
     marginHorizontal: 12,
     marginVertical: 5,
     overflow: 'hidden',
   },
-  accent: {
-    display: 'none',
+  cardHovered: {
+    backgroundColor: 'rgba(255, 255, 255, 0.045)',
+    borderColor: 'rgba(255, 255, 255, 0.14)',
+  },
+  cardImportant: {
+    borderColor: 'rgba(244, 63, 94, 0.22)',
   },
   cardDimmed: {
     opacity: 0.55,
   },
   body: {
-    padding: 14,
+    padding: 15,
   },
   topRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    marginBottom: 9,
   },
-  catRow: {
+  catBadge: {
     flexDirection: 'row',
     alignItems: 'center',
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 2.5,
+    borderWidth: 1,
   },
   catDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    marginRight: 6,
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+    marginRight: 5,
   },
   catText: {
     fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 0.8,
+    fontWeight: '700',
+    letterSpacing: 0.6,
     fontFamily: FONT_FAMILY,
   },
-  hotRow: {
+  hotBadge: {
     flexDirection: 'row',
     alignItems: 'center',
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 2.5,
+    backgroundColor: 'rgba(244, 63, 94, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(244, 63, 94, 0.30)',
   },
-  hotBadge: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    marginRight: 6,
+  hotDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+    marginRight: 5,
     backgroundColor: COLORS.important,
   },
   hotText: {
@@ -121,33 +143,37 @@ const styles = StyleSheet.create({
     fontFamily: FONT_FAMILY,
   },
   title: {
-    color: COLORS.text,
-    fontSize: 15,
-    lineHeight: 21,
+    color: '#F8FAFC',
+    fontSize: 15.5,
+    lineHeight: 23,
     fontWeight: '500',
     fontFamily: FONT_FAMILY,
   },
   titleImportant: {
     fontWeight: '600',
+    color: '#FFFFFF',
   },
   metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 11,
-    minHeight: 16,
+    marginTop: 12,
+    minHeight: 18,
   },
   monogram: {
-    width: 18,
-    height: 18,
-    borderRadius: 5,
+    width: 20,
+    height: 20,
+    borderRadius: 6,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 7,
+    marginRight: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
   },
   monogramText: {
     color: COLORS.textSecondary,
-    fontSize: 8,
-    fontWeight: '800',
+    fontSize: 8.5,
+    fontWeight: '700',
     fontFamily: FONT_FAMILY,
   },
   source: {
@@ -158,9 +184,9 @@ const styles = StyleSheet.create({
     fontFamily: FONT_FAMILY,
   },
   dot: {
-    color: COLORS.textMuted,
+    color: '#475569',
     fontSize: 12,
-    marginHorizontal: 5,
+    marginHorizontal: 6,
   },
   time: {
     color: COLORS.textSecondary,

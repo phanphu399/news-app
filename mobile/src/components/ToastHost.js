@@ -132,13 +132,14 @@ const styles = StyleSheet.create({
   toast: {
     width: '100%',
     maxWidth: 420,
-    backgroundColor: COLORS.surface,
-    borderRadius: 14,
+    backgroundColor: 'rgba(20, 27, 43, 0.95)',
+    backdropFilter: 'blur(20px)',
+    borderRadius: 16,
     borderWidth: 1,
     padding: 14,
     shadowColor: '#000',
-    shadowOpacity: 0.5,
-    shadowRadius: 18,
+    shadowOpacity: 0.6,
+    shadowRadius: 20,
     shadowOffset: { width: 0, height: 8 },
     elevation: 14,
   },
@@ -149,7 +150,7 @@ const styles = StyleSheet.create({
   iconSquircle: {
     width: 38,
     height: 38,
-    borderRadius: 12,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -158,13 +159,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   label: {
-    fontSize: 9,
+    fontSize: 9.5,
     fontWeight: '900',
     letterSpacing: 1.3,
     marginBottom: 2,
   },
   title: {
-    color: COLORS.text,
+    color: '#F8FAFC',
     fontSize: 14,
     lineHeight: 19,
     fontWeight: '700',
@@ -174,7 +175,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: COLORS.borderSoft,
+    borderTopColor: 'rgba(255, 255, 255, 0.06)',
   },
   bulletRow: {
     flexDirection: 'row',
@@ -184,7 +185,7 @@ const styles = StyleSheet.create({
   bulletDot: {
     width: 5,
     height: 5,
-    borderRadius: 3,
+    borderRadius: 2.5,
     marginTop: 6,
     marginRight: 8,
   },
@@ -229,8 +230,8 @@ const styles = StyleSheet.create({
   },
   pillGhost: {
     borderWidth: 1,
-    borderColor: COLORS.border,
-    backgroundColor: 'rgba(255,255,255,0.03)',
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
   },
   pillText: {
     fontSize: 12,
@@ -238,6 +239,6 @@ const styles = StyleSheet.create({
     fontFamily: FONT_FAMILY,
   },
   pillTextPrimary: {
-    color: COLORS.primaryText,
+    color: '#0B0E14',
   },
 });

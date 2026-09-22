@@ -3,6 +3,7 @@
   "private": true,
   "scripts": {
     "build": "npm --prefix mobile run build",
-    "verify:dist": "node mobile/scripts/build-web.mjs --verify"
+    "verify:dist": "node mobile/scripts/build-web.mjs --verify",
+    "preview": "npm --prefix mobile run preview"
   }
 }

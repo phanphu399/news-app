@@ -82,16 +82,16 @@ function TabBar({ active, onChange, insets, badge, hidden }) {
         return (
           <TouchableOpacity
             key={tab.key}
-            style={styles.tabItem}
+            style={[styles.tabItem, isActive && styles.tabItemActive]}
             onPress={() => onChange(tab.key)}
-            activeOpacity={0.7}
+            activeOpacity={0.75}
           >
             {isActive && <View style={styles.tabTopLine} />}
             <Icon
               size={20}
               strokeWidth={isActive ? 2 : 1.6}
               variant={isActive ? 'solid' : 'outline'}
-              color={isActive ? '#F1F5F9' : '#94A3B8'}
+              color={isActive ? '#F8FAFC' : '#94A3B8'}
             />
             <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>{tab.label}</Text>
             {badge > 0 && tab.key === TABS.NEWS && (
@@ -599,10 +599,11 @@ const styles = StyleSheet.create({
   },
   tabBar: {
     flexDirection: 'row',
-    backgroundColor: COLORS.background,
+    backgroundColor: 'rgba(11, 14, 20, 0.88)',
+    backdropFilter: 'blur(24px)',
     borderTopWidth: 1,
-    borderTopColor: '#334155',
-    paddingTop: 0,
+    borderTopColor: 'rgba(255, 255, 255, 0.08)',
+    paddingTop: 4,
     width: '100%',
     maxWidth: 896,
     alignSelf: 'center',
@@ -620,26 +621,29 @@ const styles = StyleSheet.create({
     width: 48,
     height: 4,
     borderRadius: 2,
-    backgroundColor: 'rgba(148,163,184,0.35)',
+    backgroundColor: 'rgba(255, 255, 255, 0.20)',
   },
   tabItem: {
     flex: 1,
     alignItems: 'center',
-    paddingTop: 9,
-    paddingBottom: 3,
+    paddingTop: 8,
+    paddingBottom: 4,
     position: 'relative',
   },
   tabTopLine: {
     position: 'absolute',
-    top: 0,
-    alignSelf: 'stretch',
-    height: 2,
-    marginHorizontal: 22,
+    top: -4,
+    alignSelf: 'center',
+    width: 28,
+    height: 2.5,
     borderRadius: 2,
     backgroundColor: COLORS.primary,
+    shadowColor: COLORS.primary,
+    shadowOpacity: 0.9,
+    shadowRadius: 6,
   },
   tabItemActive: {
-    backgroundColor: 'rgba(245,166,35,0.06)',
+    backgroundColor: 'transparent',
   },
   tabLabel: {
     color: TAB_INACTIVE,
@@ -649,7 +653,7 @@ const styles = StyleSheet.create({
     fontFamily: FONT_FAMILY,
   },
   tabLabelActive: {
-    color: '#F1F5F9',
+    color: '#F8FAFC',
     fontWeight: '600',
   },
   tabIndicator: {
@@ -661,18 +665,18 @@ const styles = StyleSheet.create({
   },
   badgeDot: {
     position: 'absolute',
-    top: 1,
-    right: '24%',
-    minWidth: 16,
-    height: 16,
-    borderRadius: 8,
+    top: 2,
+    right: '22%',
+    minWidth: 17,
+    height: 17,
+    borderRadius: 8.5,
     backgroundColor: COLORS.important,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 4,
   },
   badgeText: {
-    color: '#fff',
+    color: '#FFFFFF',
     fontSize: 9,
     fontWeight: '800',
     fontFamily: FONT_FAMILY,
@@ -685,27 +689,33 @@ const styles = StyleSheet.create({
   modalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.surface,
-    paddingHorizontal: 8,
-    paddingVertical: 10,
+    backgroundColor: 'rgba(11, 14, 20, 0.88)',
+    backdropFilter: 'blur(20px)',
+    paddingHorizontal: 16,
+    paddingVertical: 11,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.borderSoft,
+    borderBottomColor: 'rgba(255, 255, 255, 0.08)',
+    width: '100%',
+    maxWidth: 896,
+    alignSelf: 'center',
   },
   closeButton: {
-    width: 40,
-    height: 36,
+    width: 32,
+    height: 32,
     borderRadius: 10,
-    backgroundColor: COLORS.surface,
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   closeButtonText: {
-    color: COLORS.primary,
-    fontSize: 18,
-    fontWeight: '800',
+    color: '#F8FAFC',
+    fontSize: 16,
+    fontWeight: '600',
   },
   modalTitle: {
-    color: COLORS.text,
+    color: '#F8FAFC',
     fontSize: 14,
     fontWeight: '700',
     marginLeft: 12,
@@ -714,36 +724,38 @@ const styles = StyleSheet.create({
   },
   externalButton: {
     paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 9,
-    backgroundColor: COLORS.surface,
+    paddingVertical: 6,
+    borderRadius: 8,
+    backgroundColor: 'rgba(245, 166, 35, 0.12)',
     borderWidth: 1,
-    borderColor: COLORS.primary,
+    borderColor: 'rgba(245, 166, 35, 0.35)',
   },
   externalText: {
     color: COLORS.primary,
     fontSize: 12,
-    fontWeight: '800',
+    fontWeight: '700',
+    fontFamily: FONT_FAMILY,
   },
   modalSpacer: {
-    width: 40,
+    width: 32,
   },
   installCard: {
     position: 'absolute',
     right: 16,
     bottom: 92,
     maxWidth: 330,
-    backgroundColor: COLORS.surface,
+    backgroundColor: 'rgba(20, 27, 43, 0.94)',
+    backdropFilter: 'blur(16px)',
     borderWidth: 1,
-    borderColor: COLORS.primary,
-    borderRadius: 14,
-    paddingVertical: 10,
-    paddingLeft: 12,
-    paddingRight: 6,
+    borderColor: 'rgba(245, 166, 35, 0.30)',
+    borderRadius: 16,
+    paddingVertical: 12,
+    paddingLeft: 14,
+    paddingRight: 8,
     shadowColor: '#000',
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.5,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 6 },
     elevation: 8,
   },
   installRow: {
@@ -760,11 +772,11 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     width: '100%',
     maxWidth: 896,
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
     paddingVertical: 6,
-    backgroundColor: COLORS.surfaceAlt,
+    backgroundColor: 'rgba(11, 14, 20, 0.90)',
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(148,163,184,0.10)',
+    borderBottomColor: 'rgba(255, 255, 255, 0.06)',
   },
   connDot: {
     width: 6,
@@ -787,16 +799,17 @@ const styles = StyleSheet.create({
     maxWidth: 560,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.surfaceElevated,
+    backgroundColor: 'rgba(20, 27, 43, 0.95)',
+    backdropFilter: 'blur(20px)',
     borderWidth: 1,
-    borderColor: COLORS.primary,
-    borderRadius: 14,
-    paddingVertical: 10,
-    paddingLeft: 14,
-    paddingRight: 10,
+    borderColor: 'rgba(245, 166, 35, 0.30)',
+    borderRadius: 16,
+    paddingVertical: 12,
+    paddingLeft: 16,
+    paddingRight: 12,
     shadowColor: '#000',
-    shadowOpacity: 0.5,
-    shadowRadius: 16,
+    shadowOpacity: 0.6,
+    shadowRadius: 20,
     shadowOffset: { width: 0, height: 6 },
     elevation: 10,
   },
@@ -805,7 +818,7 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   updateTitle: {
-    color: COLORS.text,
+    color: '#F8FAFC',
     fontSize: 13,
     fontWeight: '800',
     fontFamily: FONT_FAMILY,
@@ -813,7 +826,7 @@ const styles = StyleSheet.create({
   updateSub: {
     color: COLORS.textMuted,
     fontSize: 11,
-    marginTop: 1,
+    marginTop: 2,
     fontFamily: FONT_FAMILY,
   },
   updateApply: {
@@ -824,7 +837,7 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   updateApplyText: {
-    color: COLORS.primaryText,
+    color: '#0B0E14',
     fontSize: 12,
     fontWeight: '800',
     fontFamily: FONT_FAMILY,
@@ -852,7 +865,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   installTitle: {
-    color: COLORS.text,
+    color: '#F8FAFC',
     fontSize: 13,
     fontWeight: '800',
     fontFamily: FONT_FAMILY,
@@ -860,7 +873,7 @@ const styles = StyleSheet.create({
   installSub: {
     color: COLORS.textMuted,
     fontSize: 11,
-    marginTop: 1,
+    marginTop: 2,
     fontFamily: FONT_FAMILY,
   },
 });

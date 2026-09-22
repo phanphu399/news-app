@@ -98,41 +98,47 @@ export default function NewsArticleView({ item, onOpenOriginal, onToggleBookmark
 
   return (
     <ScrollView style={styles.reader} contentContainerStyle={styles.readerContent}>
-      {article.image ? (
-        <Image source={{ uri: article.image }} style={styles.hero} resizeMode="cover" />
-      ) : null}
+      <View style={styles.articleContainer}>
+        {article.image ? (
+          <Image source={{ uri: article.image }} style={styles.hero} resizeMode="cover" />
+        ) : null}
 
-      <View style={styles.metaRow}>
-        <View style={styles.categoryChip}>
-          <View style={[styles.catDot, { backgroundColor: cat.color }]} />
-          <Text style={[styles.categoryText, { color: cat.color }]}>{cat.label}</Text>
+        <View style={styles.metaRow}>
+          <View style={[styles.categoryChip, { backgroundColor: cat.bg, borderColor: `${cat.color}35` }]}>
+            <View style={[styles.catDot, { backgroundColor: cat.color }]} />
+            <Text style={[styles.categoryText, { color: cat.color }]}>{cat.label}</Text>
+          </View>
+          <Text style={styles.source}>{article.source || item.source}</Text>
         </View>
-        <Text style={styles.source}>{article.source || item.source}</Text>
+
+        <TranslatedText style={styles.title} text={article.title || item.title} />
+
+        {article.description ? (
+          <Text style={styles.deck}>{article.description}</Text>
+        ) : null}
+
+        {article.paragraphs.map((paragraph, index) => (
+          <Text key={index} style={styles.paragraph}>
+            {paragraph}
+          </Text>
+        ))}
+
+        <View style={styles.footerRow}>
+          <TouchableOpacity style={styles.footerLink} onPress={onOpenOriginal} activeOpacity={0.75}>
+            <Text style={styles.footerLinkText}>↗ Mở trang gốc</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.footerLink, isBookmarked && styles.footerLinkActive]}
+            onPress={onToggleBookmark}
+            activeOpacity={0.75}
+          >
+            <Text style={[styles.footerLinkText, isBookmarked && { color: COLORS.primary }]}>
+              {isBookmarked ? '★ Đã lưu' : '☆ Lưu bài'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+        <View style={{ height: 32 }} />
       </View>
-
-      <TranslatedText style={styles.title} text={article.title || item.title} />
-
-      {article.description ? (
-        <Text style={styles.deck}>{article.description}</Text>
-      ) : null}
-
-      {article.paragraphs.map((paragraph, index) => (
-        <Text key={index} style={styles.paragraph}>
-          {paragraph}
-        </Text>
-      ))}
-
-      <Text style={styles.skeletonTrail}>────────────────────────────</Text>
-
-      <View style={styles.footerRow}>
-        <TouchableOpacity style={styles.footerLink} onPress={onOpenOriginal}>
-          <Text style={styles.footerLinkText}>↗ Mở trang gốc</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.footerLink} onPress={onToggleBookmark}>
-          <Text style={styles.footerLinkText}>{isBookmarked ? '★ Đã lưu' : '☆ Lưu bài'}</Text>
-        </TouchableOpacity>
-      </View>
-      <View style={{ height: 24 }} />
     </ScrollView>
   );
 }
@@ -148,49 +154,55 @@ const styles = StyleSheet.create({
     color: COLORS.textMuted,
     fontSize: 13,
     marginTop: 12,
+    fontFamily: FONT_FAMILY,
   },
   errorIcon: {
     fontSize: 38,
   },
   errorTitle: {
-    color: COLORS.text,
-    fontSize: 16,
+    color: '#F8FAFC',
+    fontSize: 17,
     fontWeight: '800',
-    marginTop: 12,
+    marginTop: 14,
     textAlign: 'center',
+    fontFamily: FONT_FAMILY,
   },
   errorBody: {
-    color: COLORS.textMuted,
-    fontSize: 13,
-    lineHeight: 19,
+    color: COLORS.textSecondary,
+    fontSize: 13.5,
+    lineHeight: 20,
     textAlign: 'center',
     marginTop: 8,
-    marginBottom: 22,
+    marginBottom: 24,
+    fontFamily: FONT_FAMILY,
+    maxWidth: 480,
   },
   primaryBtn: {
     borderWidth: 1,
-    borderColor: COLORS.primary,
-    backgroundColor: 'rgba(245,166,35,0.10)',
-    paddingHorizontal: 26,
-    paddingVertical: 11,
-    borderRadius: 12,
+    borderColor: 'rgba(245, 166, 35, 0.40)',
+    backgroundColor: 'rgba(245, 166, 35, 0.12)',
+    paddingHorizontal: 22,
+    paddingVertical: 10,
+    borderRadius: 10,
   },
   primaryBtnText: {
     color: COLORS.primary,
-    fontWeight: '800',
-    fontSize: 14,
+    fontWeight: '700',
+    fontSize: 13.5,
     fontFamily: FONT_FAMILY,
   },
   ghostBtn: {
     marginTop: 12,
-    paddingHorizontal: 18,
+    paddingHorizontal: 20,
     paddingVertical: 9,
-    borderRadius: 12,
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
   },
   ghostBtnActive: {
-    borderColor: COLORS.gold,
+    borderColor: 'rgba(245, 166, 35, 0.35)',
+    backgroundColor: 'rgba(245, 166, 35, 0.10)',
   },
   ghostBtnText: {
     color: COLORS.textSecondary,
@@ -203,90 +215,108 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
   },
   readerContent: {
-    paddingBottom: 12,
+    paddingBottom: 24,
+  },
+  articleContainer: {
+    width: '100%',
+    maxWidth: 768,
+    alignSelf: 'center',
+    paddingHorizontal: 20,
   },
   hero: {
     width: '100%',
-    height: 200,
-    backgroundColor: COLORS.surfaceAlt,
+    height: 220,
+    borderRadius: 14,
+    marginTop: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
   },
   metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingTop: 16,
-    paddingHorizontal: 18,
+    paddingTop: 18,
   },
   categoryChip: {
     flexDirection: 'row',
     alignItems: 'center',
+    borderRadius: 999,
+    paddingHorizontal: 9,
+    paddingVertical: 3,
+    borderWidth: 1,
   },
   catDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 3.5,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
     marginRight: 6,
   },
   categoryText: {
-    fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 0.5,
+    fontSize: 10.5,
+    fontWeight: '700',
+    letterSpacing: 0.6,
+    fontFamily: FONT_FAMILY,
   },
   source: {
     color: COLORS.textMuted,
     fontSize: 12,
     marginLeft: 10,
-    fontWeight: '600',
-  },
-  title: {
-    color: COLORS.text,
-    fontSize: 22,
-    lineHeight: 30,
-    fontWeight: '800',
-    paddingHorizontal: 18,
-    marginTop: 12,
-  },
-  deck: {
-    color: COLORS.textSecondary,
-    fontSize: 15,
-    lineHeight: 22,
-    paddingHorizontal: 18,
-    marginTop: 10,
-    fontStyle: 'italic',
-  },
-  paragraph: {
-    color: '#c3cfdf',
-    fontSize: 15,
-    lineHeight: 24,
-    paddingHorizontal: 18,
-    marginTop: 14,
+    fontWeight: '500',
     fontFamily: FONT_FAMILY,
   },
-  skeletonTrail: {
-    color: COLORS.borderSoft,
-    textAlign: 'center',
-    marginTop: 22,
-    fontSize: 12,
-    letterSpacing: 2,
+  title: {
+    color: '#F8FAFC',
+    fontSize: 23,
+    lineHeight: 33,
+    fontWeight: '700',
+    marginTop: 12,
+    fontFamily: FONT_FAMILY,
+    letterSpacing: -0.2,
+  },
+  deck: {
+    color: '#CBD5E1',
+    fontSize: 15.5,
+    lineHeight: 24,
+    marginTop: 14,
+    fontStyle: 'italic',
+    fontFamily: FONT_FAMILY,
+    borderLeftWidth: 2.5,
+    borderLeftColor: 'rgba(245, 166, 35, 0.50)',
+    paddingLeft: 12,
+  },
+  paragraph: {
+    color: '#E2E8F0',
+    fontSize: 15.5,
+    lineHeight: 27,
+    marginTop: 16,
+    fontFamily: FONT_FAMILY,
+    letterSpacing: 0.1,
   },
   footerRow: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginTop: 16,
-    paddingTop: 16,
+    justifyContent: 'center',
+    gap: 12,
+    marginTop: 32,
+    paddingTop: 20,
     borderTopWidth: 1,
-    borderTopColor: COLORS.borderSoft,
-    marginHorizontal: 18,
+    borderTopColor: 'rgba(255, 255, 255, 0.07)',
   },
   footerLink: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 9,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+  },
+  footerLinkActive: {
+    borderColor: 'rgba(245, 166, 35, 0.35)',
+    backgroundColor: 'rgba(245, 166, 35, 0.08)',
   },
   footerLinkText: {
     color: COLORS.primary,
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '600',
+    fontFamily: FONT_FAMILY,
   },
 });
