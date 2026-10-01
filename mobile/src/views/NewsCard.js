@@ -155,9 +155,9 @@ function HotPulse() {
 export default NewsCard;
 
 const styles = StyleSheet.create({
-  touchable: { overflow: 'hidden' },
-  card: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: 'rgba(255, 255, 255, 0.06)', borderLeftWidth: 2, borderLeftColor: 'transparent', paddingVertical: 12, paddingRight: 12, paddingLeft: 0, marginHorizontal: 0, position: 'relative', overflow: 'hidden' },
-  cardImportant: { borderBottomColor: 'rgba(255, 59, 92, 0.25)', borderLeftColor: '#FF3B5C', backgroundColor: 'rgba(255, 59, 92, 0.02)' },
+  touchable: { overflow: 'visible', marginBottom: 10 },
+  card: { flexDirection: 'row', backgroundColor: '#0B0F15', borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.08)', borderLeftWidth: 3, borderLeftColor: 'transparent', borderRadius: 4, paddingVertical: 12, paddingRight: 12, paddingLeft: 0, marginHorizontal: 12, position: 'relative', overflow: 'hidden' },
+  cardImportant: { borderColor: 'rgba(255, 59, 92, 0.25)', borderLeftColor: '#FF3B5C', backgroundColor: 'rgba(255, 59, 92, 0.04)' },
   cardDimmed: { opacity: 0.5 },
   accentBar: { display: 'none' },
   body: { flexDirection: 'row', alignItems: 'flex-start', flex: 1, paddingLeft: 12, marginBottom: 0 },
