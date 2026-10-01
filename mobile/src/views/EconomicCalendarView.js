@@ -29,6 +29,7 @@ import localizeTitle, {
   formatTime,
 } from '../utils/calendarVi';
 
+const HEADER_HEIGHT = 56; // Height of AppHeader
 const Z = {
   zinc100: '#F8FAFC',
   zinc200: '#E2E8F0',
@@ -777,6 +778,7 @@ const styles = StyleSheet.create({
     maxWidth: 900,
     alignSelf: 'center',
     paddingBottom: 4,
+    paddingTop: HEADER_HEIGHT, // offset for AppHeader
   },
   dayGroup: {
     borderBottomWidth: 1,
@@ -792,8 +794,9 @@ const styles = StyleSheet.create({
     borderBottomColor: 'rgba(255, 255, 255, 0.05)',
     backgroundColor: 'rgba(8, 11, 17, 0.90)',
     backdropFilter: 'blur(16px)',
-    position: 'sticky',
-    top: 0,
+    // Removed sticky positioning to prevent header jank
+    // position: 'sticky',
+    // top: 0,
     zIndex: 50,
   },
   dateHeaderLeft: {
