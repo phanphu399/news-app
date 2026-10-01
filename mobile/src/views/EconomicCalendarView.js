@@ -394,7 +394,7 @@ export default function EconomicCalendarView() {
           pollBusyRef.current = false;
           loadRelated();
         });
-    }, 30000);
+    }, 10000);
     return () => clearInterval(timer);
   }, [loadEvents, loadRelated]);
 
@@ -410,7 +410,7 @@ export default function EconomicCalendarView() {
     const upcoming = valid.filter((event) => new Date(event.date) >= nowMs - 3600_000);
     const past = valid.filter((event) => new Date(event.date) < nowMs - 3600_000);
     return [...upcoming, ...past];
-  }, [events, impact]);
+  }, [events, impact, now]);
 
   const sections = useMemo(() => {
     const map = new Map();
@@ -651,7 +651,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background,
     width: '100%',
-    minHeight: '45vh',
     position: 'relative',
   },
   header: {
