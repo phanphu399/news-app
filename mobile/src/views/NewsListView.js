@@ -95,7 +95,7 @@ function FilterChip({ chip, isActive, onPress }) {
 
   const borderColor = bgAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: ['transparent', COLORS.primary],
+    outputRange: ['transparent', chip.isSpecial ? '#F43F5E' : COLORS.primary],
   });
 
   return (
@@ -107,10 +107,10 @@ function FilterChip({ chip, isActive, onPress }) {
       style={{ transform: [{ scale }] }}
     >
       <Animated.View style={[styles.chip, { borderBottomColor: borderColor }]}>
-        <Text style={[styles.chipText, isActive && styles.chipTextActive]}>
+        <Text style={[styles.chipText, isActive && (chip.isSpecial ? { color: '#F43F5E' } : styles.chipTextActive)]}>
           {chip.label.toUpperCase()}
         </Text>
-        <Text style={[styles.chipCount, isActive && styles.chipCountActive]}>
+        <Text style={[styles.chipCount, isActive && (chip.isSpecial ? { color: '#F43F5E', backgroundColor: 'rgba(244,63,94,0.1)' } : styles.chipCountActive)]}>
           {chip.count}
         </Text>
       </Animated.View>
@@ -147,7 +147,9 @@ export default function NewsListView({ items, loading, error, onRefresh, newItem
   // Build chips (categories)
   const chips = useMemo(() => {
     const counts = {};
+    let hotCount = 0;
     for (const item of items) {
+      if (item.isImportant) hotCount++;
       const cat = item.category || 'Macro';
       counts[cat] = (counts[cat] || 0) + 1;
     }
@@ -158,12 +160,22 @@ export default function NewsListView({ items, loading, error, onRefresh, newItem
         label: categoryStyle(key)?.short || key,
         count,
       }));
-    return [{ key: ALL, label: 'Tất cả', count: items.length }, ...catChips];
+    return [
+      { key: ALL, label: 'Tất cả', count: items.length },
+      { key: 'HOT', label: '🔥 Tin Nóng', count: hotCount, isSpecial: true },
+      ...catChips
+    ];
   }, [items]);
 
   // Filtered list
   const flatList = useMemo(() => {
-    let list = filter === ALL ? items : items.filter((i) => i.category === filter);
+    let list = items;
+    if (filter === 'HOT') {
+      list = items.filter((i) => i.isImportant);
+    } else if (filter !== ALL) {
+      list = items.filter((i) => (i.category || 'Macro') === filter);
+    }
+
     if (query.trim()) {
       const q = query.trim().toLowerCase();
       list = list.filter(
