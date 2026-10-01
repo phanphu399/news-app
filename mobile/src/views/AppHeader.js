@@ -9,7 +9,7 @@ import {
   Platform,
 } from 'react-native';
 import { PulseLogo, LiveDot } from '../components/PulseLogo';
-import { COLORS, FONT_FAMILY } from '../config/constants';
+import { COLORS, FONT_FAMILY, FONT_MONO } from '../config/constants';
 
 function getBuildVersion() {
   if (Platform.OS !== 'web' || typeof window === 'undefined') return '';

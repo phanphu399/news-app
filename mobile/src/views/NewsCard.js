@@ -10,7 +10,7 @@ import {
   Image,
 } from 'react-native';
 import { formatRelativeTime } from '../utils/time_format';
-import { categoryStyle, COLORS, FONT_FAMILY, TABULAR_NUMS } from '../config/constants';
+import { categoryStyle, COLORS, FONT_FAMILY, TABULAR_NUMS, FONT_MONO } from '../config/constants';
 import TranslatedText from '../components/TranslatedText';
 
 // Helper to generate a monogram from source name

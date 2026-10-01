@@ -13,7 +13,7 @@ import {
   Platform,
 } from 'react-native';
 import NewsCard from './NewsCard';
-import { COLORS, categoryStyle, FONT_FAMILY, TABULAR_NUMS } from '../config/constants';
+import { COLORS, categoryStyle, FONT_FAMILY, TABULAR_NUMS, FONT_MONO } from '../config/constants';
 
 const ALL = '__all__';
 
