@@ -84,11 +84,7 @@ export default function AppHeader({ online, loading, onRefresh }) {
       </View>
 
       <View style={styles.right}>
-        {build ? (
-          <View style={styles.versionBadge}>
-            <Text style={styles.versionText}>{build}</Text>
-          </View>
-        ) : null}
+
 
         <TouchableOpacity
           style={[styles.refreshBtn, loading && styles.refreshBtnLoading]}

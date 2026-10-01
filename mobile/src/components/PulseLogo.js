@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Animated, Easing, Platform } from 'react-native';
+import { View, Text, StyleSheet, Animated, Easing, Platform, Image } from 'react-native';
 import Svg, { Path, Circle } from 'react-native-svg';
 import { COLORS, FONT_FAMILY } from '../config/constants';
 
@@ -128,29 +128,11 @@ export function PulseLogo({
   return (
     <View style={styles.brand} pointerEvents="none">
       <View style={[styles.markWrap, { width: size, height: size }]}>
-        <Svg width={size} height={size} viewBox="0 0 24 24" style={[styles.markSvg, { transform: [{ rotate: '0deg' }] }]}>
-          <AnimatedPath
-            d={BOLT_PATH}
-            fill="none"
-            stroke={pulseColor}
-            strokeWidth={1.8}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeDasharray={strokeDasharray}
-            strokeDashoffset={drawOffset.interpolate({
-              inputRange: [0, 1],
-              outputRange: [strokeDasharray, 0],
-            })}
-            opacity={drawOffset}
-          />
-          <AnimatedCircle
-            cx={flowX}
-            cy={flowY}
-            r={1.4}
-            fill={pulseColor}
-            opacity={flowOpacity}
-          />
-        </Svg>
+        <Image 
+          source={require('../../assets/icon.png')} 
+          style={{ width: '100%', height: '100%', borderRadius: size * 0.2 }} 
+          resizeMode="cover" 
+        />
       </View>
 
       {showText && (
