@@ -308,7 +308,6 @@ export default function NewsListView({ items, loading, error, onRefresh, newItem
         </View>
       ) : (
         <FlatList
-          style={{ flex: 1 }}
           data={flatList}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.content}
@@ -367,8 +366,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: 'rgba(0, 212, 255, 0.08)',
     backgroundColor: 'rgba(5, 7, 10, 0.94)',
-    minHeight: 48,
+    flexGrow: 0,
     flexShrink: 0,
+    minHeight: 48,
   },
   chipsContent: {
     paddingHorizontal: 12,
