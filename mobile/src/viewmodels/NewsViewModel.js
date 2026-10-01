@@ -146,7 +146,29 @@ export default class NewsViewModel {
   async refresh() {
     try {
       const fetched = await fetchLatestNews();
+      const prevIds = new Set(this.items.map(i => i.id));
+      
       this.items = mergeById(this.items, fetched);
+      
+      // Detect completely new items that weren't in our list before
+      const newItems = fetched.filter(item => !prevIds.has(item.id));
+      
+      for (const item of newItems) {
+        if (this.knownIds.has(item.id)) continue;
+        this.knownIds.add(item.id);
+        
+        const ageMs = Date.now() - new Date(item.publishedAt).getTime();
+        const isFresh = ageMs >= 0 && ageMs <= NEW_ITEM_MAX_AGE_MS;
+        
+        if (isFresh) {
+          if (item?.isImportant) {
+            NewsWarningService.playBeep();
+            NewsWarningService.scheduleLocal(item);
+          }
+          this.newItemListeners.forEach((listener) => listener(item));
+        }
+      }
+
       this.importantIds = new Set(
         this.items.filter((item) => item.isImportant).map((item) => item.id)
       );
