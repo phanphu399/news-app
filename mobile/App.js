@@ -666,7 +666,6 @@ const styles = StyleSheet.create({
     maxWidth: 896,
     alignSelf: 'center',
     position: 'relative',
-    paddingBottom: 80,
   },
   tabBar: {
     flexDirection: 'row',
