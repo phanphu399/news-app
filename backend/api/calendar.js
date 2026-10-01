@@ -1,5 +1,5 @@
-const CACHE_TTL_MS = 15 * 1000;
-const CACHE_MAX_AGE = 15;
+const CACHE_TTL_MS = 3 * 1000;
+const CACHE_MAX_AGE = 3;
 
 let cache = { at: 0, payload: null };
 

@@ -437,7 +437,7 @@ export default function EconomicCalendarView() {
           pollBusyRef.current = false;
           loadRelated();
         });
-    }, 10000);
+    }, 3000);
     return () => clearInterval(timer);
   }, [loadEvents, loadRelated]);
 

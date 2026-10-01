@@ -20,7 +20,7 @@ export function buildTradingViewUrl({ symbol = 'OANDA:XAUUSD', interval = 60 } =
     locale: 'vi',
     enable_publishing: '0',
     allow_symbol_change: '1',
-    withdateranges: '1',
+    withdateranges: '0',
     saveimage: '1',
     symboledit: '1',
     container_id: 'tradingview_lite',
