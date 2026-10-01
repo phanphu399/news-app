@@ -333,13 +333,11 @@ export default function EconomicCalendarView() {
     else if (mode === 'refresh') setRefreshing(true);
     setError(null);
     try {
-      const res = await fetch(`${BACKEND_URL}/api/calendar`, {
+      const ts = Date.now();
+      const res = await fetch(`${BACKEND_URL}/api/calendar?t=${ts}`, {
         signal: abort.signal,
         headers: { 
           Accept: 'application/json',
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache',
-          'Expires': '0'
         },
       });
       const json = await res.json();
