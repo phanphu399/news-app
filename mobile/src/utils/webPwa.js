@@ -86,7 +86,7 @@ export function ensureWebPwa() {
     addHtml('meta', { name: 'theme-color', content: '#0B1426' });
   }
   if (!document.querySelector('link[rel="icon"]')) {
-    addHtml('link', { rel: 'icon', type: 'image/png', href: '/icons/icon-192.png' });
+    addHtml('link', { rel: 'icon', type: 'image/png', href: '/icons/icon-192.png?v=2' });
   }
   if (!document.querySelector('meta[name="apple-mobile-web-app-capable"]')) {
     addHtml('meta', { name: 'apple-mobile-web-app-capable', content: 'yes' });
@@ -95,7 +95,7 @@ export function ensureWebPwa() {
     addHtml('meta', { name: 'apple-mobile-web-app-title', content: 'MacroPulse' });
   }
   if (!document.querySelector('link[rel="apple-touch-icon"]')) {
-    addHtml('link', { rel: 'apple-touch-icon', href: '/icons/icon-180.png' });
+    addHtml('link', { rel: 'apple-touch-icon', href: '/icons/icon-180.png?v=2' });
   }
 
   window.__ASTER_BUILD = WEB_BUILD_VERSION;
