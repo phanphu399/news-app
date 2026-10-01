@@ -6,7 +6,7 @@ let cache = { at: 0, payload: null };
 function cors(response) {
   response.setHeader('Access-Control-Allow-Origin', '*');
   response.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
-  response.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  response.setHeader('Access-Control-Allow-Headers', 'Content-Type, Cache-Control, Pragma, Expires');
   response.setHeader('Cache-Control', `public, max-age=${CACHE_MAX_AGE}`);
 }
 
