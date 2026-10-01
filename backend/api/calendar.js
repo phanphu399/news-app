@@ -1,6 +1,6 @@
 const TARGET = 'https://nfs.faireconomy.media/ff_calendar_thisweek.json';
-const CACHE_TTL_MS = 5 * 60 * 1000;
-const CACHE_MAX_AGE = 300;
+const CACHE_TTL_MS = 15 * 1000;
+const CACHE_MAX_AGE = 15;
 
 let cache = { at: 0, payload: null };
 
