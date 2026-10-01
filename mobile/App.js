@@ -22,6 +22,7 @@ import EconomicCalendarView from './src/views/EconomicCalendarView';
 import SourcesView from './src/views/SourcesView';
 import TradingViewScreen from './src/views/TradingViewScreen';
 import AppHeader from './src/views/AppHeader';
+import { PulseLogo } from './src/components/PulseLogo';
 import LiveTicker from './src/components/LiveTicker';
 import ToastHost from './src/components/ToastHost';
 import ErrorBoundary from './src/components/ErrorBoundary';
