@@ -37,9 +37,94 @@ const TABS = {
   FEEDS: 'feeds',
 };
 
-const TOAST_DURATION_MS = 7000;
+const TOAST_DURATION_MS = 8000;
 const MAX_TOASTS = 3;
 
+// ─── Animated Tab Item ──────────────────────────────────────────────────────
+function TabItem({ tab, isActive, onPress, badge }) {
+  const scale = useRef(new Animated.Value(1)).current;
+  const glowOpacity = useRef(new Animated.Value(isActive ? 1 : 0)).current;
+  const labelOpacity = useRef(new Animated.Value(isActive ? 1 : 0.5)).current;
+  const Icon = tab.icon;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.spring(glowOpacity, {
+        toValue: isActive ? 1 : 0,
+        useNativeDriver: true,
+        friction: 8,
+      }),
+      Animated.timing(labelOpacity, {
+        toValue: isActive ? 1 : 0.5,
+        duration: 200,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [isActive]);
+
+  const handlePressIn = () =>
+    Animated.spring(scale, { toValue: 0.87, useNativeDriver: true, friction: 10 }).start();
+  const handlePressOut = () =>
+    Animated.spring(scale, { toValue: 1, useNativeDriver: true, friction: 7 }).start();
+
+  // Badge pulse
+  const badgePulse = useRef(new Animated.Value(1)).current;
+  useEffect(() => {
+    if (!badge) return;
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(badgePulse, { toValue: 1.2, duration: 600, useNativeDriver: true }),
+        Animated.timing(badgePulse, { toValue: 1, duration: 600, useNativeDriver: true }),
+      ])
+    ).start();
+    return () => badgePulse.setValue(1);
+  }, [badge]);
+
+  return (
+    <TouchableOpacity
+      style={styles.tabItem}
+      onPress={onPress}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      activeOpacity={1}
+    >
+      <Animated.View style={[styles.tabItemInner, { transform: [{ scale }] }]}>
+        {/* Glow background for active */}
+        <Animated.View style={[styles.tabGlow, { opacity: glowOpacity }]} />
+
+        <Icon
+          size={20}
+          strokeWidth={isActive ? 2.2 : 1.6}
+          variant={isActive ? 'solid' : 'outline'}
+          color={isActive ? COLORS.primary : TAB_INACTIVE}
+        />
+
+        <Animated.Text
+          style={[
+            styles.tabLabel,
+            isActive && styles.tabLabelActive,
+            { opacity: labelOpacity },
+          ]}
+        >
+          {tab.label}
+        </Animated.Text>
+
+        {/* Active indicator dot với cyan glow */}
+        {isActive && <View style={styles.activeDot} />}
+
+        {/* Badge */}
+        {badge > 0 && tab.key === TABS.NEWS && (
+          <Animated.View style={[styles.badgeDot, { transform: [{ scale: badgePulse }] }]}>
+            <Text style={styles.badgeText}>{badge > 99 ? '99+' : badge}</Text>
+          </Animated.View>
+        )}
+      </Animated.View>
+    </TouchableOpacity>
+  );
+}
+
+// ─── Tab Bar ─────────────────────────────────────────────────────────────────
 function TabBar({ active, onChange, insets, badge, hidden }) {
   const tabs = [
     { key: TABS.NEWS, label: 'Tin nóng', icon: FlameIcon },
@@ -53,7 +138,7 @@ function TabBar({ active, onChange, insets, badge, hidden }) {
   useEffect(() => {
     Animated.timing(hiding, {
       toValue: hidden ? 1 : 0,
-      duration: 260,
+      duration: 280,
       easing: Easing.out(Easing.cubic),
       useNativeDriver: true,
     }).start();
@@ -63,7 +148,7 @@ function TabBar({ active, onChange, insets, badge, hidden }) {
     opacity: hiding.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }),
     transform: [
       {
-        translateY: hiding.interpolate({ inputRange: [0, 1], outputRange: [0, 160] }),
+        translateY: hiding.interpolate({ inputRange: [0, 1], outputRange: [0, 80] }),
       },
     ],
   };
@@ -76,32 +161,17 @@ function TabBar({ active, onChange, insets, badge, hidden }) {
         navStyle,
       ]}
     >
-      {tabs.map((tab) => {
-        const isActive = active === tab.key;
-        const Icon = tab.icon;
-        return (
-          <TouchableOpacity
-            key={tab.key}
-            style={[styles.tabItem, isActive && styles.tabItemActive]}
-            onPress={() => onChange(tab.key)}
-            activeOpacity={0.75}
-          >
-            <Icon
-              size={19}
-              strokeWidth={isActive ? 2.2 : 1.6}
-              variant={isActive ? 'solid' : 'outline'}
-              color={isActive ? '#F1F5F9' : '#64748B'}
-            />
-            <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>{tab.label}</Text>
-            {isActive && <View style={styles.activeDot} />}
-            {badge > 0 && tab.key === TABS.NEWS && (
-              <View style={styles.badgeDot}>
-                <Text style={styles.badgeText}>{badge > 99 ? '99+' : badge}</Text>
-              </View>
-            )}
-          </TouchableOpacity>
-        );
-      })}
+      {/* Top cyan glow separator */}
+      <View style={styles.tabTopGlow} />
+      {tabs.map((tab) => (
+        <TabItem
+          key={tab.key}
+          tab={tab}
+          isActive={active === tab.key}
+          onPress={() => onChange(tab.key)}
+          badge={tab.key === TABS.NEWS ? badge : 0}
+        />
+      ))}
     </Animated.View>
   );
 }
@@ -599,15 +669,26 @@ const styles = StyleSheet.create({
   },
   tabBar: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(8, 11, 17, 0.90)',
-    backdropFilter: 'blur(24px)',
+    backgroundColor: 'rgba(5, 7, 10, 0.97)',
+    backdropFilter: 'blur(20px)',
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.08)',
-    paddingTop: 6,
+    borderTopColor: 'rgba(0, 212, 255, 0.08)',
+    paddingTop: 4,
     width: '100%',
     maxWidth: 896,
     alignSelf: 'center',
     position: 'relative',
+    overflow: 'hidden',
+  },
+  // Thin cyan glow line top of tab bar
+  tabTopGlow: {
+    position: 'absolute',
+    top: 0,
+    left: '15%',
+    right: '15%',
+    height: 1,
+    backgroundColor: 'rgba(0, 212, 255, 0.25)',
+    borderRadius: 1,
   },
   navReveal: {
     position: 'absolute',
@@ -621,61 +702,78 @@ const styles = StyleSheet.create({
     width: 48,
     height: 4,
     borderRadius: 2,
-    backgroundColor: 'rgba(255, 255, 255, 0.20)',
+    backgroundColor: 'rgba(0, 212, 255, 0.30)',
   },
   tabItem: {
     flex: 1,
     alignItems: 'center',
-    paddingTop: 6,
-    paddingBottom: 4,
+    paddingVertical: 5,
     position: 'relative',
+  },
+  tabItemInner: {
+    alignItems: 'center',
+    paddingTop: 4,
+    paddingBottom: 2,
+    paddingHorizontal: 8,
+    borderRadius: 10,
+    position: 'relative',
+    minWidth: 44,
+  },
+  // Subtle glow bg khi tab active
+  tabGlow: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: 10,
+    backgroundColor: 'rgba(0, 212, 255, 0.08)',
   },
   activeDot: {
     width: 4,
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#F5A623',
-    marginTop: 3,
-    shadowColor: '#F5A623',
-    shadowOpacity: 0.8,
-    shadowRadius: 4,
+    backgroundColor: COLORS.primary,
+    marginTop: 2,
+    shadowColor: COLORS.primary,
+    shadowOpacity: 1,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 3,
   },
   tabItemActive: {
     backgroundColor: 'transparent',
   },
   tabLabel: {
-    color: '#64748B',
-    fontSize: 10,
+    color: TAB_INACTIVE,
+    fontSize: 9.5,
     fontWeight: '500',
     marginTop: 3,
     fontFamily: FONT_FAMILY,
+    letterSpacing: 0.1,
   },
   tabLabelActive: {
-    color: '#F1F5F9',
-    fontWeight: '600',
-  },
-  tabIndicator: {
-    marginTop: 5,
-    width: 20,
-    height: 2,
-    borderRadius: 2,
-    backgroundColor: 'transparent',
+    color: COLORS.primary,
+    fontWeight: '700',
   },
   badgeDot: {
     position: 'absolute',
-    top: 2,
-    right: '22%',
-    minWidth: 17,
-    height: 17,
-    borderRadius: 8.5,
+    top: 1,
+    right: 4,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
     backgroundColor: COLORS.important,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 4,
+    shadowColor: COLORS.important,
+    shadowOpacity: 0.7,
+    shadowRadius: 4,
   },
   badgeText: {
     color: '#FFFFFF',
-    fontSize: 9,
+    fontSize: 8.5,
     fontWeight: '800',
     fontFamily: FONT_FAMILY,
     fontVariant: TABULAR_NUMS,
@@ -687,12 +785,12 @@ const styles = StyleSheet.create({
   modalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(11, 14, 20, 0.88)',
+    backgroundColor: 'rgba(5, 7, 10, 0.95)',
     backdropFilter: 'blur(20px)',
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
     paddingVertical: 11,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.08)',
+    borderBottomColor: 'rgba(0, 212, 255, 0.10)',
     width: '100%',
     maxWidth: 896,
     alignSelf: 'center',
@@ -700,20 +798,20 @@ const styles = StyleSheet.create({
   closeButton: {
     width: 32,
     height: 32,
-    borderRadius: 10,
+    borderRadius: 9,
     backgroundColor: 'rgba(255, 255, 255, 0.04)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: 'rgba(255, 255, 255, 0.07)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   closeButtonText: {
-    color: '#F8FAFC',
+    color: '#F0F4F8',
     fontSize: 16,
     fontWeight: '600',
   },
   modalTitle: {
-    color: '#F8FAFC',
+    color: '#F0F4F8',
     fontSize: 14,
     fontWeight: '700',
     marginLeft: 12,
@@ -723,10 +821,10 @@ const styles = StyleSheet.create({
   externalButton: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 8,
-    backgroundColor: 'rgba(245, 166, 35, 0.12)',
+    borderRadius: 7,
+    backgroundColor: 'rgba(0, 212, 255, 0.08)',
     borderWidth: 1,
-    borderColor: 'rgba(245, 166, 35, 0.35)',
+    borderColor: 'rgba(0, 212, 255, 0.30)',
   },
   externalText: {
     color: COLORS.primary,
@@ -739,21 +837,21 @@ const styles = StyleSheet.create({
   },
   installCard: {
     position: 'absolute',
-    right: 16,
-    bottom: 92,
+    right: 14,
+    bottom: 90,
     maxWidth: 330,
-    backgroundColor: 'rgba(20, 27, 43, 0.94)',
+    backgroundColor: 'rgba(9, 12, 18, 0.97)',
     backdropFilter: 'blur(16px)',
     borderWidth: 1,
-    borderColor: 'rgba(245, 166, 35, 0.30)',
-    borderRadius: 16,
+    borderColor: 'rgba(0, 212, 255, 0.25)',
+    borderRadius: 14,
     paddingVertical: 12,
     paddingLeft: 14,
     paddingRight: 8,
-    shadowColor: '#000',
-    shadowOpacity: 0.5,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 6 },
+    shadowColor: '#00D4FF',
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 4 },
     elevation: 8,
   },
   installRow: {
@@ -770,11 +868,11 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     width: '100%',
     maxWidth: 896,
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    backgroundColor: 'rgba(11, 14, 20, 0.90)',
+    paddingHorizontal: 14,
+    paddingVertical: 5,
+    backgroundColor: 'rgba(5, 7, 10, 0.95)',
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.06)',
+    borderBottomColor: 'rgba(0, 212, 255, 0.07)',
   },
   connDot: {
     width: 6,
@@ -790,33 +888,34 @@ const styles = StyleSheet.create({
   },
   updateCard: {
     position: 'absolute',
-    left: 16,
-    right: 16,
-    bottom: 88,
+    left: 14,
+    right: 14,
+    bottom: 90,
     alignSelf: 'center',
     maxWidth: 560,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(20, 27, 43, 0.95)',
+    backgroundColor: 'rgba(9, 12, 18, 0.98)',
     backdropFilter: 'blur(20px)',
     borderWidth: 1,
-    borderColor: 'rgba(245, 166, 35, 0.30)',
-    borderRadius: 16,
+    borderColor: 'rgba(0, 212, 255, 0.28)',
+    borderRadius: 14,
     paddingVertical: 12,
-    paddingLeft: 16,
-    paddingRight: 12,
-    shadowColor: '#000',
-    shadowOpacity: 0.6,
-    shadowRadius: 20,
-    shadowOffset: { width: 0, height: 6 },
+    paddingLeft: 14,
+    paddingRight: 10,
+    shadowColor: '#00D4FF',
+    shadowOpacity: 0.18,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 4 },
     elevation: 10,
   },
+
   updateTextWrap: {
     flex: 1,
     minWidth: 0,
   },
   updateTitle: {
-    color: '#F8FAFC',
+    color: '#F0F4F8',
     fontSize: 13,
     fontWeight: '800',
     fontFamily: FONT_FAMILY,
@@ -829,13 +928,13 @@ const styles = StyleSheet.create({
   },
   updateApply: {
     backgroundColor: COLORS.primary,
-    borderRadius: 9,
+    borderRadius: 8,
     paddingVertical: 8,
     paddingHorizontal: 14,
     marginLeft: 8,
   },
   updateApplyText: {
-    color: '#0B0E14',
+    color: '#05070A',
     fontSize: 12,
     fontWeight: '800',
     fontFamily: FONT_FAMILY,

@@ -1,7 +1,14 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Animated, Easing, Platform } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Animated,
+  Easing,
+  Platform,
+} from 'react-native';
 import { PulseLogo, LiveDot } from '../components/PulseLogo';
-import { RefreshIcon } from '../components/UIIcons';
 import { COLORS, FONT_FAMILY } from '../config/constants';
 
 function getBuildVersion() {
@@ -11,8 +18,20 @@ function getBuildVersion() {
 
 export default function AppHeader({ online, loading, onRefresh }) {
   const spin = useRef(new Animated.Value(0)).current;
+  const headerOpacity = useRef(new Animated.Value(0)).current;
   const build = getBuildVersion();
 
+  // Fade-in header khi mount
+  useEffect(() => {
+    Animated.timing(headerOpacity, {
+      toValue: 1,
+      duration: 400,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  }, []);
+
+  // Rotate khi loading
   useEffect(() => {
     if (!loading) {
       spin.setValue(0);
@@ -33,21 +52,33 @@ export default function AppHeader({ online, loading, onRefresh }) {
   const rotate = spin.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] });
 
   return (
-    <View style={styles.header}>
+    <Animated.View style={[styles.header, { opacity: headerOpacity }]}>
+      {/* Glow line ở bottom border */}
+      <View style={styles.glowLine} />
+
       <View style={styles.brandLeft}>
-        <PulseLogo size={24} showText={true} scale={1.05} />
+        <PulseLogo size={22} showText={true} scale={1.0} />
         <View
           style={[
             styles.liveWrap,
             {
-              backgroundColor: online ? 'rgba(52, 211, 153, 0.08)' : 'rgba(244, 63, 94, 0.08)',
-              borderColor: online ? 'rgba(52, 211, 153, 0.22)' : 'rgba(244, 63, 94, 0.22)',
+              backgroundColor: online
+                ? 'rgba(0, 230, 118, 0.08)'
+                : 'rgba(255, 59, 92, 0.08)',
+              borderColor: online
+                ? 'rgba(0, 230, 118, 0.25)'
+                : 'rgba(255, 59, 92, 0.25)',
             },
           ]}
         >
-          <LiveDot size={6} color={online ? COLORS.success : COLORS.danger} />
-          <Text style={[styles.liveText, { color: online ? COLORS.success : COLORS.danger }]}>
-            {online ? 'Trực tiếp' : 'Ngoại tuyến'}
+          <LiveDot size={5} color={online ? COLORS.success : COLORS.danger} />
+          <Text
+            style={[
+              styles.liveText,
+              { color: online ? COLORS.success : COLORS.danger },
+            ]}
+          >
+            {online ? 'LIVE' : 'OFFLINE'}
           </Text>
         </View>
       </View>
@@ -58,19 +89,45 @@ export default function AppHeader({ online, loading, onRefresh }) {
             <Text style={styles.versionText}>{build}</Text>
           </View>
         ) : null}
+
         <TouchableOpacity
-          style={styles.refreshBtn}
+          style={[styles.refreshBtn, loading && styles.refreshBtnLoading]}
           onPress={onRefresh}
           disabled={loading}
-          hitSlop={8}
+          hitSlop={10}
           accessibilityLabel="Cập nhật tin mới"
         >
           <Animated.View style={[styles.refreshIconWrap, { transform: [{ rotate }] }]}>
-            <RefreshIcon size={16} color={loading ? COLORS.primary : COLORS.textSecondary} strokeWidth={2.2} />
+            <RefreshSvg
+              size={15}
+              color={loading ? COLORS.primary : COLORS.textSecondary}
+            />
           </Animated.View>
         </TouchableOpacity>
       </View>
-    </View>
+    </Animated.View>
+  );
+}
+
+// Inline SVG refresh icon
+function RefreshSvg({ size = 15, color = '#8899AA' }) {
+  const { Svg, Path } = require('react-native-svg');
+  return (
+    <Svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke={color}
+      strokeWidth={2.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <Path d="M23 4v6h-6" />
+      <Path d="M1 20v-6h6" />
+      <Path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10" />
+      <Path d="M21 14a9 9 0 0 1-14.85 3.36L1 14" />
+    </Svg>
   );
 }
 
@@ -79,16 +136,27 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
     width: '100%',
     maxWidth: 896,
     alignSelf: 'center',
+    backgroundColor: 'rgba(5, 7, 10, 0.96)',
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.06)',
-    backgroundColor: 'rgba(8, 11, 17, 0.85)',
-    backdropFilter: 'blur(20px)',
+    borderBottomColor: 'rgba(0, 212, 255, 0.08)',
     zIndex: 100,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  // Subtle cyan glow line tại bottom
+  glowLine: {
+    position: 'absolute',
+    bottom: 0,
+    left: '20%',
+    right: '20%',
+    height: 1,
+    backgroundColor: 'rgba(0, 212, 255, 0.20)',
+    borderRadius: 1,
   },
   brandLeft: {
     flexDirection: 'row',
@@ -100,17 +168,17 @@ const styles = StyleSheet.create({
   liveWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 8,
+    paddingHorizontal: 7,
     paddingVertical: 3,
     borderRadius: 999,
     borderWidth: 1,
+    gap: 4,
   },
   liveText: {
-    fontSize: 10.5,
-    fontWeight: '600',
-    marginLeft: 3,
+    fontSize: 9.5,
+    fontWeight: '700',
+    letterSpacing: 0.8,
     fontFamily: FONT_FAMILY,
-    letterSpacing: 0.2,
   },
   right: {
     flexDirection: 'row',
@@ -119,16 +187,16 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   versionBadge: {
-    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    backgroundColor: 'rgba(0, 212, 255, 0.05)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.06)',
+    borderColor: 'rgba(0, 212, 255, 0.15)',
     paddingHorizontal: 7,
     paddingVertical: 2.5,
-    borderRadius: 6,
+    borderRadius: 5,
   },
   versionText: {
     color: COLORS.textMuted,
-    fontSize: 10.5,
+    fontSize: 10,
     fontWeight: '600',
     fontFamily: FONT_FAMILY,
     fontVariant: ['tabular-nums'],
@@ -142,11 +210,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.03)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.06)',
+    borderColor: 'rgba(255, 255, 255, 0.07)',
+  },
+  refreshBtnLoading: {
+    borderColor: 'rgba(0, 212, 255, 0.30)',
+    backgroundColor: 'rgba(0, 212, 255, 0.06)',
   },
   refreshIconWrap: {
-    width: 16,
-    height: 16,
+    width: 15,
+    height: 15,
     alignItems: 'center',
     justifyContent: 'center',
   },
