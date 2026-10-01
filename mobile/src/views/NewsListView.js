@@ -297,6 +297,7 @@ export default function NewsListView({ items, loading, error, onRefresh, newItem
         </View>
       ) : (
         <FlatList
+          style={{ flex: 1 }}
           data={flatList}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.content}

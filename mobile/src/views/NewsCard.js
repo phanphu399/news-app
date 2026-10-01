@@ -86,9 +86,6 @@ export const NewsCard = memo(function NewsCard({ item, onPress, dimmed, index = 
         style={styles.touchable}
       >
         <Animated.View style={[styles.card, isImportant && styles.cardImportant, { backgroundColor: glowBg }]}>
-          {/* Left accent border for important items */}
-          {isImportant && <View style={[styles.accentBar, { backgroundColor: COLORS.important }]} />}
-
           <View style={styles.body}>
             {item.thumbnailUrl && (
               <Image source={{ uri: item.thumbnailUrl }} style={styles.thumbnail} />
@@ -159,10 +156,10 @@ export default NewsCard;
 
 const styles = StyleSheet.create({
   touchable: { overflow: 'hidden' },
-  card: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: 'rgba(255, 255, 255, 0.06)', paddingVertical: 10, paddingRight: 12, paddingLeft: 0, marginHorizontal: 0, position: 'relative', overflow: 'hidden' },
-  cardImportant: { borderBottomColor: 'rgba(255, 59, 92, 0.25)', backgroundColor: 'rgba(255, 59, 92, 0.02)' },
+  card: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: 'rgba(255, 255, 255, 0.06)', borderLeftWidth: 2, borderLeftColor: 'transparent', paddingVertical: 12, paddingRight: 12, paddingLeft: 0, marginHorizontal: 0, position: 'relative', overflow: 'hidden' },
+  cardImportant: { borderBottomColor: 'rgba(255, 59, 92, 0.25)', borderLeftColor: '#FF3B5C', backgroundColor: 'rgba(255, 59, 92, 0.02)' },
   cardDimmed: { opacity: 0.5 },
-  accentBar: { width: 2, alignSelf: 'stretch', marginRight: 10, marginLeft: 12, opacity: 1 },
+  accentBar: { display: 'none' },
   body: { flexDirection: 'row', alignItems: 'flex-start', flex: 1, paddingLeft: 12, marginBottom: 0 },
   thumbnail: { width: 48, height: 48, borderRadius: 2, marginRight: 10, backgroundColor: 'rgba(255, 255, 255, 0.05)', borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)' },
   textContainer: { flex: 1 },
