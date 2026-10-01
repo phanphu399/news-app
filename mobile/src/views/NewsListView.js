@@ -94,37 +94,26 @@ function FilterChip({ chip, isActive, onPress }) {
 
   const borderColor = bgAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: ['rgba(255,255,255,0.07)', 'rgba(0, 212, 255, 0.55)'],
-  });
-  const bgColor = bgAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['rgba(255,255,255,0.02)', 'rgba(0, 212, 255, 0.10)'],
+    outputRange: ['transparent', COLORS.primary],
   });
 
   return (
-    <Animated.View style={{ transform: [{ scale }] }}>
-      <TouchableOpacity
-        onPress={onPress}
-        onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
-        activeOpacity={1}
-      >
-        <Animated.View
-          style={[
-            styles.chip,
-            { backgroundColor: bgColor, borderColor },
-            isActive && styles.chipActiveShadow,
-          ]}
-        >
-          <Text style={[styles.chipText, isActive && styles.chipTextActive]}>
-            {chip.label}
-          </Text>
-          <Text style={[styles.chipCount, isActive && styles.chipCountActive]}>
-            {chip.count}
-          </Text>
-        </Animated.View>
-      </TouchableOpacity>
-    </Animated.View>
+    <TouchableOpacity
+      onPress={onPress}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      activeOpacity={1}
+      style={{ transform: [{ scale }] }}
+    >
+      <Animated.View style={[styles.chip, { borderBottomColor: borderColor }]}>
+        <Text style={[styles.chipText, isActive && styles.chipTextActive]}>
+          {chip.label.toUpperCase()}
+        </Text>
+        <Text style={[styles.chipCount, isActive && styles.chipCountActive]}>
+          {chip.count}
+        </Text>
+      </Animated.View>
+    </TouchableOpacity>
   );
 }
 
@@ -147,11 +136,11 @@ export default function NewsListView({ items, loading, error, onRefresh, newItem
 
   const searchBorder = searchAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: ['rgba(255,255,255,0.07)', 'rgba(0, 212, 255, 0.50)'],
+    outputRange: ['rgba(255,255,255,0.05)', 'rgba(0, 212, 255, 0.4)'],
   });
   const searchBg = searchAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: ['rgba(255,255,255,0.025)', 'rgba(0, 212, 255, 0.05)'],
+    outputRange: ['rgba(5, 7, 10, 0.94)', 'rgba(0, 212, 255, 0.02)'],
   });
 
   // Build chips (categories)
@@ -361,87 +350,71 @@ function CloseSvg({ size = 13, color = '#4A5568' }) {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
 
-  // Filter chips
+  // Filter chips (Terminal Tabs)
   chipsBar: {
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(0, 212, 255, 0.08)',
-    backgroundColor: 'rgba(5, 7, 10, 0.94)',
+    backgroundColor: COLORS.background,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.08)',
     flexGrow: 0,
     flexShrink: 0,
-    minHeight: 48,
+    minHeight: 36,
   },
   chipsContent: {
-    paddingHorizontal: 12,
-    paddingVertical: 9,
-    gap: 7,
+    paddingHorizontal: 8,
     flexDirection: 'row',
   },
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 7,
-    borderWidth: 1,
-    paddingLeft: 10,
-    paddingRight: 7,
-    paddingVertical: 5,
-    gap: 5,
-  },
-  chipActiveShadow: {
-    // Web shadow
-    shadowColor: '#00D4FF',
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 0 },
-    elevation: 3,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
+    gap: 6,
   },
   chipText: {
-    color: COLORS.textMuted,
-    fontSize: 12,
-    fontWeight: '600',
+    color: '#64748B',
+    fontSize: 11,
+    fontWeight: '700',
     fontFamily: FONT_FAMILY,
+    letterSpacing: 0.5,
   },
   chipTextActive: {
-    color: COLORS.primary,
-    fontWeight: '700',
+    color: COLORS.text,
   },
   chipCount: {
-    color: COLORS.textMuted,
-    fontSize: 10,
+    color: '#64748B',
+    fontSize: 9,
     fontWeight: '600',
-    backgroundColor: 'rgba(255, 255, 255, 0.04)',
-    borderRadius: 4,
-    paddingHorizontal: 5,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    paddingHorizontal: 4,
     paddingVertical: 1,
-    fontFamily: FONT_FAMILY,
+    borderRadius: 2,
+    fontFamily: FONT_MONO,
     fontVariant: TABULAR_NUMS,
   },
   chipCountActive: {
-    color: COLORS.primary,
-    backgroundColor: 'rgba(0, 212, 255, 0.12)',
+    color: '#05070A',
+    backgroundColor: COLORS.primary,
   },
 
   // Search bar
   searchWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginHorizontal: 12,
-    marginTop: 8,
-    marginBottom: 12,
-    borderRadius: 9,
-    borderWidth: 1,
-    paddingHorizontal: 11,
-    height: 37,
+    height: 38,
     alignSelf: 'stretch',
     maxWidth: 896,
-    backgroundColor: 'rgba(5, 7, 10, 0.94)',
-    borderColor: 'rgba(0, 212, 255, 0.12)',
+    borderBottomWidth: 1,
+    paddingHorizontal: 14,
   },
   searchInput: {
     flex: 1,
     color: COLORS.text,
-    fontSize: 13.5,
+    fontSize: 12,
     fontFamily: FONT_FAMILY,
     paddingVertical: 0,
+    letterSpacing: 0.3,
   },
 
   // List content
