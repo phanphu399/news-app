@@ -333,6 +333,22 @@ function MainScreen() {
 
   const [state, setState] = useState({ items: [], loading: true, error: null });
   const [manualRefreshing, setManualRefreshing] = useState(false);
+  const [showSplash, setShowSplash] = useState(true);
+  const splashOpacity = useRef(new Animated.Value(1)).current;
+
+  // Ẩn splash screen khi app load xong hoặc sau 2s
+  useEffect(() => {
+    if (!state.loading || state.items.length > 0) {
+      setTimeout(() => {
+        Animated.timing(splashOpacity, {
+          toValue: 0,
+          duration: 400,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }).start(() => setShowSplash(false));
+      }, 800);
+    }
+  }, [state.loading, state.items.length, splashOpacity]);
 
   const reloadAll = useCallback(async () => {
     if (manualRefreshing) return;
@@ -645,6 +661,26 @@ function MainScreen() {
           ) : null}
         </View>
       </Modal>
+
+      {showSplash && (
+        <Animated.View
+          style={[
+            StyleSheet.absoluteFill,
+            {
+              backgroundColor: '#05070A',
+              justifyContent: 'center',
+              alignItems: 'center',
+              zIndex: 99999,
+              opacity: splashOpacity,
+            },
+          ]}
+        >
+          <PulseLogo size={50} showText={true} scale={1.8} />
+          <Text style={{ color: '#4A5568', marginTop: 24, fontSize: 13, fontFamily: FONT_FAMILY, letterSpacing: 1 }}>
+            TẢI DỮ LIỆU...
+          </Text>
+        </Animated.View>
+      )}
     </SafeAreaView>
   );
 }
