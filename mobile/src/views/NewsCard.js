@@ -93,11 +93,20 @@ export const NewsCard = memo(function NewsCard({ item, onPress, dimmed, index = 
             <View style={styles.textContainer}>
               {/* Category + hot badge */}
               <View style={styles.topRow}>
-                <View style={[styles.catBadge, { backgroundColor: cat.bg, borderColor: cat.border || `${cat.color}30` }]} >
-                  <View style={[styles.catDot, { backgroundColor: cat.color }]} />
-                  <Text style={[styles.catText, { color: cat.color }]} numberOfLines={1}>
-                    {cat.short}
-                  </Text>
+                <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
+                  <View style={[styles.catBadge, { backgroundColor: cat.bg, borderColor: cat.border || `${cat.color}30` }]} >
+                    <View style={[styles.catDot, { backgroundColor: cat.color }]} />
+                    <Text style={[styles.catText, { color: cat.color }]} numberOfLines={1}>{cat.short}</Text>
+                  </View>
+                  {/* Tích hợp AI Sentiment đơn giản */}
+                  {(() => {
+                    const txt = (item.title || '').toLowerCase();
+                    if (/surge|jump|rally|beat|record|climb|gain|bull|high|soar|tăng|vượt/i.test(txt)) 
+                      return <View style={[styles.catBadge, { borderColor: 'rgba(52, 211, 153, 0.4)', backgroundColor: 'rgba(52, 211, 153, 0.1)' }]}><Text style={[styles.catText, { color: '#34D399' }]}>BULLISH</Text></View>;
+                    if (/drop|plunge|fall|miss|crash|bear|low|slump|slide|giảm|lao|rơi/i.test(txt)) 
+                      return <View style={[styles.catBadge, { borderColor: 'rgba(244, 63, 94, 0.4)', backgroundColor: 'rgba(244, 63, 94, 0.1)' }]}><Text style={[styles.catText, { color: '#F43F5E' }]}>BEARISH</Text></View>;
+                    return null;
+                  })()}
                 </View>
                 {isImportant && (
                   <View style={styles.hotBadge}>

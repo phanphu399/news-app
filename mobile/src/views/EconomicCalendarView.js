@@ -23,6 +23,8 @@ import { BACKEND_URL } from '../config/constants';
 import { fetchLatestNews } from '../services/SupabaseService';
 import { ChevronUpIcon, RefreshIcon } from '../components/UIIcons';
 import { showToast } from '../services/ToastService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Haptics from 'expo-haptics';
 import localizeTitle, {
   localizeCountry,
   formatDateHeader,
@@ -144,6 +146,14 @@ function actualColor(actual, forecast, title) {
   return better ? Z.emerald400 : Z.rose400;
 }
 
+function getDeviation(actual, forecast, title) {
+  const a = parseFloat(String(actual || '').replace(/,/g, ''));
+  const f = parseFloat(String(forecast || '').replace(/,/g, ''));
+  if (Number.isNaN(a) || Number.isNaN(f) || f === 0) return 0;
+  const dev = ((a - f) / Math.abs(f)) * 100;
+  return isDownsideGood(title) ? -dev : dev;
+}
+
 // Thanh vạch impact 1/2/3 (TradingView-style) thay cho badge chữ.
 function ImpactIndicator({ impact }) {
   const level = impact === 'High' ? 3 : impact === 'Medium' ? 2 : 1;
@@ -173,6 +183,9 @@ function CalendarRow({ event, compact, now, last }) {
   const previous = event.previous ?? '—';
   const actual = event.actual ?? '';
   const actualCol = actual ? actualColor(actual, event.forecast, event.title) : null;
+  const deviation = actual && event.forecast ? getDeviation(actual, event.forecast, event.title) : 0;
+  const isSurprise = Math.abs(deviation) > 15; // >15% miss/beat is a big surprise
+
   const eventMs = new Date(event.date || 0).getTime();
   const diff = eventMs - now;
   const countDown = diff > 0 && diff <= COUNTDOWN_WINDOW_MS;
@@ -225,18 +238,21 @@ function CalendarRow({ event, compact, now, last }) {
             <Text style={styles.statLabel} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>
               Hiện tại
             </Text>
-            <Text
-              style={[
-                styles.statValue,
-                actualCol ? { color: actualCol } : actual ? styles.actualNeutral : styles.actualEmpty,
-              ]}
-              numberOfLines={1}
-              ellipsizeMode="tail"
-              adjustsFontSizeToFit
-              minimumFontScale={0.6}
-            >
-              {actual || '—'}
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <Text
+                style={[
+                  styles.statValue,
+                  actualCol ? { color: actualCol } : actual ? styles.actualNeutral : styles.actualEmpty,
+                ]}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                adjustsFontSizeToFit
+                minimumFontScale={0.6}
+              >
+                {actual || '—'}
+              </Text>
+              {isSurprise && <Text style={{ fontSize: 10 }}>🔥</Text>}
+            </View>
           </View>
           <View style={styles.statCell}>
             <Text style={styles.statLabel} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>
@@ -329,31 +345,54 @@ export default function EconomicCalendarView() {
     const abort = new AbortController();
     abortRef.current = abort;
     const timeout = setTimeout(() => abort.abort(), 12000);
-    if (mode === 'initial') setLoading(true);
-    else if (mode === 'refresh') setRefreshing(true);
+    
+    if (mode === 'initial') {
+      setLoading(true);
+      try {
+        const cached = await AsyncStorage.getItem('CAL_CACHE');
+        if (cached) setEvents(JSON.parse(cached));
+      } catch (e) {}
+    } else if (mode === 'refresh') {
+      setRefreshing(true);
+    }
     setError(null);
+
     try {
       const ts = Date.now();
       const res = await fetch(`${BACKEND_URL}/api/calendar?t=${ts}`, {
         signal: abort.signal,
-        headers: { 
-          Accept: 'application/json',
-        },
+        headers: { Accept: 'application/json' },
       });
       const json = await res.json();
       if (!res.ok || !json?.ok) throw new Error(json?.error || `HTTP ${res.status}`);
-      setEvents(json.events || []);
+      
+      const newEvents = json.events || [];
+      setEvents((prev) => {
+        // Vibrate if a new 'actual' number dropped for an event we were waiting for
+        if (mode === 'poll' && prev.length > 0) {
+          const hasNewData = newEvents.some((ne, i) => {
+            const pe = prev[i];
+            return pe && ne.id === pe.id && ne.actual && !pe.actual;
+          });
+          if (hasNewData && typeof Haptics !== 'undefined') {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(()=>{});
+          }
+        }
+        return newEvents;
+      });
+      
+      AsyncStorage.setItem('CAL_CACHE', JSON.stringify(newEvents)).catch(()=>{});
     } catch (err) {
       if (err.name === 'AbortError') {
         if (mode !== 'poll') {
           setError('Quá thời gian chờ (12s), thử lại.');
-          showToast({ type: 'error', title: 'Lịch kinh tế quá chậm', message: 'Kết nối tới server bị treo, hãy thử lại.' });
+          showToast({ type: 'error', title: 'Lịch kinh tế', message: 'Tốc độ mạng quá chậm.' });
         }
         return;
       }
       if (mode !== 'poll') {
         setError(err.message);
-        showToast({ type: 'error', title: 'Lỗi lịch kinh tế', message: err.message });
+        showToast({ type: 'error', title: 'Lỗi', message: err.message });
       }
     } finally {
       clearTimeout(timeout);

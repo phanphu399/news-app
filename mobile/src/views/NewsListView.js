@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import NewsCard from './NewsCard';
 import { COLORS, categoryStyle, FONT_FAMILY, TABULAR_NUMS, FONT_MONO } from '../config/constants';
+import * as Haptics from 'expo-haptics';
 
 const ALL = '__all__';
 
@@ -304,7 +305,12 @@ export default function NewsListView({ items, loading, error, onRefresh, newItem
           refreshControl={
             <RefreshControl
               refreshing={loading}
-              onRefresh={onRefresh}
+              onRefresh={() => {
+                if (typeof Haptics !== 'undefined') {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+                }
+                if (onRefresh) onRefresh();
+              }}
               tintColor={COLORS.primary}
               colors={[COLORS.primary]}
               progressBackgroundColor={COLORS.surface}
