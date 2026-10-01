@@ -335,7 +335,12 @@ export default function EconomicCalendarView() {
     try {
       const res = await fetch(`${BACKEND_URL}/api/calendar`, {
         signal: abort.signal,
-        headers: { Accept: 'application/json' },
+        headers: { 
+          Accept: 'application/json',
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        },
       });
       const json = await res.json();
       if (!res.ok || !json?.ok) throw new Error(json?.error || `HTTP ${res.status}`);
