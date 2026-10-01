@@ -86,28 +86,46 @@ export const NewsCard = memo(function NewsCard({ item, onPress, dimmed, index = 
         style={styles.touchable}
       >
         <Animated.View style={[styles.card, isImportant && styles.cardImportant, { backgroundColor: glowBg }]}>
-          <View style={styles.timeCol}>
-            <Text style={styles.timeText}>{formatRelativeTime(item.publishedAt)}</Text>
-            <View style={[styles.catBadge, { borderColor: cat.border || `${cat.color}40`, backgroundColor: cat.bg }]}>
-              <Text style={[styles.catText, { color: cat.color }]} numberOfLines={1}>{cat.short}</Text>
-            </View>
-            {isImportant && (
-              <View style={styles.hotBadge}>
-                <Text style={styles.hotText}>NÓNG</Text>
-              </View>
-            )}
-          </View>
-
-          <View style={styles.contentCol}>
-            <Text style={styles.source} numberOfLines={1}>{item.source || 'Unknown'}</Text>
-            <TranslatedText
-              style={[styles.title, isImportant && styles.titleImportant]}
-              numberOfLines={3}
-              text={item.title}
-            />
+          <View style={styles.body}>
             {item.thumbnailUrl && (
               <Image source={{ uri: item.thumbnailUrl }} style={styles.thumbnail} />
             )}
+            <View style={styles.textContainer}>
+              {/* Category + hot badge */}
+              <View style={styles.topRow}>
+                <View style={[styles.catBadge, { backgroundColor: cat.bg, borderColor: cat.border || `${cat.color}30` }]} >
+                  <View style={[styles.catDot, { backgroundColor: cat.color }]} />
+                  <Text style={[styles.catText, { color: cat.color }]} numberOfLines={1}>
+                    {cat.short}
+                  </Text>
+                </View>
+                {isImportant && (
+                  <View style={styles.hotBadge}>
+                    <HotPulse />
+                    <Text style={styles.hotText}>NÓNG</Text>
+                  </View>
+                )}
+              </View>
+
+              {/* Title */}
+              <TranslatedText
+                style={[styles.title, isImportant && styles.titleImportant]}
+                numberOfLines={2}
+                text={item.title}
+              />
+
+              {/* Meta */}
+              <View style={styles.metaRow}>
+                <View style={styles.monogram}>
+                  <Text style={styles.monogramText}>{monogram(item.source)}</Text>
+                </View>
+                <Text style={styles.source} numberOfLines={1}>
+                  {item.source || 'Unknown'}
+                </Text>
+                <Text style={styles.dot}>·</Text>
+                <Text style={styles.time}>{formatRelativeTime(item.publishedAt)}</Text>
+              </View>
+            </View>
           </View>
         </Animated.View>
       </TouchableOpacity>
@@ -115,93 +133,128 @@ export const NewsCard = memo(function NewsCard({ item, onPress, dimmed, index = 
   );
 });
 
+// Hot badge pulse animation
+function HotPulse() {
+  const pulse = useRef(new Animated.Value(1)).current;
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, { toValue: 1.4, duration: 700, useNativeDriver: true }),
+        Animated.timing(pulse, { toValue: 1, duration: 700, useNativeDriver: true }),
+      ])
+    ).start();
+  }, []);
+  return (
+    <View style={styles.hotDotWrap}>
+      <Animated.View style={[styles.hotDotRing, { transform: [{ scale: pulse }] }]} />
+      <View style={styles.hotDot} />
+    </View>
+  );
+}
+
 export default NewsCard;
 
 const styles = StyleSheet.create({
-  touchable: { overflow: 'visible' },
+  touchable: { 
+    marginBottom: 6, // Vertical gap to prevent them from blending together
+  },
   card: { 
     flexDirection: 'row', 
+    backgroundColor: '#0B1017', // Distinct but subtle background
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.04)',
     paddingVertical: 14, 
-    paddingHorizontal: 12, 
-    borderBottomWidth: 1, 
-    borderBottomColor: 'rgba(255, 255, 255, 0.05)', 
-    backgroundColor: 'transparent'
+    paddingHorizontal: 16, 
+    position: 'relative', 
+    overflow: 'hidden' 
   },
   cardImportant: { 
-    backgroundColor: 'rgba(255, 59, 92, 0.03)',
-    borderBottomColor: 'rgba(255, 59, 92, 0.2)'
+    backgroundColor: 'rgba(255, 59, 92, 0.04)',
+    borderLeftWidth: 3,
+    borderLeftColor: '#FF3B5C',
+    paddingLeft: 13, // Adjust for the 3px border
   },
   cardDimmed: { opacity: 0.5 },
-  timeCol: {
-    width: 65,
-    flexShrink: 0,
-    alignItems: 'flex-start',
-    marginRight: 12,
+  accentBar: { display: 'none' },
+  body: { 
+    flexDirection: 'row', 
+    alignItems: 'flex-start', 
+    flex: 1, 
   },
-  timeText: {
-    color: '#94A3B8',
-    fontSize: 11,
-    fontFamily: FONT_MONO,
-    fontVariant: TABULAR_NUMS,
-    marginBottom: 6,
+  thumbnail: { 
+    width: 60, 
+    height: 60, 
+    borderRadius: 4, 
+    marginRight: 14, 
+    backgroundColor: 'rgba(255, 255, 255, 0.05)', 
+    borderWidth: 1, 
+    borderColor: 'rgba(255, 255, 255, 0.1)' 
   },
-  catBadge: {
-    borderWidth: 1,
-    borderRadius: 2,
-    paddingHorizontal: 4,
-    paddingVertical: 2,
-    marginBottom: 6,
-  },
-  catText: {
-    fontSize: 9,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
-    fontFamily: FONT_MONO,
-  },
-  hotBadge: {
-    backgroundColor: '#FF3B5C',
-    borderRadius: 2,
-    paddingHorizontal: 4,
-    paddingVertical: 2,
-  },
-  hotText: {
-    color: '#FFFFFF',
-    fontSize: 9,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-    fontFamily: FONT_MONO,
-  },
-  contentCol: {
+  textContainer: { 
     flex: 1,
+    justifyContent: 'center',
   },
-  source: {
-    color: '#64748B',
-    fontSize: 10,
-    fontWeight: '700',
-    fontFamily: FONT_MONO,
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
-    marginBottom: 4,
+  topRow: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    justifyContent: 'space-between', 
+    marginBottom: 6 
   },
-  title: {
-    color: '#E2E8F0',
-    fontSize: 13.5,
-    lineHeight: 19,
-    fontWeight: '400',
-    fontFamily: FONT_FAMILY,
+  catBadge: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    borderRadius: 3, 
+    paddingHorizontal: 5, 
+    paddingVertical: 2, 
+    borderWidth: 1 
   },
-  titleImportant: {
-    fontWeight: '600',
-    color: '#FFFFFF',
+  catDot: { display: 'none' },
+  catText: { 
+    fontSize: 9, 
+    fontWeight: '800', 
+    letterSpacing: 0.8, 
+    textTransform: 'uppercase', 
+    fontFamily: FONT_FAMILY 
   },
-  thumbnail: {
-    width: '100%',
-    height: 120,
-    borderRadius: 4,
-    marginTop: 10,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+  hotBadge: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    paddingHorizontal: 4, 
+    paddingVertical: 1, 
+    gap: 4 
   },
+  hotDotWrap: { width: 6, height: 6, alignItems: 'center', justifyContent: 'center' },
+  hotDotRing: { display: 'none' },
+  hotDot: { width: 4, height: 4, backgroundColor: '#FF3B5C' },
+  hotText: { color: '#FF3B5C', fontSize: 9, fontWeight: '700', letterSpacing: 0.5, fontFamily: FONT_MONO },
+  title: { 
+    color: '#E2E8F0', 
+    fontSize: 14, 
+    lineHeight: 20, 
+    fontWeight: '500', 
+    fontFamily: FONT_FAMILY 
+  },
+  titleImportant: { 
+    fontWeight: '700', 
+    color: '#FFFFFF' 
+  },
+  metaRow: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    marginTop: 8 
+  },
+  monogram: { display: 'none' },
+  monogramText: { display: 'none' },
+  source: { 
+    color: '#94A3B8', 
+    fontSize: 11, 
+    fontWeight: '700', 
+    flexShrink: 1, 
+    fontFamily: FONT_FAMILY, 
+    letterSpacing: 0.5, 
+    textTransform: 'uppercase' 
+  },
+  dot: { color: '#475569', fontSize: 11, marginHorizontal: 6 },
+  time: { color: '#94A3B8', fontSize: 11, fontFamily: FONT_MONO, fontVariant: TABULAR_NUMS },
 });
