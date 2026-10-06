@@ -358,8 +358,7 @@ export default function EconomicCalendarView() {
     setError(null);
 
     try {
-      const ts = Date.now();
-      const res = await fetch(`${BACKEND_URL}/api/calendar?t=${ts}`, {
+      const res = await fetch(`${BACKEND_URL}/api/calendar`, {
         signal: abort.signal,
         headers: { Accept: 'application/json' },
       });
@@ -437,7 +436,7 @@ export default function EconomicCalendarView() {
           pollBusyRef.current = false;
           loadRelated();
         });
-    }, 3000);
+    }, 30000);
     return () => clearInterval(timer);
   }, [loadEvents, loadRelated]);
 

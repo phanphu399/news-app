@@ -25,10 +25,12 @@ All endpoints are Vercel serverless functions (ESM). Runtime Node ≥18 with `fe
 - **No longer consumed by mobile** — the gold/silver price panel was removed from `EconomicCalendarView` (2026-09-11). Endpoint kept in backend.
 
 ### GET /api/calendar
-- Proxies `https://nfs.faireconomy.media/ff_calendar_thisweek.json`.
-- Filters impacts (`High`/`Medium`/`Low`), maps to `{title,country,date,impact,forecast,previous,actual,unit}`, sorts ascending by date.
-- In-memory cache 5 min. `stale:true` fallback; `502` if no cache.
-- `Cache-Control: public, max-age=300`.
+- Proxies `https://economic-calendar.tradingview.com/events?from=...&to=...` (cửa sổ 13 ngày, 13 quốc gia).
+- Filters impacts (`High`/`Medium`/`Low` → impact map), maps to `{title,country,date,impact,forecast,previous,actual}`, sorts ascending by date.
+- In-memory cache 30s. `stale:true` fallback; `502` nếu không có cache.
+- `Cache-Control: public, max-age=30, s-maxage=30, stale-while-revalidate=30` — **CDN phục vụ request** → origin tối đa 1 lần/30s cho mọi client. Client **không** dùng query cache-buster (`?t=...`) vì phá cache CDN; React Native/browser tôn trọng `max-age`.
+- Upstream timeout 9s (Hobby limit 10s — vượt quá function bị kill).
+- Mobile poll 30s/lần (`EconomicCalendarView`). Poll 3s + cache-buster cũ là nguyên nhân chính gây ~864K invocations/tháng.
 
 ### GET /api/article?url=...
 - Fetches arbitrary article URL (9s timeout, 900KB HTML cap).
@@ -54,19 +56,26 @@ All endpoints are Vercel serverless functions (ESM). Runtime Node ≥18 with `fe
 - `Cache-Control: public, max-age=60, s-maxage=120`.
 
 ### POST /api/manual-fetch
-- Trigger bên ngoài (cron-job / admin curl). **Từ v15, nút "Tải mới" trong app KHÔNG còn gọi endpoint này** — chỉ tải lại tin từ Supabase (`vm.refresh()`).
+- Trigger bên ngoài (admin curl). **Nút "Làm mới" trong app gọi `GET /api/scrape` (on-demand)** — không gọi endpoint này; nút chỉ tải lại list từ Supabase sau khi chờ scrape.
 - Rate limit: 1 per 60s (`429`).
 - **Yêu cầu `CRON_SECRET`** (fail-closed).
 - Full pipeline: `scrapeAll()` + all user feeds → spam filter → title-dedupe → upsert → force purge spam → force cleanup old (>100 rows) → reclassify Paywall→Macro.
 - Returns `{ok, scraped, user_feeds, spam_filtered, duplicate_filtered, upserted, junk_deleted, message}`.
 
+### GET /api/scrape
+- **Cào on-demand** — endpoint duy nhất app gọi để kéo tin mới: `App.js` trigger fire-and-forget khi **app mở** và trong `reloadAll` khi **bấm nút Làm mới / pull-to-refresh** (`SourceService.triggerOnDemandScrape`, timeout 15s).
+- **Không cần secret.** Bảo vệ là cooldown **180s toàn cục** qua tier `on-demand` trong `cronState` (lock slot 14): mọi request trong cửa sổ đó trả `status: "skipped"` ngay. Client hiển thị toast theo `status` (`ok` → số tin mới, `skipped` → "vừa được cập nhật trước đó").
+- Gọi `runCronFetch('on-demand')`: **toàn bộ feed** (system + user feeds) + cleanup/reclassify (cooldown nội bộ từng bước: junk 1h, cleanup 6h, reclassify 10p).
+- CORS `*`, `Cache-Control: no-store` (client không được cache — nếu cache thì nút Làm mới sẽ không chạm origin). HTTP 500 khi `status: "error"`.
+
 ### GET /api/cron-fetch?tier=hot|standard|full
-- Cron-driven fetch. Tiers: `hot` (5 hot Google queries + 2 hot RSS feeds), `standard` (everything non-hot), `full` (everything + maintenance).
+- **Chạy tay/admin bằng curl** — không còn scheduler nào gọi endpoint này (on-demand qua `/api/scrape`).
+- Tiers: `hot` (5 hot Google queries + hot RSS feeds), `standard` (everything non-hot + user feeds), `full` (everything + maintenance + user feeds). **Tier `hot` bỏ qua user feeds** (tối đa 60 nguồn) — chỉ crawl ở `standard`/`full`.
 - **Yêu cầu `CRON_SECRET`** (fail-closed, constant-time). Nguồn: header `x-cron-secret`, `Authorization: Bearer`, hoặc query `?secret=`.
-- Locks via `cron_state` table (`cronAcquireLock`): hot 60s, standard 5m, full 4h.
-- On full tier additionally: purge spam (non-forced, 1h cooldown), cleanup old news, reclassify Paywall→Macro.
+- Locks via `cron_state` table (`cronAcquireLock`): hot 60s, standard 5m, full 4h, on-demand 180s.
+- On `full`/`on-demand` tiers additionally: purge spam (non-forced, 1h cooldown), cleanup old news, reclassify Paywall→Macro.
 - Sends FCM notifications for brand-new `is_important` rows (`notifyImportantNews`).
-- Returns full stats payload.
+- Returns full stats payload (`status`: `ok`/`skipped`/`error`; HTTP 500 khi `error`).
 
 ### GET|POST /api/cleanup
 - Manual spam purge. **Yêu cầu `CRON_SECRET`** (header `x-cron-secret` / Bearer / `?secret=`; so sánh constant-time). Auto-limit 500 rows (max 2000), non-forced cooldown 1h.
@@ -108,7 +117,7 @@ RLS: bật cho mọi role; chỉ có policy SELECT cho anon; `revoke insert, upd
 ### cron_state
 | Column | Notes |
 |---|---|
-| `id` | int PK (lock slot: 11=hot, 12=standard, 13=full) |
+| `id` | int PK (lock slot: 11=hot, 12=standard, 13=full, 14=on-demand) |
 | `ran_at` | Last run — used for lock acquire condition |
 
 ## Scraper Pipeline (src/services/scraper.js)
@@ -117,6 +126,7 @@ RLS: bật cho mọi role; chỉ có policy SELECT cho anon; `revoke insert, upd
   - `hot`: `HOT_GOOGLE_QUERIES` (5) + `HOT_DIRECT_RSS_FEEDS` (Yahoo, CNBC).
   - `standard`: everything except hot feeds.
   - `full`: all.
+  - `on-demand`: all (không khớp hot/standard → trả toàn bộ feed).
 - **Source lists (constants.js):**
   - `FED_MACRO_QUERIES` — 8 Google News query strings (category Macro).
   - `GEOPOLITICS_QUERIES` — 6 queries.
@@ -137,12 +147,14 @@ RLS: bật cho mọi role; chỉ có policy SELECT cho anon; `revoke insert, upd
 - `isJunkTitle`: too-short (<16 chars), spam, crypto, ALL-CAPS (>60% uppercase over 40 chars).
 - `buildTitleSelection(items)`: dedupe by `titleKey` (lowercase alnum-only). Keeps preferred: important > non-Google source > newer.
 
-## Cron
-- `backend/vercel.json` **không còn đăng ký cron** (`"crons": []`) — cron không thể mang secret trong URL commit lên git.
-- **Phải tạo cron trong Vercel Dashboard** (project `news-app-realtime-seven` → Cron Jobs):
-  - Path: `/api/cron-fetch?secret=<CRON_SECRET>&tier=full`
-  - Schedule: `0 1 * * *`
-- Endpoint từng chạy mỗi ngày 01:00 qua `?tier=full`. `REQUIRES RUNTIME VERIFICATION`: nhớ tạo lại cron ở Dashboard sau khi deploy, nếu không feed chỉ refresh khi có manual fetch.
+## Scrape On-demand (không còn cron ở bất kỳ đâu)
+- `backend/vercel.json` để `"crons": []` — **không đăng ký cron nào trên Vercel** (Hobby Fluid Active CPU 4h/tháng; crawler nền sẽ hết quota). Không có GitHub Actions scheduler, không có cron-job.org.
+- Kích hoạt duy nhất — `GET /api/scrape` (tier `on-demand`):
+  - **App mở**: `App.js` fire-and-forget `triggerOnDemandScrape()` cùng lúc `vm.start()` — tin mới tự đến qua Realtime, không block splash.
+  - **Nút Làm mới / pull-to-refresh**: `reloadAll` chờ scrape xong rồi `vm.refresh()`, toast theo `status` (`ok` → số tin mới, `skipped` → "vừa được cập nhật trước đó").
+- **Cooldown 180s toàn cục** (`TIER_CONFIG['on-demand'].lockSeconds`, lock slot 14): request trong cửa sổ trả `status: "skipped"` không chạy pipeline — đây là lớp chống abuse duy nhất (endpoint mở, không secret).
+- **Dọn scheduler cũ**: disable/delete mọi job cron-job.org đang GET `/api/cron-fetch?tier=...`; (tuỳ chọn) xóa cron `0 1 * * *` trong Vercel Dashboard → Cron Jobs.
+- Chạy tay bằng curl vẫn dùng `GET /api/cron-fetch?tier=...` (yêu cầu `CRON_SECRET`).
 
 ## Push Notifications (services/fcm.js)
 - FCM V1 via service account JWT (RS256) → OAuth token → `POST /fcm.googleapis.com/v1/projects/{id}/messages:send`.

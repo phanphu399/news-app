@@ -26,6 +26,19 @@ export async function triggerManualFetch() {
   return json;
 }
 
+// Cào on-demand (không cần secret — server tự throttle 180s toàn cục).
+// Trả về payload: { status: 'ok' | 'skipped', upserted, scraped, ... }
+export async function triggerOnDemandScrape() {
+  const endpoint = `${BACKEND_URL}/api/scrape`;
+  const response = await fetch(endpoint, {
+    signal: AbortSignal.timeout(15000),
+    headers: { Accept: 'application/json' },
+  });
+  const json = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(json?.message || `HTTP ${response.status}`);
+  return json;
+}
+
 export async function addUserFeed({ name, rssUrl, category }) {
   const response = await fetch(FEEDS_ENDPOINT, {
     method: 'POST',

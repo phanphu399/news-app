@@ -1,5 +1,6 @@
-const CACHE_TTL_MS = 3 * 1000;
-const CACHE_MAX_AGE = 3;
+// CDN (s-maxage) phục vụ request từ mọi client — origin chỉ chạy tối đa 1 lần/30s.
+const CACHE_TTL_MS = 30 * 1000;
+const CACHE_MAX_AGE = 30;
 
 let cache = { at: 0, payload: null };
 
@@ -7,7 +8,10 @@ function cors(response) {
   response.setHeader('Access-Control-Allow-Origin', '*');
   response.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
   response.setHeader('Access-Control-Allow-Headers', 'Content-Type, Cache-Control, Pragma, Expires');
-  response.setHeader('Cache-Control', `public, max-age=${CACHE_MAX_AGE}`);
+  response.setHeader(
+    'Cache-Control',
+    `public, max-age=${CACHE_MAX_AGE}, s-maxage=${CACHE_MAX_AGE}, stale-while-revalidate=${CACHE_MAX_AGE}`
+  );
 }
 
 function formatVal(val, raw, unit) {
@@ -55,7 +59,7 @@ export default async function handler(request, response) {
         'User-Agent': 'Mozilla/5.0',
         'origin': 'https://www.tradingview.com'
       },
-      signal: AbortSignal.timeout(20000),
+      signal: AbortSignal.timeout(9000),
     });
     if (!res.ok) throw new Error(`TradingView returned HTTP ${res.status}`);
     const raw = await res.json();

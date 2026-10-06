@@ -36,7 +36,9 @@ jobs:
           node --check api/sources.js
           node --check api/markets.js
           node --check api/calendar.js
+          node --check api/scrape.js
           node --check src/services/scraper.js
+          node --check src/services/cronPipeline.js
           node --check src/services/supabase.js
           node --check src/services/fcm.js
           node --check src/utils/helpers.js
@@ -47,7 +49,7 @@ jobs:
 
       - name: Validate vercel.json
         run: |
-          node -e "const c = require('./vercel.json'); if (!Array.isArray(c.crons)) throw new Error('crons array missing'); const msg = c.crons.length ? 'cron(s): ' + c.crons.map(x => x.schedule + ' ' + x.path).join(', ') : 'no committed cron — configure the daily cron in Vercel Dashboard with ?secret=<CRON_SECRET>&tier=full'; console.log(msg);"
+          node -e "const c = require('./vercel.json'); if (!Array.isArray(c.crons)) throw new Error('crons array missing'); const msg = c.crons.length ? 'cron(s): ' + c.crons.map(x => x.schedule + ' ' + x.path).join(', ') : 'no committed cron — scraping is on-demand (GET /api/scrape, global 180s cooldown)'; console.log(msg);"
 
   mobile:
     name: Mobile checks (Expo)

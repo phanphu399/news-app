@@ -22,19 +22,17 @@ function extractSecret(request) {
 }
 
 // Fail-closed: nếu chưa cấu hình CRON_SECRET thì từ chối luôn (không fail-open).
-// Trả về response đã gửi nếu bị chặn, ngược lại trả null (được phép đi tiếp).
+// Luôn trả về truthy khi chặn — không phụ thuộc giá trị trả về của response.json().
 export function checkCronSecret(request, response) {
   const configured = process.env.CRON_SECRET || '';
   if (!configured) {
-    return response
-      .status(500)
-      .json({ ok: false, error: 'Backend chưa cấu hình CRON_SECRET — từ chối thực thi.' });
+    response.status(500).json({ ok: false, error: 'Backend chưa cấu hình CRON_SECRET — từ chối thực thi.' });
+    return true;
   }
   const provided = extractSecret(request);
   if (!provided || !safeEqual(provided, configured)) {
-    return response
-      .status(401)
-      .json({ ok: false, error: 'Thiếu hoặc sai CRON_SECRET (header x-cron-secret, Authorization Bearer hoặc ?secret=).' });
+    response.status(401).json({ ok: false, error: 'Thiếu hoặc sai CRON_SECRET (header x-cron-secret, Authorization Bearer hoặc ?secret=).' });
+    return true;
   }
   return null;
 }

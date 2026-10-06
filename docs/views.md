@@ -5,7 +5,7 @@ Location: `mobile/src/views/`
 ## AppHeader.js
 Top app bar shown on all tabs except GOLD.
 
-**Props:** `online` (bool from `useOnlineStatus`), `loading` (bool), `onRefresh` (callback → `reloadAll`).
+**Props:** `online` (bool from `useOnlineStatus`), `loading` (bool), `onRefresh` (callback → `reloadAll` — trigger `GET /api/scrape` on-demand rồi `vm.refresh()`).
 
 **Renders:**
 - `PulseLogo size=22`

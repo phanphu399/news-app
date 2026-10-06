@@ -1,30 +1,33 @@
 # ASTER — Realtime Forex & Macro News App
 
-Monorepo chứa **Serverless Backend (Vercel Cron)** + **Mobile App (Expo / React Native)** cho ứng dụng tin tức Forex & Macro theo thời gian thực. Toàn bộ commit ở nhánh `main` được tự động deploy bởi Vercel.
+Monorepo chứa **Serverless Backend (Vercel, cào tin on-demand)** + **Mobile App (Expo / React Native)** cho ứng dụng tin tức Forex & Macro theo thời gian thực. Toàn bộ commit ở nhánh `main` được tự động deploy bởi Vercel.
 
 ---
 
 ## 1. Tổng quan (System Overview)
 
-- **Backend** (`backend/`): Vercel Serverless Functions + Cron Job chạy **1 phút/lần** cào tin tức, ghi vào Supabase và bắn push notification qua FCM.
+- **Backend** (`backend/`): Vercel Serverless Functions phục vụ API theo yêu cầu; **cào tin on-demand** — chỉ chạy khi người dùng mở app hoặc bấm Làm mới (`GET /api/scrape`, cooldown 180s toàn cục), ghi vào Supabase và bắn push notification qua FCM. **Không có cron nào** (Vercel lẫn bên ngoài).
 - **Mobile** (`mobile/`): Ứng dụng Expo (React Native) theo **Clean Architecture**, tách biệt UI Views (dumb) và ViewModels (smart), nhận dữ liệu tức thì bằng **Supabase Realtime**.
 
 ```
 news-app/
 │
-├── .github/workflows/ci.yml     # Pipeline CI tự động kiểm tra backend + mobile
+├── .github/workflows/
+│   └── ci.yml                    # Pipeline CI tự động kiểm tra backend + mobile
 │
 ├── backend/                     # [VERCEL SERVERLESS PROJECT]
-│   ├── api/cron-fetch.js        # Endpoint chạy định kỳ theo tier (hot 1p / standard 5p / full 1d) — Controller
+│   ├── api/scrape.js            # Cào on-demand (app mở / nút Làm mới) — throttle 180s
+│   ├── api/cron-fetch.js        # Endpoint chạy tay/admin theo tier (auth CRON_SECRET) — Controller
 │   ├── src/
 │   │   ├── config/constants.js  # Keywords đỏ, URL Google News, RSS feeds + tier hot
 │   │   ├── services/
 │   │   │   ├── scraper.js       # Cào RSS theo tier + parse XML (fast-xml-parser)
+│   │   │   ├── cronPipeline.js  # Logic pipeline tier hot/standard/full/on-demand (dùng bởi 2 API trên)
 │   │   │   ├── supabase.js      # Upsert, lock tier, dọn dữ liệu, realtime
 │   │   │   └── fcm.js           # Firebase Cloud Messaging (HTTP v1)
 │   │   └── utils/helpers.js     # Băm URL → ID, check tin đỏ, sanitize
 │   ├── package.json
-│   ├── vercel.json              # Cron fallback "0 1 * * *" → /api/cron-fetch?tier=full
+│   ├── vercel.json              # crons: [] — không có cron trên Vercel
 │   └── .env.example
 │
 ├── mobile/                      # [MOBILE APP — EXPO / REACT NATIVE]
@@ -66,27 +69,32 @@ Bảng **`market_news`** — **tuyệt đối không lưu nội dung bài viết
 
 ---
 
-## 3. Data Fetching Pipeline (Vercel API)
+## 3. Data Fetching Pipeline (On-demand)
 
-> **Lưu ý quan trọng (Hobby plan):** Vercel Hobby chỉ cho phép cron tối đa **1 lần/ngày** — lịch `* * * * *` (mỗi phút) bị chặn deploy. Do đó nhịp 1 phút được đảm bảo bằng **External Scheduler** (xem mục 5). `vercel.json` chỉ giữ 1 cron dự phòng mỗi ngày (`0 1 * * *`) để vẫn có lượt chạy ngay cả khi external scheduler tạm lỗi.
+> **Lưu ý quan trọng (Hobby plan):** Vercel Hobby chỉ gồm **4 giờ Fluid Active CPU/tháng**. Cào tin chạy nền dày đặc trên Serverless Function (cron mỗi phút, poll liên tục) sẽ dùng hết quota và **tự động pause toàn bộ Function**. Do đó **không có scheduler nào** — cào chỉ chạy **khi người dùng mở app hoặc bấm Làm mới**, với cooldown **180s toàn cục** → mỗi lượt cào tối đa ~48 lượt/giờ CPU.
 
-`vercel.json` (Hobby-safe, dự phòng 1 lần/ngày):
+`backend/vercel.json` để `"crons": []` — **không có cron nào chạy trên Vercel**.
 
-```json
-{ "crons": [{ "path": "/api/cron-fetch", "schedule": "0 1 * * *" }] }
-```
+Nguồn kích hoạt:
 
-Luồng xử lý trong `api/cron-fetch.js` (Controller, không chứa logic nghiệp vụ):
+| Sự kiện | Tier | Nhịp | Ghi chú |
+|---|---|---|---|
+| Người dùng mở app | `on-demand` | mỗi lần mở, tự bỏ qua nếu <180s | fire-and-forget (`App.js`), tin mới tự đến qua Realtime |
+| Nút Làm mới / pull-to-refresh | `on-demand` | mỗi lần bấm, tự bỏ qua nếu <180s | `GET /api/scrape` → `status: ok/skipped` → toast theo kết quả |
+| Chạy tay bằng curl (admin) | `hot`/`standard`/`full` | tùy ý | `GET /api/cron-fetch?tier=...`, yêu cầu `CRON_SECRET` |
+
+Pipeline nằm ở `src/services/cronPipeline.js` (service thuần, không phụ thuộc HTTP) — dùng chung bởi `api/scrape.js` (on-demand) và `api/cron-fetch.js` (admin):
 
 1. **Scrape** (`services/scraper.js`):
-   - **Google News Proxy** (`news.google.com/rss/search`): 3 luồng query — Vĩ mô (FED, CPI), Hàng hóa (XAUUSD, Oil), Báo Paywall (site:bloomberg.com, site:wsj.com, site:reuters.com), lọc tin trong 1 giờ.
-   - **Direct RSS**: Yahoo Finance, CNBC, White House — parse bằng `fast-xml-parser`.
+   - **Google News Proxy** (`news.google.com/rss/search`): query theo tier — Vĩ mô (FED, CPI), Hàng hóa (XAUUSD, Oil), Geopolitics, Forex, Paywall (site:bloomberg.com, site:wsj.com, site:reuters.com).
+   - **Direct RSS**: Yahoo Finance, CNBC, MarketWatch, OilPrice, Fed feeds... — parse bằng `fast-xml-parser`.
 2. **Tagging**: tiêu đề chứa keyword đỏ (FED, FOMC, CPI, XAUUSD, WAR, ...) → `is_important = true`.
 3. **Dedupe**: ID = hash URL; chỉ notify các tin quan trọng **mới** (chưa tồn tại trong DB) để tránh beep lặp mỗi phút.
 4. **Push**: `services/fcm.js` gọi FCM **HTTP v1** (OAuth2 service account) với `sound: "default"` / file `beep.wav` để điện thoại **BEEP** cảnh báo kể cả khi khóa màn hình.
-5. **Cleanup**: xóa bản ghi quá 3 ngày.
+5. **Cleanup**: xóa bản ghi quá 3 ngày (tier `full` hoặc `on-demand` — đều có cooldown nội bộ).
+6. **Tier `hot` bỏ qua user feeds**: tối đa 60 nguồn RSS cá nhân chỉ được crawl ở tier `standard`/`full` — giữ nhịp hot nhẹ và nhanh.
 
-Bảo mật endpoint: nếu đặt `CRON_SECRET`, request phải kèm `Authorization: Bearer <CRON_SECRET>` (Vercel Cron tự động gắn hoặc cấu hình Header auth).
+Bảo mật: `/api/scrape` là endpoint **mở** nhưng tự throttle 180s toàn cục (bảng `cron_state`) — chống spam bằng lock chứ không bằng secret. `/api/cron-fetch` vẫn yêu cầu `Authorization: Bearer <CRON_SECRET>` (fail-closed) cho chạy tay bằng curl.
 
 ---
 
@@ -116,25 +124,26 @@ vercel --prod
 ```
 Đặt env trên Vercel (xem `backend/.env.example`).
 
-### External Scheduler — chạy mỗi phút (Hobby plan)
-Vì Hobby không cho cron mỗi phút, dùng dịch vụ scheduler gọi endpoint theo **tier**:
+### Cào tin (On-demand — không còn scheduler nền)
 
-| Tier | URL | Interval | Mục đích |
+Không có cron nào ở mọi nơi (Vercel, cron-job.org, GitHub Actions). Cào chỉ chạy khi người dùng **mở app** hoặc **bấm Làm mới** (`GET /api/scrape`), tự bỏ qua nếu lượt trước chưa qua **180s** (cooldown toàn cục trong bảng `cron_state`).
+
+Các bước dọn scheduler cũ:
+
+1. **Disable/delete toàn bộ job cron-job.org** đang GET `https://<app>.vercel.app/api/cron-fetch?tier=...` — đây là nguyên nhân chính đẩy CPU Vercel vượt quota.
+2. (Tùy chọn) Xóa cron `0 1 * * *` trong **Vercel Dashboard → `news-app-realtime-seven` → Cron Jobs**.
+3. Không cần secrets hay PAT nào cho GitHub — CI chỉ syntax-check, không chạy pipeline.
+
+Chạy tay bằng curl (admin): `GET /api/cron-fetch?tier=hot|standard|full` với header `Authorization: Bearer <CRON_SECRET>`.
+
+| Tier | Kích hoạt | Interval | Mục đích |
 |---|---|---|---|
-| hot | `.../api/cron-fetch?tier=hot` | 1 phút | Cào ~9 feed phát tin liên tục (ForexFactory, Investing, Yahoo, CNBC, 5 query Google macro nóng) → realtime tức thì |
-| standard | `.../api/cron-fetch?tier=standard` | 5 phút | Cào các feed còn lại (geopolitics, vàng, forex, crypto, Fed...) |
-| full (fallback) | `.../api/cron-fetch?tier=full` | 1 ngày (Vercel cron) | Toàn bộ + cleanup + reclassify |
+| on-demand | app mở / nút Làm mới | ≤1 lượt / 180s | Toàn bộ feed nóng + còn lại + user feeds + cleanup (cooldown nội bộ từng bước) |
+| hot | curl admin | tự ý | ~9 feed nóng liên tục (ForexFactory, Investing, Yahoo, CNBC, query Google macro) |
+| standard | curl admin | tự ý | Các feed còn lại (geopolitics, vàng, forex, crypto, Fed...) + user feeds |
+| full | curl admin | tự ý | Toàn bộ + cleanup + reclassify |
 
-1. Deploy thành công → lấy URL: `https://<your-app>.vercel.app/api/cron-fetch`
-2. Đặt `CRON_SECRET` trong Vercel env (VD: `8f3a...`).
-3. Tạo scheduler tại **cron-job.org** (hoặc Crontap, Upstash QStash):
-   - **hot** — URL: `.../api/cron-fetch?tier=hot`, Method `GET`, Interval `1` phút (`* * * * *`)
-   - **standard** — URL: `.../api/cron-fetch?tier=standard`, Method `GET`, Interval `5` phút
-   - Headers mỗi job: `Authorization: Bearer <CRON_SECRET>`
-4. Bấm **Enable/Start** → endpoint được gọi theo nhịp, không lệ thuộc giới hạn cron Vercel.
-5. Vercel cron `0 1 * * *` (`?tier=full`) giữ làm fallback ngày — nguồn hot vẫn đảm bảo realtime khi scheduler ngoài dừng.
-
-**Supabase Realtime chính là WebSocket** — mobile nhận INSERT tức thì qua `postgres_changes`, không cần tự dựng WebSocket riêng. Tiering chỉ giảm tải cào/upsert chứ không đổi kênh truyền.
+**Supabase Realtime chính là WebSocket** — mobile nhận INSERT tức thì qua `postgres_changes`, không cần tự dựng WebSocket riêng. On-demand chỉ quyết định *khi nào cào*; kênh truyền không đổi.
 
 ### Database (Supabase)
 Chạy `db/schema.sql` trong Supabase SQL Editor (bảng + trigger dọn 3 ngày + realtime).

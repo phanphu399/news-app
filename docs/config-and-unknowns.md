@@ -13,7 +13,7 @@
 | `mobile/vercel.json` | Frontend deploy: buildCommand, outputDirectory, headers |
 | `backend/src/config/constants.js` | `KNOWN_SOURCES`, `KNOWN_DOMAINS`, `DIRECT_RSS_FEEDS`, `EXTRA_FEEDS`, `RED_ALERT_KEYWORDS`, `FED_MACRO_QUERIES`, `HOT_GOOGLE_QUERIES`, `GEOPOLITICS_QUERIES`, `PAYWALL_QUERIES` |
 | `backend/.env.example` | Template for required env vars |
-| `backend/vercel.json` | Cron schedule only (`0 1 * * *`) |
+| `backend/vercel.json` | `"crons": []` — không cron trên Vercel; cào tin on-demand qua `GET /api/scrape` (cooldown 180s) |
 
 ## Environment Variables
 
@@ -92,7 +92,8 @@ Exports (key items):
 
 | Endpoint | In repo | Live? | Notes |
 |---|---|---|---|
-| `/api/cron-fetch` | Yes | Yes (daily cron) | Cron **phải tạo lại trong Vercel Dashboard**: `/api/cron-fetch?secret=<CRON_SECRET>&tier=full`, schedule `0 1 * * *` (không commit secret vào vercel.json) |
+| `/api/scrape` | Yes | `REQUIRES RUNTIME VERIFICATION` | **Cào on-demand** — app mở / nút Làm mới; mở (không secret), throttle 180s toàn cục qua `cron_state` |
+| `/api/cron-fetch` | Yes | Endpoint only (manual/admin) | **Không còn cron nào gọi** — on-demand qua `/api/scrape`; endpoint giữ lại cho curl tay, yêu cầu `CRON_SECRET` |
 | `/api/manual-fetch` | Yes | `REQUIRES RUNTIME VERIFICATION` | Requires backend redeploy to `news-app-realtime-seven`; giờ yêu cầu `CRON_SECRET` |
 | `/api/markets` | Yes | `REQUIRES RUNTIME VERIFICATION` | Same redeploy needed; **no longer referenced by mobile** since the gold/silver price panel was removed from `EconomicCalendarView` |
 | `/api/article` | Yes | `REQUIRES RUNTIME VERIFICATION` | Backend redeploy needed |
@@ -129,7 +130,7 @@ Exports (key items):
 |---|---|
 | Native always online | `useOnlineStatus()` returns `{online: true}` on iOS/Android — `NOT FOUND`: `NetInfo.addEventListener`. Only meaningful on web. |
 | No search UI | No `SearchService` exists. `NOT IMPLEMENTED`: keyword filter in `NewsListView` or any view. |
-| Single daily cron | Only `0 1 * * *` registered. No hot/standard tier crons, no intraday fetch cycle. |
+| Crawler schedule | **Không còn cron** — cào on-demand khi app mở / bấm Làm mới (`GET /api/scrape`), cooldown 180s toàn cục. `cron-fetch` chỉ dùng cho curl admin. |
 | No crash reporting | No Sentry, LogRocket, or remote logging. `NOT IMPLEMENTED`. |
 | No deep linking | No URL scheme handling, no `Linking.addEventListener`. |
 | Google News limitation | `maxItems=20` per feed; 500ms delay between feed requests; no pagination. |
@@ -148,10 +149,11 @@ These items require actually running the app against a live backend to confirm:
 | # | Item | How to test |
 |---|---|---|
 | 1 | Backend endpoints live? | `curl https://news-app-realtime-seven.vercel.app/api/markets` |
-| 2 | Cron registered? | Vercel dashboard → `news-app-realtime-seven` → Cron Jobs |
-| 3 | FCM push delivery | Trigger `manual-fetch` → check if mobile receives notification |
-| 4 | Supabase Realtime | Open app → verify `● Trực tiếp` indicator appears (no `OFFLINE` in log) |
-| 5 | PWA install flow | Chrome DevTools → Application → Manifest → "Install" |
-| 6 | PWA update flow | Deploy new version → open app → verify banner appears without reload |
-| 7 | `rss-proxy` consumers | Check if any external service calls `/api/rss-proxy` |
-| 8 | `user_feeds` consumers | Check if any code path inserts into `user_feeds` table |
+| 2 | Scheduler cũ đã tắt? | Disable mọi cron-job.org GET `/api/cron-fetch?tier=...`; (tuỳ chọn) xóa cron trong Vercel Dashboard → Cron Jobs. Không còn workflow Actions nào. |
+| 3 | On-demand scrape | Mở app / bấm Làm mới → `GET /api/scrape` trả `status: ok` (lần 2 trong 180s phải trả `skipped`) |
+| 4 | FCM push delivery | Trigger `cron-fetch` (curl admin) → check if mobile receives notification |
+| 5 | Supabase Realtime | Open app → verify `● Trực tiếp` indicator appears (no `OFFLINE` in log) |
+| 6 | PWA install flow | Chrome DevTools → Application → Manifest → "Install" |
+| 7 | PWA update flow | Deploy new version → open app → verify banner appears without reload |
+| 8 | `rss-proxy` consumers | Check if any external service calls `/api/rss-proxy` |
+| 9 | `user_feeds` consumers | Check if any code path inserts into `user_feeds` table |

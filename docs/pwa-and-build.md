@@ -139,16 +139,11 @@ Custom pure-JS PNG encoder/decoder — no dependencies. Functions: `decodePng`, 
 
 ```json
 {
-  "crons": [
-    {
-      "path": "/api/cron-fetch?tier=full",
-      "schedule": "0 1 * * *"
-    }
-  ]
+  "crons": []
 }
 ```
 
-Single daily cron at 01:00 UTC. Separate Vercel project (`news-app-realtime-seven`).
+**Không có cron trên Vercel** — cào tin **on-demand** (`GET /api/scrape`, cooldown 180s toàn cục khi app mở / bấm Làm mới, xem `backend-and-data.md` § Scrape On-demand) để giữ Fluid Active CPU (4h/tháng) cho API theo yêu cầu. Separate Vercel project (`news-app-realtime-seven`).
 
 ## Native Builds (EAS)
 
@@ -205,16 +200,16 @@ Two parallel jobs, both on `ubuntu-latest` with Node 20:
 ### Backend job
 
 1. `npm ci` in `backend/`
-2. Syntax check: `cron-fetch.js`, `scraper.js`, `supabase.js`, `fcm.js`, `helpers.js`
-3. Validate `vercel.json` has crons
+2. Syntax check: `cron-fetch.js`, `scrape.js`, `cronPipeline.js`, `scraper.js`, `supabase.js`, `fcm.js`, `helpers.js`, ...
+3. Validate `vercel.json` có mảng `crons` (rỗng là bình thường — cào tin on-demand qua `/api/scrape`, không có cron)
 
 ### Mobile job
 
 1. `npm ci || npm install --no-audit --no-fund` in `mobile/`
-2. Syntax check: `App.js`, `index.js`, `webPwa.js`, `NewsViewModel.js`, **`CustomFeedService.js`**, `build-web.mjs`, `generate-logo.mjs`, `EconomicCalendarView.js`
-3. Validate `app.json` and `mobile/vercel.json`
+2. Syntax check: `App.js`, `index.js`, `webPwa.js`, `NewsViewModel.js`, các `services/` + `hooks/` còn tồn tại, `build-web.mjs`, `generate-logo.mjs`, `EconomicCalendarView.js`, ...
+3. Validate `app.json` và `mobile/vercel.json`
 
-> **BROKEN:** The mobile syntax check references `src/services/CustomFeedService.js` which does **NOT FOUND** — this step would fail if CI runs. See [config-and-unknowns.md](./config-and-unknowns.md).
+Không có workflow crawler nào nữa — cào tin on-demand qua `GET /api/scrape` từ app.
 
 ## Verification Commands
 

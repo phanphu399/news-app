@@ -56,6 +56,7 @@ Backend REST client for sources + user feeds.
 | Function | Endpoint | Method |
 |---|---|---|
 | `fetchSources()` | `${BACKEND_URL}/api/sources` | GET (20s timeout) |
+| `triggerOnDemandScrape()` | `${BACKEND_URL}/api/scrape` | GET (15s timeout) — không secret, server throttle 180s |
 | `triggerManualFetch()` | `${BACKEND_URL}/api/manual-fetch` | POST (90s timeout) |
 | `addUserFeed({name, rssUrl, category})` | `${BACKEND_URL}/api/user-feeds` | POST (20s) |
 | `updateUserFeed(id, {name,rssUrl,category,enabled})` | `${BACKEND_URL}/api/user-feeds?id=` | PATCH (20s) |
@@ -65,7 +66,7 @@ Backend REST client for sources + user feeds.
 
 All use `AbortSignal.timeout(...)`; errors thrown as `new Error(json.error || HTTP n)`.
 
-> **v15:** `triggerManualFetch()` vẫn export từ `SourceService` nhưng **không còn được `App.js` gọi** — nút Refresh hiện chỉ tải lại tin từ Supabase (`vm.refresh()`). Manual trigger (POST `/api/manual-fetch`) chỉ dùng từ admin curl / cron và yêu cầu `CRON_SECRET`.
+> **On-demand scrape:** `App.js` gọi `triggerOnDemandScrape()` 2 chỗ — fire-and-forget khi **app mở** (cùng `vm.start()`, tin mới tự đến qua Realtime) và await trong `reloadAll` khi **bấm nút Refresh / pull-to-refresh** (trước `vm.refresh()`, toast theo `status`: `ok` → số tin mới, `skipped` → "vừa được cập nhật trước đó"). `triggerManualFetch()` vẫn export nhưng **không được `App.js` gọi** — chỉ dùng từ admin curl và yêu cầu `CRON_SECRET`.
 
 ## SupabaseService.js
 Direct client to Supabase for news feed (bypasses backend for read/realtime).

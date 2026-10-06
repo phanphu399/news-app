@@ -46,23 +46,25 @@ mobile/
 backend/
 ├── api/                          ← Vercel serverless functions
 │   ├── article.js                ← GET /api/article?url=... (HTML → paragraphs)
-│   ├── calendar.js               ← GET /api/calendar (faireconomy proxy)
+│   ├── calendar.js               ← GET /api/calendar (TradingView economic calendar proxy)
 │   ├── cleanup.js                ← GET|POST /api/cleanup (spam deletion)
 │   ├── cron-fetch.js             ← GET /api/cron-fetch?tier=hot|standard|full
 │   ├── manual-fetch.js           ← POST /api/manual-fetch (manual scrape trigger)
 │   ├── markets.js                ← GET /api/markets (Yahoo Finance GC=F, SI=F)
 │   ├── rss-proxy.js              ← GET /api/rss-proxy?url=... (RSS → JSON)
+│   ├── scrape.js                 ← GET /api/scrape (cào on-demand, throttle 180s)
 │   ├── sources.js                ← GET /api/sources (source list + health)
 │   └── user-feeds.js             ← CRUD /api/user-feeds (user RSS management)
 ├── src/
 │   ├── config/constants.js       ← FEED lists, RED_ALERT_KEYWORDS, KNOWN_SOURCES
 │   ├── services/scraper.js       ← Feed fetching, parsing, tier selection
+│   ├── services/cronPipeline.js  ← Logic pipeline tier hot/standard/full/on-demand (dùng bởi 2 API)
 │   ├── services/supabase.js      ← DB operations (upsert, cleanup, dedup, cron lock)
 │   ├── services/fcm.js           ← Firebase Cloud Messaging V1 (push notifications)
 │   ├── utils/spamFilter.js       ← isJunkTitle, isJunkItem, buildTitleSelection
 │   └── utils/helpers.js          ← hashUrl, isRedAlert, normalizeUrl, sanitizeTitle
 ├── package.json                  ← @supabase/supabase-js ^2.45.0, fast-xml-parser ^4.5.0
-├── vercel.json                   ← Backend deploy + cron schedule
+├── vercel.json                   ← Backend deploy ("crons": [] — cào on-demand qua /api/scrape)
 └── .env.example                  ← Template for required env vars
 ```
 

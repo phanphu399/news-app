@@ -28,6 +28,7 @@ import ToastHost from './src/components/ToastHost';
 import ErrorBoundary from './src/components/ErrorBoundary';
 import { showToast } from './src/services/ToastService';
 import { LocalStorageService } from './src/services/LocalStorageService';
+import { triggerOnDemandScrape } from './src/services/SourceService';
 import { normalizeUrl } from './src/utils/url';
 import { COLORS, TAB_INACTIVE, FONT_FAMILY, TABULAR_NUMS } from './src/config/constants';
 
@@ -355,13 +356,37 @@ function MainScreen() {
     if (manualRefreshing) return;
     setManualRefreshing(true);
     showToast({ type: 'info', title: 'Đang làm mới tin tức…' });
+    let scrape = null;
+    try {
+      // Cào on-demand trước (bỏ qua nếu lượt trước chưa qua 180s), rồi mới tải lại list
+      scrape = await triggerOnDemandScrape();
+    } catch (error) {
+      // Server lỗi / quá thời gian — vẫn tải lại danh sách hiện có
+    }
     try {
       await vm.refresh();
-      showToast({
-        type: 'success',
-        title: 'Đã làm mới',
-        message: 'Danh sách tin tức đã được cập nhật từ máy chủ.',
-      });
+      if (scrape?.status === 'ok') {
+        showToast({
+          type: 'success',
+          title: 'Đã làm mới',
+          message:
+            scrape.upserted > 0
+              ? `${scrape.upserted} tin mới đã được thêm vào danh sách.`
+              : 'Danh sách tin tức đã được cập nhật từ máy chủ.',
+        });
+      } else if (scrape?.status === 'skipped') {
+        showToast({
+          type: 'success',
+          title: 'Đã làm mới',
+          message: 'Nguồn tin vừa được cập nhật trước đó.',
+        });
+      } else {
+        showToast({
+          type: 'success',
+          title: 'Đã làm mới',
+          message: 'Danh sách tin tức đã được cập nhật từ máy chủ.',
+        });
+      }
     } catch (error) {
       showToast({ type: 'error', title: 'Làm mới thất bại', message: error.message });
     } finally {
@@ -388,6 +413,8 @@ function MainScreen() {
       toastTimersRef.current.set(id, timer);
     });
     vm.start();
+    // Cào on-demand khi app mở — fire-and-forget, tin mới tự đến qua Realtime
+    triggerOnDemandScrape().catch(() => {});
     return () => {
       unsubscribe();
       unsubNewItem();
